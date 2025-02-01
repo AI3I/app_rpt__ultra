@@ -31,7 +31,7 @@ You will need a couple of packages for successful execution of all scripts withi
 _**app_rpt__ultra**_ will require required unfettered use of Asterisk's native local account, _asterisk_, and requires an interactive shell with sudo access.
 As superuser root, you should change the shell accordingly:
 
-`usermod -s /bin/bash asterisk -G sudo`
+`usermod -s /bin/bash -G sudo asterisk`
 
 ### Ensuring sudo access without passwords
 Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
@@ -103,7 +103,7 @@ Edit configuration
 `cp config.ini /opt/app_rpt`
 
 > [!CAUTION]
-> At minimum, `MYNODE` toward the top of the file should contain your AllStarLink node number; failure to set this will cause all scripts to fail!
+> At minimum, `%MYNODE%` toward the top of the file should be replaced with your AllStarLink node number; failure to set this will cause nearly all scripts to fail!
 
 ### Set permissions unilaterally
 
@@ -141,6 +141,15 @@ Edit configuration
 │       ├── lib
 │       │   ├── nwsalerts.out
 │       │   └── wunderground.out
+```
+
+```
+├── opt
+│   └── app_rpt
+│       └── sounds
+│       │   ├── _female
+│       │   ├── _male
+│       │   ├── _sndfx
 ```
 
 ```
@@ -191,7 +200,6 @@ Edit configuration
 │       │   ├── write_functcomplete.sh
 │       │   ├── write_remotemon.sh
 │       │   └── write_remotetx.sh
-│       └── sounds
 ```
 # General Use & Functionality
 More information coming soon!
