@@ -121,6 +121,63 @@ The message is written and can be tested through manual invocation by using: `rp
 
 `chown -Rf asterisk:asterisk /opt/app_rpt`
 
+### Set the initial date for readback
+
+`sudo su - asterisk`
+
+`/opt/app_rpt/bin/datekeeper.sh`
+
 ### Restart Asterisk
 
 `systemctl restart asterisk`
+
+# Operation
+Now that you've set up the basics and have legal IDs, it's time to dive deeper into the general operation and behavior of _**app_rpt__ultra**_.  You have configured cron jobs that are now managing general operations of your system, and by periodically dispatching scripts to do our bidding.
+## Script Operations
+> [!NOTE]
+> All scripts reference _/opt/app_rpt/config.ini_ for runtime and master configuration data.  Should you make edits, be cognizant of changes that need to be reflected accordingly!
+### statekeeper.sh
+#### BY INVOCATION ONLY
+This script basically the magic and the heart of it all.  The purpose of _statekeeper.sh_ is to manage all of your system's personalities, or states, and to modify those on demand.  States can be invoked in any number of ways:  through the command line, using DTMF, or through the internal scheduler.
+Several default states have been pre-programmed to take on situational personalities:
+|State Name|Purpose|Behaviors|
+|-|-|-|
+|default|Default Mode|This is the default power-up state that generally cleans up any modifications from other states, and puts your system back to a pre-defined running state.|
+|standard|Standard Mode|Ideal if you prefer a static state and don't leverage daytime or nighttime modes.|
+|daytime|Daytime Mode|Ideal for daytime operations.|
+|nighttime|Nighttime Mode|Ideal for nighttime operations.|
+|net|Net Mode|Changes behaviors for net, including brief IDs, courtesy tone change, and relaxed timers.|
+|tactical|Tactical Mode|Ideal for tactical operations with adjusted timers and courtesy tone.|
+|weatheralert|Weather Alert|This announces "weather alert" as a tail message, relaxes timers, but maintains normal operations.|
+|severeweather|Severe Weather Mode|This changes the courtesy tone, announces "severe weather alert" for a tail message, suppresses timers, and sends a two-tone page alerting of severe weather.|
+|stealth|Stealth Mode|With the exception of required CW ID, this suppresses all telemetry including voice synthesis, courtesy tones, cuts hang timers, and disables the scheduler.|
+|litzalert|Long Tone Zero (LiTZ) Alert|This generates two-tone pages and announcements when the LiTZ command is executed.|
+|clock|Grandfather Clock|This emulates the CAT-1000 grandfather clock and can be called through the scheduler at the top of every hour.|
+
+### idkeeper.sh
+#### CRONTAB: every minute
+This script makes calls into Asterisk to determine current repeater and identifier states, and based upon _config.ini_ and pre-defined behaviors in _statekeeper.sh_ will determine what identifiers it plays, and when.
+
+### tailkeeper.sh
+#### CRONTAB: every minute
+This follows _statekeeper.sh_ behavior and adjusts tail messages based upon operational condition and weather conditions.  By default, it will rotate in messages for current time and local temperature, if Weather Underground is configured.
+
+### weatheralert.sh
+#### CRONTAB: every minute
+This monitors NOAA National Weather Service alerts, if configured for your NWS zone, and will trigger _statekeeper.sh_ to change to a weather alert or severe weather alert, if enabled.
+
+### weatherkeeper.sh
+#### CRONTAB: every 15 minutes
+This polls Weather Underground (if you setup an API key) to poll for weather station data in your region.  It will generate temperature, humdity, wind speed and direction, et al., which can be called by invocation.
+
+### timekeeper.sh
+#### CRONTAB: every minute
+This generates time messages every minute for playback either in tail messages or by invocation.
+
+### datekeeper.sh
+#### CRONTAB: midnight daily
+This generates date messages once daily for playback by invocation.
+
+### datadumper.sh
+#### CRONTAB: midnight daily
+This purges old recordings after they have aged by the defined period in the script.
