@@ -65,7 +65,7 @@ You will need to put your configurations and directories into a local repo:
 
 ### Ensure permissions are properly set
 
-`chmod -Rf asterisk:asterisk /opt/app_rpt`
+`chmod -Rf asterisk:asterisk /opt/app_rpt /etc/asterisk`
 
 ### Configure crontab for _asterisk_ user
 
