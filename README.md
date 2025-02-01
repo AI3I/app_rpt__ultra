@@ -97,6 +97,7 @@ Edit configuration
 > 1. Replace all instances of `%MYCALL%` within the file with your call sign
 > 2. Replace `%MYNODE%` to match your AllStarLink node number
 > 3. Be sure to check your **duplex** and **rxchannel** values to ensure they align with desired operation
+> 4. _Do not change_ the **idrecording=voice_id** parameter; this is overwritten by _idkeeper.sh_ which you will learn more about later.
 
 ### Copy config.ini template to _/opt/app_rpt/_ and configure
 
@@ -105,6 +106,14 @@ Edit configuration
 > [!CAUTION]
 > At minimum, `%MYNODE%` toward the top of the file should be replaced with your AllStarLink node number; failure to set this will cause nearly all scripts to fail!
 
+### Setup temporary voice identifier from vocabulary bank
+
+For example, and assuming our node number is 504380, we want to use word choices from the vocabulary bank, and want it to say "_This is A I 3 I repeater._"  We can achieve this by concatenating several files together to produce our ID, as follows:
+
+`cd /opt/app_rpt/sounds/_male; cat this_is.ulaw a.ulaw i.ulaw 3.ulaw i.ulaw repeater.ulaw > /opt/app_rpt/sounds/voice_id.ulaw`
+
+The message is written and can be tested through manual invocation by using: `rpt localplay 504380 voice_id`
+
 ### Set permissions unilaterally
 
 `chown -Rf asterisk:asterisk /opt/app_rpt`
@@ -112,94 +121,3 @@ Edit configuration
 ### Restart Asterisk
 
 `systemctl restart asterisk`
-
-# Configurations
-## Directories
-
-```
-├── etc
-│   └── asterisk
-│       ├── extensions_custom.conf
-│       └── rpt.conf
-```
-
-```
-├── opt
-│   └── app_rpt
-│       ├── config.ini
-│       ├── lib
-│       │   ├── autodialers.txt
-│       │   ├── characters.txt
-│       │   ├── emergency_autodialers.txt
-│       │   ├── mailboxes.txt
-│       │   ├── vocabulary.txt
-```
-
-```
-├── opt
-│   └── app_rpt
-│       ├── lib
-│       │   ├── nwsalerts.out
-│       │   └── wunderground.out
-```
-
-```
-├── opt
-│   └── app_rpt
-│       └── sounds
-│       │   ├── _female
-│       │   ├── _male
-│       │   ├── _sndfx
-```
-
-```
-├── opt
-│   └── app_rpt
-│       ├── bin
-│       │   ├── asterisk_reload.sh
-│       │   ├── asterisk_restart.sh
-│       │   ├── asterisk_start.sh
-│       │   ├── asterisk_stop.sh
-│       │   ├── change_linkunkeyct.sh
-│       │   ├── change_remotect.sh
-│       │   ├── change_unlinkedct.sh
-│       │   ├── cmds_cop.sh
-│       │   ├── cmds_ilink.sh
-│       │   ├── cmds_remote.sh
-│       │   ├── cmds_status.sh
-│       │   ├── configkeeper.sh
-│       │   ├── ctwriter.sh
-│       │   ├── datadumper.sh
-│       │   ├── datekeeper.sh
-│       │   ├── gpiodirection.sh
-│       │   ├── gpioexport.sh
-│       │   ├── gpiosleep.sh
-│       │   ├── gpiotoggle.sh
-│       │   ├── gpiounexport.sh
-│       │   ├── idkeeper.sh
-│       │   ├── msgwriter.sh
-│       │   ├── network_restart.sh
-│       │   ├── openvpn_restart.sh
-│       │   ├── sayip.sh
-│       │   ├── saymsg.sh
-│       │   ├── saywlan0.sh
-│       │   ├── soundfob.sh
-│       │   ├── soundkeeper.sh
-│       │   ├── speaktext.sh
-│       │   ├── statekeeper.sh
-│       │   ├── system_halt.sh
-│       │   ├── system_reboot.sh
-│       │   ├── tailkeeper.sh
-│       │   ├── timekeeper.sh
-│       │   ├── weatheralert.sh
-│       │   ├── weatherkeeper.sh
-│       │   ├── wireguard_restart.sh
-│       │   ├── wireless_restart.sh
-│       │   ├── wireline_restart.sh
-│       │   ├── write_cmdmode.sh
-│       │   ├── write_functcomplete.sh
-│       │   ├── write_remotemon.sh
-│       │   └── write_remotetx.sh
-```
-# General Use & Functionality
-More information coming soon!
