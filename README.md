@@ -11,10 +11,10 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 - Management of repeater states or personalities
 - Rotating identifier and tail messages
 - An advanced message editor with the ability to program messages, courtesy tones and telemetry via DTMF
-- A vocabulary of 877 words and sound effects with dozens of pre-defined phrases
+- A vocabulary of 877 words and sound effects with dozens of pre-defined phrases, all derived from high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer
 - Weather alerting system, powered by NOAA NWS alerts
-- Reporting weather conditions, powered by Weather Underground
-- Full integration with Asterisk AllStarLink app_rpt without code modification
+- Reporting weather conditions, powered by Weather Underground (requires account registration and use of an API key)
+- Full integration with Asterisk AllStarLink app_rpt without any code modification
 
 # Installation
 ## System Requirements
@@ -75,6 +75,7 @@ You will need to put your configurations and directories into a local repo:
 
 Use the following for your crontab:
 ```
+# apt_rpt__ultra crontab
 0 0 * * *      /opt/app_rpt/bin/datekeeper.sh      # Produce today's date for readback
 0 0 * * *      /opt/app_rpt/bin/datadumper.sh      # Purge old recordings
 */15 * * * *   /opt/app_rpt/bin/weatherkeeper.sh   # Produce current weather conditions
@@ -99,12 +100,14 @@ Edit configuration
 > [!TIP]
 > 1. Replace all instances of `%MYCALL%` within the file with your call sign
 > 2. Replace `%MYNODE%` to match your AllStarLink node number
-> 3. Be sure to check your **duplex** and **rxchannel** values to ensure they align with desired operation
+> 3. Be sure to check your **duplex** and **rxchannel** values to ensure they align with desired operation (i.e. with _usbradio.conf_ or _simpleusb.conf_)
 > 4. _Do not change_ the **idrecording=voice_id** parameter; this is overwritten by _idkeeper.sh_ which you will learn more about later.
 
 ### Copy config.ini template to _/opt/app_rpt/_ and configure
 
 `cp config.ini /opt/app_rpt`
+
+`nano -w /opt/app_rpt/config.ini`
 
 > [!CAUTION]
 > At minimum, `%MYNODE%` toward the top of the file should be replaced with your AllStarLink node number; failure to set this will cause nearly all scripts to fail!
@@ -115,7 +118,9 @@ For example, and assuming our node number is 504380, we want to use word choices
 
 `cd /opt/app_rpt/sounds/_male; cat this_is.ulaw a.ulaw i.ulaw 3.ulaw i.ulaw repeater.ulaw > /opt/app_rpt/sounds/voice_id.ulaw`
 
-The message is written and can be tested through manual invocation by using: `rpt localplay 504380 voice_id`
+The message is written and can be tested through manual invocation by using:
+
+`rpt localplay 504380 voice_id`
 
 ### Set permissions unilaterally
 
@@ -135,7 +140,7 @@ The message is written and can be tested through manual invocation by using: `rp
 Now that you've set up the basics and have legal IDs, it's time to dive deeper into the general operation and behavior of _**app_rpt__ultra**_.  You have configured cron jobs that are now managing general operations of your system, and by periodically dispatching scripts to do our bidding.
 ## Script Operations
 > [!NOTE]
-> All scripts reference _/opt/app_rpt/config.ini_ for runtime and master configuration data.  Should you make edits, be cognizant of changes that need to be reflected accordingly!
+> All scripts reference _/opt/app_rpt/config.ini_ for runtime and master configuration data.  Should you make any edits to scripts within _/opt/app_rpt/bin_, be cognizant of any changes that may need to be reflected in _config.ini_ accordingly!
 ### statekeeper.sh
 #### BY INVOCATION ONLY
 This script basically the magic and the heart of it all.  The purpose of _statekeeper.sh_ is to manage all of your system's personalities, or states, and to modify those on demand.  States can be invoked in any number of ways:  through the command line, using DTMF, or through the internal scheduler.
@@ -157,10 +162,24 @@ Several default states have been pre-programmed to take on situational personali
 ### idkeeper.sh
 #### CRONTAB: every minute
 This script makes calls into Asterisk to determine current repeater and identifier states, and based upon _config.ini_ and pre-defined behaviors in _statekeeper.sh_ will determine what identifiers it plays, and when.
+|Variables|Values|Behaviors (config.ini)|
+|-|-|-|
+|SPECIALID|0 or 1 (_boolean_)|Whether the Special ID is toggled on or not|
+|ROTATEIIDS|0 or 1 (_boolean_)|Whether Initial IDs are rotated|
+|ROTATEPIDS|0 or 1 (_boolean_)|Whether Pending IDs are rotated|
+|INITIALID|1,2,3|Overide with specific Initial ID|
+|PENDINGID|1,2,3,4,5|Override with specific Pending ID|
 
 ### tailkeeper.sh
 #### CRONTAB: every minute
 This follows _statekeeper.sh_ behavior and adjusts tail messages based upon operational condition and weather conditions.  By default, it will rotate in messages for current time and local temperature, if Weather Underground is configured.
+|Variables|Values|Behaviors (config.ini)|
+|-|-|-|
+|ENABLETAIL|0 or 1 (_boolean_)|Whether the tail messages are enabled or not|
+|ENABLETIME|0 or 1 (_boolean_)|Whether periodic time announcements are given in tail messages or not|
+|ENABLETEMP|0 or 1 (_boolean_)|Whether periodic temperature readings are given in tail messages or not (requires Weather Underground configuration)|
+|ROTATETMSG|0 or 1 (_boolean_)|Whether to rotate tail messages or not|
+|TAILMSG|1,2,3,4,5,6,7,8,9|Override with specific tail message|
 
 ### weatheralert.sh
 #### CRONTAB: every minute
