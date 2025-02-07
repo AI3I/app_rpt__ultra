@@ -87,7 +87,7 @@ elif [ "$SEVEREWEATHER" == "0" ] || [ "$SEVEREWEATHER" == "3" ] || [ "$SEVEREWEA
                 elif [ "$ENABLETIME" == "1" ]; then
                     ln -sf $(shuf -n 1 -e $SOUNDS/$TIMEMSG.ulaw $SOUNDS/tail_message.ulaw_$TAILMSG) $SOUNDS/tail_message.ulaw
                 else
-                    ln -sf $SOUNDS/tail_message.ulaw_$TAILMSG $SOUNDS/tail_message.ulaw
+                    ln -sf $SOUNDS/tail_message_$TAILMSG.ulaw $SOUNDS/tail_message.ulaw
                 fi
             fi
         elif [ "$ROTATETMSG" == "1" ]; then
