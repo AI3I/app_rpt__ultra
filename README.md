@@ -159,7 +159,7 @@ Several default states have been pre-programmed to take on situational personali
 ### idkeeper.sh
 #### CRONTAB: every minute
 This script makes calls into Asterisk to determine current repeater and identifier states, and based upon _config.ini_ and pre-defined behaviors in _statekeeper.sh_ will determine what identifiers it plays, and when.
-|Variables|Values|Behaviors (config.ini)|
+|Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
 |SPECIALID|0 or 1 (_boolean_)|Whether the Special ID is toggled on or not|
 |ROTATEIIDS|0 or 1 (_boolean_)|Whether Initial IDs are rotated|
@@ -170,7 +170,7 @@ This script makes calls into Asterisk to determine current repeater and identifi
 ### tailkeeper.sh
 #### CRONTAB: every minute
 This follows _statekeeper.sh_ behavior and adjusts tail messages based upon operational condition and weather conditions.  By default, it will rotate in messages for current time and local temperature, if Weather Underground is configured.
-|Variables|Values|Behaviors (config.ini)|
+|Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
 |ENABLETAIL|0 or 1 (_boolean_)|Whether the tail messages are enabled or not|
 |ENABLETIME|0 or 1 (_boolean_)|Whether periodic time announcements are given in tail messages or not|
@@ -181,7 +181,7 @@ This follows _statekeeper.sh_ behavior and adjusts tail messages based upon oper
 ### weatheralert.sh
 #### CRONTAB: every minute
 This monitors NOAA National Weather Service alerts, if configured for your NWS zone, and will trigger _statekeeper.sh_ to change to a weather alert or severe weather alert, if enabled.
-|Variables|Values|Behaviors (config.ini)|
+|Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
 |NWSZONE|XXX000|The default value is invalid and should be replaced with your local NWS zone: [NWS Public Forecast Zones](https://www.weather.gov/gis/publiczones)|
 |NWSFILE|/opt/app_rpt/lib/nwsalerts.out|File where weather data is kept|
@@ -192,7 +192,7 @@ This monitors NOAA National Weather Service alerts, if configured for your NWS z
 ### weatherkeeper.sh
 #### CRONTAB: every 15 minutes
 This polls Weather Underground (if you setup an API key) to poll for weather station data in your region.  It will generate temperature, humdity, wind speed and direction, et al., which can be called by invocation.
-|Variables|Values|Behaviors (config.ini)|
+|Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
 |FETCHLOCAL|0 or 1 (_boolean_)|Whether to pull data from a local system (i.e. hub system); default is _0_|
 |WUAPIKEY|_empty_|Should be populated with your [Weather Underground API Key](https://www.weatherunderground.com/)|
@@ -201,12 +201,12 @@ This polls Weather Underground (if you setup an API key) to poll for weather sta
 
 ### timekeeper.sh
 #### CRONTAB: every minute
-This generates time messages every minute for playback either in tail messages or by invocation.
+This generates time messages every minute for playback either in tail messages or by invocation.  (There are no configurable options.)
 
 ### datekeeper.sh
 #### CRONTAB: midnight daily
-This generates date messages once daily for playback by invocation.
+This generates date messages once daily for playback by invocation.  (There are no configurable options.)
 
 ### datadumper.sh
 #### CRONTAB: midnight daily
-This purges old recordings after they have aged by the defined period in the script.
+This purges old recordings after they have aged by the defined period in the script.  (There are no configurable options.)
