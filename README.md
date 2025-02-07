@@ -189,8 +189,6 @@ This monitors NOAA National Weather Service alerts, if configured for your NWS z
 |SEVEREWEATHER|0,1,2,3|*0* deactivated; *1* incidcates a _severe_ weather alert; *2* indicates a weather alert; *3* indicates all conditions are normal|
 |RTWXALERT|tails/weather_alert|_location of tail message to be played for routine weather alert_|
 |SVWXALERT|tails/severe_weather_alert|_location of tail message to be played for severe weather alert_|
-=======
->>>>>>> ecb2789d2088cfd2fcbc0fcdb78461de93c03be6
 
 ### weatherkeeper.sh
 #### CRONTAB: every 15 minutes
@@ -202,8 +200,6 @@ This polls Weather Underground (if you setup an API key) to poll for weather sta
 |WUAPIKEY|_empty_|Should be populated with your [Weather Underground API Key](https://www.weatherunderground.com/)|
 |WUSTATION|_empty_|ID of a Weather Underground station that provides you with local weather data|
 |WUOUTPUT|/opt/app_rpt/lib/wunderground.out|File where Weather Underground raw JSON data is kept for parsing|
-=======
->>>>>>> ecb2789d2088cfd2fcbc0fcdb78461de93c03be6
 
 ### timekeeper.sh
 #### CRONTAB: every minute
