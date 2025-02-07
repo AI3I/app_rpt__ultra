@@ -184,6 +184,7 @@ This follows _statekeeper.sh_ behavior and adjusts tail messages based upon oper
 ### weatheralert.sh
 #### CRONTAB: every minute
 This monitors NOAA National Weather Service alerts, if configured for your NWS zone, and will trigger _statekeeper.sh_ to change to a weather alert or severe weather alert, if enabled.
+<<<<<<< HEAD
 |Variables|Values|Behaviors (config.ini)|
 |-|-|-|
 |NWSZONE|XXX000|The default value is invalid and should be replaced with your local NWS zone: [NWS Public Forecast Zones](https://www.weather.gov/gis/publiczones)|
@@ -191,16 +192,21 @@ This monitors NOAA National Weather Service alerts, if configured for your NWS z
 |SEVEREWEATHER|0,1,2,3|*0* deactivated; *1* incidcates a _severe_ weather alert; *2* indicates a weather alert; *3* indicates all conditions are normal|
 |RTWXALERT|tails/weather_alert|_location of tail message to be played for routine weather alert_|
 |SVWXALERT|tails/severe_weather_alert|_location of tail message to be played for severe weather alert_|
+=======
+>>>>>>> ecb2789d2088cfd2fcbc0fcdb78461de93c03be6
 
 ### weatherkeeper.sh
 #### CRONTAB: every 15 minutes
 This polls Weather Underground (if you setup an API key) to poll for weather station data in your region.  It will generate temperature, humdity, wind speed and direction, et al., which can be called by invocation.
+<<<<<<< HEAD
 |Variables|Values|Behaviors (config.ini)|
 |-|-|-|
 |FETCHLOCAL|0 or 1 (_boolean_)|Whether to pull data from a local system (i.e. hub system); default is _0_|
 |WUAPIKEY|_empty_|Should be populated with your [Weather Underground API Key](https://www.weatherunderground.com/)|
 |WUSTATION|_empty_|ID of a Weather Underground station that provides you with local weather data|
 |WUOUTPUT|/opt/app_rpt/lib/wunderground.out|File where Weather Underground raw JSON data is kept for parsing|
+=======
+>>>>>>> ecb2789d2088cfd2fcbc0fcdb78461de93c03be6
 
 ### timekeeper.sh
 #### CRONTAB: every minute
