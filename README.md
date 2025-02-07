@@ -181,19 +181,17 @@ This follows _statekeeper.sh_ behavior and adjusts tail messages based upon oper
 ### weatheralert.sh
 #### CRONTAB: every minute
 This monitors NOAA National Weather Service alerts, if configured for your NWS zone, and will trigger _statekeeper.sh_ to change to a weather alert or severe weather alert, if enabled.
-<<<<<<< HEAD
 |Variables|Values|Behaviors (config.ini)|
 |-|-|-|
 |NWSZONE|XXX000|The default value is invalid and should be replaced with your local NWS zone: [NWS Public Forecast Zones](https://www.weather.gov/gis/publiczones)|
 |NWSFILE|/opt/app_rpt/lib/nwsalerts.out|File where weather data is kept|
 |SEVEREWEATHER|0,1,2,3|*0* deactivated; *1* incidcates a _severe_ weather alert; *2* indicates a weather alert; *3* indicates all conditions are normal|
-|RTWXALERT|tails/weather_alert|_location of tail message to be played for routine weather alert_|
-|SVWXALERT|tails/severe_weather_alert|_location of tail message to be played for severe weather alert_|
+|RTWXALERT|tails/weather_alert|File path of tail message to be played for routine weather alert|
+|SVWXALERT|tails/severe_weather_alert|File path of tail message to be played for severe weather alert|
 
 ### weatherkeeper.sh
 #### CRONTAB: every 15 minutes
 This polls Weather Underground (if you setup an API key) to poll for weather station data in your region.  It will generate temperature, humdity, wind speed and direction, et al., which can be called by invocation.
-<<<<<<< HEAD
 |Variables|Values|Behaviors (config.ini)|
 |-|-|-|
 |FETCHLOCAL|0 or 1 (_boolean_)|Whether to pull data from a local system (i.e. hub system); default is _0_|
