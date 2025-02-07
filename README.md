@@ -199,14 +199,17 @@ This polls Weather Underground (if you setup an API key) to poll for weather sta
 |WUSTATION|_empty_|ID of a Weather Underground station that provides you with local weather data|
 |WUOUTPUT|/opt/app_rpt/lib/wunderground.out|File where Weather Underground raw JSON data is kept for parsing|
 
-### timekeeper.sh
-#### CRONTAB: every minute
-This generates time messages every minute for playback either in tail messages or by invocation.  (There are no configurable options.)
-
-### datekeeper.sh
-#### CRONTAB: midnight daily
-This generates date messages once daily for playback by invocation.  (There are no configurable options.)
-
 ### datadumper.sh
 #### CRONTAB: midnight daily
 This purges old recordings after they have aged by the defined period in the script.  (There are no configurable options.)
+|Variables|Values|Description & Behaviors (config.ini)|
+|-|-|-|
+|RETENTION|_integer_|Number of days to keep recordings (default is _60_).|
+
+### datekeeper.sh
+#### CRONTAB: midnight daily
+This generates date messages once daily for playback by invocation.  (_There are no configurable options._)
+
+### timekeeper.sh
+#### CRONTAB: every minute
+This generates time messages every minute for playback either in tail messages or by invocation.  (_There are no configurable options._)
