@@ -20,29 +20,13 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 
 ## Download Codebase
 
-## Local Changes
+`git clone https://github.com/AI3I/app_rpt__ultra.git`
 
-### Installing local software
-You will need a couple of packages for successful execution of all scripts within the suite.  Namely, **sudo** and **jq** will be required, if not already present.
+`cd app_rpt__ultra`
 
-`apt install sudo jq -y`
-
-### Modifying the _asterisk_ account
-_**app_rpt__ultra**_ will require required unfettered use of Asterisk's native local account, _asterisk_, and requires an interactive shell with sudo access.
-As superuser root, you should change the shell accordingly:
-
-`usermod -s /bin/bash -G sudo asterisk`
-
-### Ensuring sudo access without passwords
-Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
-```
-# Allow members of group sudo to execute any command without a password
-%sudo	ALL=(ALL:ALL) NOPASSWD: ALL
-```
 ### Create local directories
-You will need to put your configurations and directories into a local repo:
 
-`mkdir -p /opt/app_rpt/{bin,lib,sounds}`
+`mkdir -p /opt/app_rpt`
 
 ### Remove local sound directories to make way for the vocabulary bank
 
@@ -60,6 +44,25 @@ You will need to put your configurations and directories into a local repo:
 
 `ln -s /opt/app_rpt/sounds /var/lib/asterisk/sounds`
 
+## Local Changes
+
+### Installing local software
+You will need a couple of packages for successful execution of all scripts within the suite.  Namely, **jq** will be required, if not already present.
+
+`apt install jq -y`
+
+### Modifying the _asterisk_ account
+_**app_rpt__ultra**_ will require required unfettered use of Asterisk's native local account, _asterisk_, and requires an interactive shell with sudo access.
+As superuser root, you should change the shell accordingly:
+
+`usermod -s /bin/bash -G sudo asterisk`
+
+### Ensuring sudo access without passwords
+Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
+```
+# Allow members of group sudo to execute any command without a password
+%sudo	ALL=(ALL:ALL) NOPASSWD: ALL
+```
 ### Ensure permissions are properly set
 
 `chmod -Rf asterisk:asterisk /opt/app_rpt /etc/asterisk`
@@ -82,7 +85,7 @@ Use the following for your crontab:
 * * * * *      /opt/app_rpt/bin/weatheralert.sh    # Poll for (severe) weather alerts
 ```
 
-### Copy **rpt.conf** template to _/etc/asterisk_ and configure to your liking
+### Copy **rpt.conf** template to _/etc/asterisk_ and edit to your liking
 
 Copy configuration templates
 
