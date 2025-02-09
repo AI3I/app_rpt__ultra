@@ -8,7 +8,7 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 - Management of repeater states or personalities
 - Rotating identifier and tail messages
 - An advanced message editor with the ability to program messages, courtesy tones and telemetry via DTMF
-- A vocabulary of 877 words and sound effects with dozens of pre-defined phrases, all derived from high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer
+- A vocabulary of 877 words and sound effects with dozens of pre-defined phrases; high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer (ACC RC-850 version 3.8)
 - Weather alerting system, powered by NOAA NWS alerts
 - Reporting weather conditions, powered by Weather Underground (requires account registration and use of an API key)
 - Full integration with Asterisk AllStarLink app_rpt without any code modification
@@ -85,17 +85,7 @@ Use the following for your crontab:
 * * * * *      /opt/app_rpt/bin/weatheralert.sh    # Poll for (severe) weather alerts
 ```
 
-### Copy **rpt.conf** template to _/etc/asterisk_ and edit to your liking
-
-Copy configuration templates
-
-`cp rpt.conf /etc/asterisk/rpt.conf`
-
-`cp extensions_custom.conf /etc/asterisk/extensions_custom.conf`
-
-Edit configuration
-
-`nano -w /etc/asterisk/rpt.conf`
+### Copy **rpt.conf** and **extensions_custom.conf** templates to _/etc/asterisk_ and edit to your liking
 
 > [!TIP]
 > 1. Replace all instances of `%MYCALL%` within the file with your call sign
@@ -103,24 +93,44 @@ Edit configuration
 > 3. Be sure to check your **duplex** and **rxchannel** values to ensure they align with desired operation (i.e. with _usbradio.conf_ or _simpleusb.conf_)
 > 4. _Do not change_ the **idrecording=voice_id** parameter; this is overwritten by _idkeeper.sh_ which you will learn more about later.
 
+Copy configuration templates:
+
+`cp rpt.conf /etc/asterisk/rpt.conf`
+
+`cp extensions_custom.conf /etc/asterisk/extensions_custom.conf`
+
+In order to start with the basics, you can do a _sed_ replacement:
+
+```
+sed -i s/%MYNODE%/1999/g /etc/asterisk/rpt.conf
+sed -i s/%MYCALL%/MYC4LL/g /etc/asterisk/rpt.conf
+```
+
+Edit configurations to your liking
+
+`nano -w /etc/asterisk/rpt.conf`
+
+
 ### Copy config.ini template to _/opt/app_rpt/_ and configure
+
+> [!CAUTION]
+> At minimum, `%MYNODE%` should be replaced with your AllStarLink node number; failure to set this will cause nearly all scripts to fail!
 
 `cp config.ini /opt/app_rpt`
 
-`nano -w /opt/app_rpt/config.ini`
-
-> [!CAUTION]
-> At minimum, `%MYNODE%` toward the top of the file should be replaced with your AllStarLink node number; failure to set this will cause nearly all scripts to fail!
+`sed -i s/%MYNODE%/1999/g /etc/asterisk/rpt.conf`
 
 ### Setup temporary voice identifier from vocabulary bank
 
-For example, and assuming our node number is 504380, we want to use word choices from the vocabulary bank, and want it to say "_This is A I 3 I repeater._"  We can achieve this by concatenating several files together to produce our ID, as follows:
+For example, and assuming our node number is 1999 and the callsign is MYC4LL, we want to use word choices from the vocabulary bank, and want it to say "_This is M Y C 4 L L repeater._"  We can achieve this by concatenating several files together to produce our ID, as follows:
 
-`cd /opt/app_rpt/sounds/_male; cat this_is.ulaw a.ulaw i.ulaw 3.ulaw i.ulaw repeater.ulaw > /opt/app_rpt/sounds/voice_id.ulaw`
+`cd /opt/app_rpt/sounds/_male; cat this_is.ulaw m.ulaw y.ulaw c.ulaw 4.ulaw l.ulaw l.ulaw repeater.ulaw > /opt/app_rpt/sounds/voice_id.ulaw`
 
 The message is written and can be tested through manual invocation by using:
 
-`rpt localplay 504380 voice_id`
+`rpt localplay 1999 voice_id`
+
+## Wrapping up
 
 ### Set permissions unilaterally
 
