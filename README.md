@@ -85,11 +85,11 @@ Use the following for your crontab:
 * * * * *      /opt/app_rpt/bin/weatheralert.sh    # Poll for (severe) weather alerts
 ```
 
-### Copy **rpt.conf** and **extensions_custom.conf** templates to _/etc/asterisk_ and edit to your liking
+### Copy configuration templates
 
 > [!TIP]
-> 1. Replace all instances of `%MYCALL%` within the file with your call sign
-> 2. Replace `%MYNODE%` to match your AllStarLink node number
+> 1. Replace `%MYNODE%` to match your AllStarLink node number (_we used **1999** as an example_)
+> 1. Replace all instances of `%MYCALL%` within the file with your call sign (_we used **MYC4LL** as an example_)
 > 3. Be sure to check your **duplex** and **rxchannel** values to ensure they align with desired operation (i.e. with _usbradio.conf_ or _simpleusb.conf_)
 > 4. _Do not change_ the **idrecording=voice_id** parameter; this is overwritten by _idkeeper.sh_ which you will learn more about later.
 
@@ -99,30 +99,19 @@ Copy configuration templates:
 
 `cp extensions_custom.conf /etc/asterisk/extensions_custom.conf`
 
+`cp config.ini /opt/app_rpt/config.ini`
+
 In order to start with the basics, you can do a _sed_ replacement:
-
-```
-sed -i s/%MYNODE%/1999/g /etc/asterisk/rpt.conf
-sed -i s/%MYCALL%/MYC4LL/g /etc/asterisk/rpt.conf
-```
-
-Edit configurations to your liking
-
-`nano -w /etc/asterisk/rpt.conf`
-
-
-### Copy config.ini template to _/opt/app_rpt/_ and configure
-
-> [!CAUTION]
-> At minimum, `%MYNODE%` should be replaced with your AllStarLink node number; failure to set this will cause nearly all scripts to fail!
-
-`cp config.ini /opt/app_rpt`
 
 `sed -i s/%MYNODE%/1999/g /etc/asterisk/rpt.conf`
 
+`sed -i s/%MYCALL%/MYC4LL/g /etc/asterisk/rpt.conf`
+
+`sed -i s/%MYNODE%/1999/g /opt/app_rpt/config.ini`
+
 ### Setup temporary voice identifier from vocabulary bank
 
-For example, and assuming our node number is 1999 and the callsign is MYC4LL, we want to use word choices from the vocabulary bank, and want it to say "_This is M Y C 4 L L repeater._"  We can achieve this by concatenating several files together to produce our ID, as follows:
+For example, using the word choices from the vocabulary bank, let us assume our voice ID will say "_This is M Y C 4 L L repeater._"  We can achieve this by concatenating several files together to produce our ID, as follows:
 
 `cd /opt/app_rpt/sounds/_male; cat this_is.ulaw m.ulaw y.ulaw c.ulaw 4.ulaw l.ulaw l.ulaw repeater.ulaw > /opt/app_rpt/sounds/voice_id.ulaw`
 
