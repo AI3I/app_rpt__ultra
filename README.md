@@ -43,7 +43,7 @@ ln -s /opt/app_rpt/sounds /usr/share/asterisk/sounds
 ```
 ## System Changes
 ### Install local software
-You will need **jq** (a JSON parser) for successful execution of all scripts within the suite.
+You will need **jq**, a JSON parser, for successful execution of all scripts within the suite.
 ```
 apt install jq -y
 ```
@@ -153,8 +153,8 @@ This script makes calls into Asterisk to determine current repeater and identifi
 |SPECIALID|0 or 1 (_boolean_)|Override all IDs with the Special ID|
 |ROTATEIIDS|0 or 1 (_boolean_)|Whether Initial IDs are rotated|
 |ROTATEPIDS|0 or 1 (_boolean_)|Whether Pending IDs are rotated|
-|INITIALID|1,2,3|Choose a specific Initial ID|
-|PENDINGID|1,2,3,4,5|Choose a specific Pending ID|
+|INITIALID|{1..3}|Choose a specific Initial ID|
+|PENDINGID|{1..5}|Choose a specific Pending ID|
 ### tailkeeper.sh
 #### CRONTAB: every minute
 This follows _statekeeper.sh_ behavior and adjusts tail messages based upon operational condition and weather conditions.  By default, it will rotate in messages for current time and local temperature, if Weather Underground is configured.
@@ -162,9 +162,9 @@ This follows _statekeeper.sh_ behavior and adjusts tail messages based upon oper
 |-|-|-|
 |ENABLETAIL|0 or 1 (_boolean_)|Whether the tail messages are enabled or not|
 |ENABLETIME|0 or 1 (_boolean_)|Whether periodic time announcements are given in tail messages or not|
-|ENABLETEMP|0 or 1 (_boolean_)|Whether periodic temperature readings are given in tail messages or not (_requires Weather Underground configuration_)|
+|ENABLETEMP|0 or 1 (_boolean_)|Whether periodic temperature readings are given in tail messages or not[^2]|
 |ROTATETMSG|0 or 1 (_boolean_)|Whether to rotate tail messages or not|
-|TAILMSG|1,2,3,4,5,6,7,8,9|Choose a specific tail message|
+|TAILMSG|{1..9}|Choose a specific tail message|
 ### weatheralert.sh
 #### CRONTAB: every minute
 This monitors NOAA National Weather Service alerts, if configured for your NWS zone, and will trigger _statekeeper.sh_ to change to a weather alert or severe weather alert, if enabled.
@@ -172,7 +172,7 @@ This monitors NOAA National Weather Service alerts, if configured for your NWS z
 |-|-|-|
 |NWSZONE|XXX000|The default value is invalid and should be replaced with your local NWS zone<br />[NWS Public Forecast Zones](https://www.weather.gov/gis/publiczones)|
 |NWSFILE|/opt/app_rpt/lib/nwsalerts.out|Temporary file where weather alerting data is kept for parsing|
-|SEVEREWEATHER|0,1,2,3|_**0**_ is deactivated<br />_**1**_ indicates a _severe_ weather alert<br />_**2**_ indicates a weather alert<br />_**3**_ indicates all conditions are normal|
+|SEVEREWEATHER|{0..3}|_**0**_ disables the feature<br />_**1**_ indicates a _severe_ weather alert<br />_**2**_ indicates a weather alert<br />_**3**_ deactivated/conditions are normal|
 |RTWXALERT|tails/weather_alert|File path of tail message to be played for routine weather alert|
 |SVWXALERT|tails/severe_weather_alert|File path of tail message to be played for severe weather alert|
 ### weatherkeeper.sh
@@ -189,14 +189,15 @@ This polls Weather Underground (if you setup an API key) to poll for weather sta
 This purges old recordings after they have aged by the defined period in the script.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|RETENTION|_integer_|The number of days to keep recordings<br />The default is _**60**_ days.|
+|RETENTION|_integer_|The number of days to keep recordings\
+The default is _**60**_ days.|
 ### datekeeper.sh
 #### CRONTAB: midnight daily
-This generates date messages once daily for playback by invocation.<br />_There are no configurable options._
+This generates date messages once daily for playback by invocation.\
+_There are no configurable options._
 ### timekeeper.sh
 #### CRONTAB: every minute
 This generates time messages every minute for playback either in tail messages or by invocation.<br />_There are no configurable options._
 #Footnotes
 [^1]: These are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).
 [^2]: Weather reporting requires account registration and use of an API key from [Weather Underground](https://www.weatherunderground.com/).
-
