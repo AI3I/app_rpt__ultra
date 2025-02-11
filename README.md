@@ -53,7 +53,7 @@ apt install jq -y
 ### Modify the _asterisk_ account
 _**app_rpt__ultra**_ will require required unfettered use of Asterisk's native local account, _asterisk_, and requires an interactive shell with _sudo_ access.
 ```
-`usermod -s /bin/bash -G sudo,dialout,audio,plugdev asterisk
+usermod -s /bin/bash -G sudo,dialout,audio,plugdev asterisk
 ```
 > [!CAUTION]
 > The _dialout_, _audio_, and _plugdev_ groups are important for stable operation in ASL3.  Should you remove access to those groups, USB audio and control interfaces running under the _asterisk_ account **will not work**!
