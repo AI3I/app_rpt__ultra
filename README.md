@@ -153,8 +153,8 @@ This script makes calls into Asterisk to determine current repeater and identifi
 |SPECIALID|0 or 1 (_boolean_)|Override all IDs with the Special ID|
 |ROTATEIIDS|0 or 1 (_boolean_)|Whether Initial IDs are rotated|
 |ROTATEPIDS|0 or 1 (_boolean_)|Whether Pending IDs are rotated|
-|INITIALID|{1..3}|Choose a specific Initial ID|
-|PENDINGID|{1..5}|Choose a specific Pending ID|
+|INITIALID|{ 1 .. 3 }|Choose a specific Initial ID|
+|PENDINGID|{ 1 .. 5 }|Choose a specific Pending ID|
 ### tailkeeper.sh
 #### CRONTAB: every minute
 This follows _statekeeper.sh_ behavior and adjusts tail messages based upon operational condition and weather conditions.  By default, it will rotate in messages for current time and local temperature, if Weather Underground is configured.
@@ -164,26 +164,26 @@ This follows _statekeeper.sh_ behavior and adjusts tail messages based upon oper
 |ENABLETIME|0 or 1 (_boolean_)|Whether periodic time announcements are given in tail messages or not|
 |ENABLETEMP|0 or 1 (_boolean_)|Whether periodic temperature readings are given in tail messages or not[^2]|
 |ROTATETMSG|0 or 1 (_boolean_)|Whether to rotate tail messages or not|
-|TAILMSG|{1..9}|Choose a specific tail message|
+|TAILMSG|{ 1 .. 9 }|Choose a specific tail message|
 ### weatheralert.sh
 #### CRONTAB: every minute
 This monitors NOAA National Weather Service alerts, if configured for your NWS zone, and will trigger _statekeeper.sh_ to change to a weather alert or severe weather alert, if enabled.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|NWSZONE|XXX000|The default value is invalid and should be replaced with your local NWS zone<br />[NWS Public Forecast Zones](https://www.weather.gov/gis/publiczones)|
-|NWSFILE|/opt/app_rpt/lib/nwsalerts.out|Temporary file where weather alerting data is kept for parsing|
-|SEVEREWEATHER|{0..3}|_**0**_ disables the feature<br />_**1**_ indicates a _severe_ weather alert<br />_**2**_ indicates a weather alert<br />_**3**_ deactivated/conditions are normal|
-|RTWXALERT|tails/weather_alert|File path of tail message to be played for routine weather alert|
-|SVWXALERT|tails/severe_weather_alert|File path of tail message to be played for severe weather alert|
+|NWSZONE|XXX000|The default value is invalid and should be replaced with your local NWS zone.<br />[NWS Public Forecast Zones](https://www.weather.gov/gis/publiczones)|
+|NWSFILE|/opt/app_rpt/lib/nwsalerts.out|Temporary file where weather alerting data is kept for parsing by **jq**.|
+|SEVEREWEATHER|{ 0 .. 3 }|_**0**_: disables the feature<br />_**1**_: indicates a _severe_ weather alert<br />_**2**_: indicates a weather alert<br />_**3**_: deactivated/conditions are normal|
+|RTWXALERT|tails/weather_alert|Relative file path of tail message to be played for routine weather alert.|
+|SVWXALERT|tails/severe_weather_alert|Relative file path of tail message to be played for severe weather alert.|
 ### weatherkeeper.sh
 #### CRONTAB: every 15 minutes
-This polls Weather Underground (if you setup an API key) to poll for weather station data in your region.  When invoked, this will generate temperature, humdity, wind speed and direction, et al., which can be called by invocation.
+This polls Weather Underground[^2] to poll for weather station data in your region.  Several conditions, such as temperature, humdity, wind speed and direction, et al., are generated which can be called by invocation.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|FETCHLOCAL|0 or 1 (_boolean_)|Whether to pull data from a local system (i.e. hub system that collates your weather data)<br />The default is _**0**_.|
-|WUAPIKEY|_empty_|Should be populated with your Weather Underground API key|
-|WUSTATION|_empty_|ID of a Weather Underground station that provides you with local weather data|
-|WUOUTPUT|/opt/app_rpt/lib/wunderground.out|File where raw JSON data from Weather Underground raw is kept for parsing|
+|FETCHLOCAL|0 or 1 (_boolean_)|Whether to pull data from a local system (i.e. hub system that collates your weather data).<br />The default is _**0**_.|
+|WUAPIKEY|_empty_|Should be populated with your Weather Underground API key.[^2]|
+|WUSTATION|_empty_|ID of a Weather Underground station that provides you with local weather data.[^2]|
+|WUOUTPUT|/opt/app_rpt/lib/wunderground.out|File where raw JSON data from Weather Underground raw is kept for parsing by **jq**.|
 ### datadumper.sh
 #### CRONTAB: midnight daily
 This purges old recordings after they have aged by the defined period in the script.
@@ -192,11 +192,11 @@ This purges old recordings after they have aged by the defined period in the scr
 |RETENTION|_integer_|The number of days to keep recordings<br />The default is _**60**_ days.|
 ### datekeeper.sh
 #### CRONTAB: midnight daily
-This generates date messages once daily for playback by invocation.
+This generates date messages once daily for playback by invocation.\
 _There are no configurable options._
 ### timekeeper.sh
 #### CRONTAB: every minute
-This generates time messages every minute for playback either in tail messages or by invocation.
+This generates time messages every minute for playback either in tail messages or by invocation.\
 _There are no configurable options._
 #Footnotes
 [^1]: These are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).
