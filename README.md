@@ -25,7 +25,7 @@ cd app_rpt__ultra
 ```
 ### Create local directory to store _**app_rpt__ultra**_
 ```
-mkdir -p /opt/app_rpt
+mkdir -p /opt/app_rpt /opt/asterisk
 ```
 ### Remove local sound directories to make way for the vocabulary bank
 ```
@@ -65,7 +65,7 @@ Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
 ```
 ### Ensure permissions are properly set
 ```
-chmod -Rf asterisk:asterisk /etc/asterisk /opt/app_rpt /usr/src/app_rpt__ultra
+chmod -Rf asterisk:asterisk /etc/asterisk /opt/asterisk /opt/app_rpt /usr/src/app_rpt__ultra
 ```
 ### Configure crontab for _asterisk_ user
 ```
@@ -102,19 +102,20 @@ sed -i s/%MYCALL%/MYC4LL/g /etc/asterisk/rpt.conf
 sed -i s/%MYNODE%/1999/g /opt/app_rpt/config.ini
 ```
 ### Setup temporary voice identifier from vocabulary bank
-For example, using the word choices from the vocabulary bank, let us assume our voice ID will say "_This is M Y C 4 L L repeater._"  We can achieve this by concatenating several files together to produce our ID, as follows:
+Let us assume our voice ID will say "_This is M Y C 4 L L repeater._"  We can achieve this by concatenating several files together to produce our ID, as follows:
 ```
 cd /opt/app_rpt/sounds/_male
-cat this_is.ulaw m.ulaw y.ulaw c.ulaw 4.ulaw l.ulaw l.ulaw repeater.ulaw > /opt/app_rpt/sounds/voice_id.ulaw
+cat this_is.ulaw m.ulaw y.ulaw c.ulaw 4.ulaw l.ulaw l.ulaw repeater.ulaw \
+> /opt/app_rpt/sounds/voice_id.ulaw
 ```
 The message is written and can be tested through manual invocation by using:
 ```
-sudo asterisk -rx 'rpt localplay 1999 voice_id'
+sudo asterisk -rx "rpt localplay 1999 voice_id"
 ```
 ## Wrapping up
-### Set permissions unilaterally
+### Set permissions unilaterally, again, just for good measure
 ```
-sudo chown -Rf asterisk:asterisk /etc/asterisk /opt/app_rpt
+sudo chown -Rf asterisk:asterisk /etc/asterisk /opt/app_rpt /opt/asterisk
 ```
 ### Set the initial date for readback
 ```
@@ -152,11 +153,11 @@ Several default states have been pre-programmed to take on situational personali
 This script makes calls into Asterisk to determine current repeater and identifier states, and based upon _config.ini_ and pre-defined behaviors in _statekeeper.sh_ will determine what identifiers it plays, and when.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|SPECIALID|0 or 1 (_boolean_)|Whether the Special ID is toggled on or not|
+|SPECIALID|0 or 1 (_boolean_)|Override all IDs with the Special ID|
 |ROTATEIIDS|0 or 1 (_boolean_)|Whether Initial IDs are rotated|
 |ROTATEPIDS|0 or 1 (_boolean_)|Whether Pending IDs are rotated|
-|INITIALID|1,2,3|Overide with specific Initial ID|
-|PENDINGID|1,2,3,4,5|Override with specific Pending ID|
+|INITIALID|1,2,3|Choose a specific Initial ID|
+|PENDINGID|1,2,3,4,5|Choose a specific Pending ID|
 ### tailkeeper.sh
 #### CRONTAB: every minute
 This follows _statekeeper.sh_ behavior and adjusts tail messages based upon operational condition and weather conditions.  By default, it will rotate in messages for current time and local temperature, if Weather Underground is configured.
@@ -164,25 +165,25 @@ This follows _statekeeper.sh_ behavior and adjusts tail messages based upon oper
 |-|-|-|
 |ENABLETAIL|0 or 1 (_boolean_)|Whether the tail messages are enabled or not|
 |ENABLETIME|0 or 1 (_boolean_)|Whether periodic time announcements are given in tail messages or not|
-|ENABLETEMP|0 or 1 (_boolean_)|Whether periodic temperature readings are given in tail messages or not (requires Weather Underground configuration)|
+|ENABLETEMP|0 or 1 (_boolean_)|Whether periodic temperature readings are given in tail messages or not (_requires Weather Underground configuration_)|
 |ROTATETMSG|0 or 1 (_boolean_)|Whether to rotate tail messages or not|
-|TAILMSG|1,2,3,4,5,6,7,8,9|Override with specific tail message|
+|TAILMSG|1,2,3,4,5,6,7,8,9|Choose a specific tail message|
 ### weatheralert.sh
 #### CRONTAB: every minute
 This monitors NOAA National Weather Service alerts, if configured for your NWS zone, and will trigger _statekeeper.sh_ to change to a weather alert or severe weather alert, if enabled.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
 |NWSZONE|XXX000|The default value is invalid and should be replaced with your local NWS zone: [NWS Public Forecast Zones](https://www.weather.gov/gis/publiczones)|
-|NWSFILE|/opt/app_rpt/lib/nwsalerts.out|File where weather alerting data is kept for parsing|
+|NWSFILE|/opt/app_rpt/lib/nwsalerts.out|Temporary file where weather alerting data is kept for parsing|
 |SEVEREWEATHER|0,1,2,3|_**0**_ deactivated; _**1**_ incidcates a _severe_ weather alert; _**2**_ indicates a weather alert; _**3**_ indicates all conditions are normal|
 |RTWXALERT|tails/weather_alert|File path of tail message to be played for routine weather alert|
 |SVWXALERT|tails/severe_weather_alert|File path of tail message to be played for severe weather alert|
 ### weatherkeeper.sh
 #### CRONTAB: every 15 minutes
-This polls Weather Underground (if you setup an API key) to poll for weather station data in your region.  It will generate temperature, humdity, wind speed and direction, et al., which can be called by invocation.
+This polls Weather Underground (if you setup an API key) to poll for weather station data in your region.  When invoked, this will generate temperature, humdity, wind speed and direction, et al., which can be called by invocation.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|FETCHLOCAL|0 or 1 (_boolean_)|Whether to pull data from a local system (i.e. hub system that collates your weather data); default is _0_|
+|FETCHLOCAL|0 or 1 (_boolean_)|Whether to pull data from a local system (i.e. hub system that collates your weather data); default is _**0**_|
 |WUAPIKEY|_empty_|Should be populated with your [Weather Underground API Key](https://www.weatherunderground.com/)|
 |WUSTATION|_empty_|ID of a Weather Underground station that provides you with local weather data|
 |WUOUTPUT|/opt/app_rpt/lib/wunderground.out|File where raw JSON data from Weather Underground raw is kept for parsing|
