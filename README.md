@@ -189,15 +189,15 @@ This polls Weather Underground (if you setup an API key) to poll for weather sta
 This purges old recordings after they have aged by the defined period in the script.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|RETENTION|_integer_|The number of days to keep recordings\
-The default is _**60**_ days.|
+|RETENTION|_integer_|The number of days to keep recordings<br />The default is _**60**_ days.|
 ### datekeeper.sh
 #### CRONTAB: midnight daily
-This generates date messages once daily for playback by invocation.\
+This generates date messages once daily for playback by invocation.
 _There are no configurable options._
 ### timekeeper.sh
 #### CRONTAB: every minute
-This generates time messages every minute for playback either in tail messages or by invocation.<br />_There are no configurable options._
+This generates time messages every minute for playback either in tail messages or by invocation.
+_There are no configurable options._
 #Footnotes
 [^1]: These are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).
 [^2]: Weather reporting requires account registration and use of an API key from [Weather Underground](https://www.weatherunderground.com/).
