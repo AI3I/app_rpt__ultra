@@ -20,6 +20,8 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 
 ## Download Codebase
 
+`mkdir -p /usr/src; cd /usr/src`
+
 `git clone https://github.com/AI3I/app_rpt__ultra.git`
 
 `cd app_rpt__ultra`
@@ -40,24 +42,29 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 
 `cp -Rf bin/* /opt/app_rpt/bin/`
 
-### Create a symbolic links for the predefined vocabulary bank
+### Create symbolic links for the vocabulary bank
 
 `ln -s /opt/app_rpt/sounds /var/lib/asterisk/sounds`
 
-## Local Changes
+`ln -s /opt/app_rpt/sounds /usr/share/asterisk/sounds`
 
-### Installing local software
-You will need a couple of packages for successful execution of all scripts within the suite.  Namely, **jq** will be required, if not already present.
+## System Changes
+
+### Install local software
+You will need a couple of packages for successful execution of all scripts within the suite.  Namely, a JSON parser, **jq** will be required, if not already present.
 
 `apt install jq -y`
 
-### Modifying the _asterisk_ account
+### Modify the _asterisk_ account
 _**app_rpt__ultra**_ will require required unfettered use of Asterisk's native local account, _asterisk_, and requires an interactive shell with _sudo_ access.
 As superuser root, you should change the shell accordingly (and include other groups, including: _dialout_, _audio_, and _plugdev_):
 
 `usermod -s /bin/bash -G sudo,dialout,audio,plugdev asterisk`
 
-### Ensuring sudo access without passwords
+> [!CAUTION]
+> The _dialout_, _audio_, and _plugdev_ groups are important--if you remove access to those groups, any USB audio and control interfaces **will not work**.
+
+### Ensure _sudo_ has access without passwords
 Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
 ```
 # Allow members of group sudo to execute any command without a password
