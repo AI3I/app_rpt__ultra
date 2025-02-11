@@ -203,6 +203,6 @@ _There are no configurable options._
 #### CRONTAB: every minute
 This generates time messages every minute for playback either in tail messages or by invocation.\
 _There are no configurable options._
-##Footnotes
+# Footnotes
 [^1]: These are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).
 [^2]: Weather reporting requires account registration and use of an API key from [Weather Underground](https://www.weatherunderground.com/).
