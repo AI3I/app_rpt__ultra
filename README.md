@@ -8,7 +8,7 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 - Management of repeater states or personalities
 - Rotating identifier and tail messages
 - An advanced message editor with the ability to program messages, courtesy tones and telemetry via DTMF
-- A vocabulary of 877 words and sound effects with dozens of pre-defined phrases; high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer (ACC RC-850 version 3.8)
+- A vocabulary of 877 words and sound effects with dozens of pre-defined phrases; these are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer from an Advanced Computer Controls (ACC) RC-850, version 3.8 controller
 - Weather alerting system, powered by NOAA NWS alerts
 - Reporting weather conditions, powered by Weather Underground (requires account registration and use of an API key)
 - Full integration with Asterisk AllStarLink app_rpt without any code modification
@@ -24,7 +24,7 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 
 `cd app_rpt__ultra`
 
-### Create local directories
+### Create local directory to store _**app_rpt__ultra**_
 
 `mkdir -p /opt/app_rpt`
 
@@ -52,10 +52,10 @@ You will need a couple of packages for successful execution of all scripts withi
 `apt install jq -y`
 
 ### Modifying the _asterisk_ account
-_**app_rpt__ultra**_ will require required unfettered use of Asterisk's native local account, _asterisk_, and requires an interactive shell with sudo access.
-As superuser root, you should change the shell accordingly:
+_**app_rpt__ultra**_ will require required unfettered use of Asterisk's native local account, _asterisk_, and requires an interactive shell with _sudo_ access.
+As superuser root, you should change the shell accordingly (and include other groups, including: _dialout_, _audio_, and _plugdev_):
 
-`usermod -s /bin/bash -G sudo asterisk`
+`usermod -s /bin/bash -G sudo,dialout,audio,plugdev asterisk`
 
 ### Ensuring sudo access without passwords
 Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
