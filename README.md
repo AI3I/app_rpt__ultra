@@ -150,21 +150,21 @@ Several default states have been pre-programmed to take on situational personali
 This script makes calls into Asterisk to determine current repeater and identifier states, and based upon _config.ini_ and pre-defined behaviors in _statekeeper.sh_ will determine what identifiers it plays, and when.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|SPECIALID|0 or 1 (_boolean_)|Override all IDs with the Special ID|
-|ROTATEIIDS|0 or 1 (_boolean_)|Whether Initial IDs are rotated|
-|ROTATEPIDS|0 or 1 (_boolean_)|Whether Pending IDs are rotated|
-|INITIALID|{ 1 .. 3 }|Choose a specific Initial ID|
-|PENDINGID|{ 1 .. 5 }|Choose a specific Pending ID|
+|SPECIALID|0 or 1 (_boolean_)|Override all IDs with the Special ID?|
+|ROTATEIIDS|0 or 1 (_boolean_)|Whether Initial IDs are rotated or not?|
+|ROTATEPIDS|0 or 1 (_boolean_)|Whether Pending IDs are rotated or not?|
+|INITIALID|{ 1 .. 3 } (_fixed range integer_)|Selection of a specific Initial ID.|
+|PENDINGID|{ 1 .. 5 } (_fixed range integer_)|Selection of a specific Pending ID.|
 ### tailkeeper.sh
 #### CRONTAB: every minute
 This follows _statekeeper.sh_ behavior and adjusts tail messages based upon operational condition and weather conditions.  By default, it will rotate in messages for current time and local temperature, if Weather Underground is configured.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|ENABLETAIL|0 or 1 (_boolean_)|Whether the tail messages are enabled or not|
-|ENABLETIME|0 or 1 (_boolean_)|Whether periodic time announcements are given in tail messages or not|
-|ENABLETEMP|0 or 1 (_boolean_)|Whether periodic temperature readings are given in tail messages or not[^2]|
-|ROTATETMSG|0 or 1 (_boolean_)|Whether to rotate tail messages or not|
-|TAILMSG|{ 1 .. 9 }|Choose a specific tail message|
+|ENABLETAIL|0 or 1 (_boolean_)|Whether the tail messages are enabled or not?|
+|ENABLETIME|0 or 1 (_boolean_)|Whether periodic time announcements are given in tail messages or not?|
+|ENABLETEMP|0 or 1 (_boolean_)|Whether periodic temperature readings are given in tail messages or not?[^2]|
+|ROTATETMSG|0 or 1 (_boolean_)|Whether to rotate tail messages or not?|
+|TAILMSG|{ 1 .. 9 } (_fixed range integer_)|Selection of a specific tail message.|
 ### weatheralert.sh
 #### CRONTAB: every minute
 This monitors NOAA National Weather Service alerts, if configured for your NWS zone, and will trigger _statekeeper.sh_ to change to a weather alert or severe weather alert, if enabled.
@@ -172,7 +172,7 @@ This monitors NOAA National Weather Service alerts, if configured for your NWS z
 |-|-|-|
 |NWSZONE|XXX000|The default value is invalid and should be replaced with your local NWS zone.<br />[NWS Public Forecast Zones](https://www.weather.gov/gis/publiczones)|
 |NWSFILE|/opt/app_rpt/lib/nwsalerts.out|Temporary file where weather alerting data is kept for parsing by **jq**.|
-|SEVEREWEATHER|{ 0 .. 3 }|_**0**_: disables the feature<br />_**1**_: indicates a _severe_ weather alert<br />_**2**_: indicates a weather alert<br />_**3**_: deactivated/conditions are normal|
+|SEVEREWEATHER|{ 0 .. 3 } (_fixed range integer_)|_**0**_: disables the feature<br />_**1**_: indicates a _severe_ weather alert<br />_**2**_: indicates a weather alert<br />_**3**_: deactivated/conditions are normal|
 |RTWXALERT|tails/weather_alert|Relative file path of tail message to be played for routine weather alert.|
 |SVWXALERT|tails/severe_weather_alert|Relative file path of tail message to be played for severe weather alert.|
 ### weatherkeeper.sh
@@ -183,13 +183,13 @@ This polls Weather Underground[^2] to poll for weather station data in your regi
 |FETCHLOCAL|0 or 1 (_boolean_)|Whether to pull data from a local system (i.e. hub system that collates your weather data).<br />The default is _**0**_.|
 |WUAPIKEY|_empty_|Should be populated with your Weather Underground API key.[^2]|
 |WUSTATION|_empty_|ID of a Weather Underground station that provides you with local weather data.[^2]|
-|WUOUTPUT|/opt/app_rpt/lib/wunderground.out|File where raw JSON data from Weather Underground raw is kept for parsing by **jq**.|
+|WUOUTPUT|/opt/app_rpt/lib/wunderground.out|Explicit file path where raw JSON data from Weather Underground raw is kept for parsing by **jq**.|
 ### datadumper.sh
 #### CRONTAB: midnight daily
 This purges old recordings after they have aged by the defined period in the script.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|RETENTION|_integer_|The number of days to keep recordings<br />The default is _**60**_ days.|
+|RETENTION|_integer_|The number of days to keep recordings.<br />The default is _**60**_ days.|
 ### datekeeper.sh
 #### CRONTAB: midnight daily
 This generates date messages once daily for playback by invocation.\
