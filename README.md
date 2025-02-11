@@ -16,13 +16,14 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 > Only [AllStarLink 3](https://allstarlink.github.io/) is supported; functionality for previous versions of _app_rpt_ have been removed.
 ## Download Codebase
 ```
-mkdir -p /usr/src; cd /usr/src
+mkdir -p /usr/src
+cd /usr/src
 git clone https://github.com/AI3I/app_rpt__ultra.git
 cd app_rpt__ultra
 ```
 ### Create local directory to store _**app_rpt__ultra**_
 ```
-mkdir -p /opt/app_rpt /opt/asterisk
+mkdir -p /opt/app_rpt /opt/asterisk /etc/asterisk/custom
 ```
 ### Remove local sound directories to make way for the vocabulary bank
 ```
@@ -30,11 +31,11 @@ rm -rf /var/lib/asterisk/sounds /usr/share/asterisk/sounds
 ```
 ### Copy provided sounds to _/opt/app_rpt/sounds_
 ```
-cp -Rf sounds/* /opt/app_rpt/sounds/
+cp -Rf app_rpt/sounds/* /opt/app_rpt/sounds/
 ```
 ### Copy executable scripts to _/opt/app_rpt/bin_
 ```
-cp -Rf bin/* /opt/app_rpt/bin/
+cp -Rf app_rpt/bin/* /opt/app_rpt/bin/
 ```
 ### Create symbolic links for the vocabulary bank
 ```
@@ -88,8 +89,8 @@ Use the following for your crontab:
 > 4. _Do not change_ the **idrecording=voice_id** parameter in _rpt.conf_; this is overwritten by _idkeeper.sh_, which you will learn more about later.
 Copy configuration templates:
 ```
-cp rpt.conf /etc/asterisk/rpt.conf
-cp extensions_custom.conf /etc/asterisk/extensions_custom.conf
+cp asterisk/rpt.conf /etc/asterisk/rpt.conf
+cp asterisk/extensions_custom.conf /etc/asterisk/custom/extensions_custom.conf
 cp config.ini /opt/app_rpt/config.ini
 ```
 In order to start with the basics, you can do a _sed_ replacement:
