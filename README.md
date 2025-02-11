@@ -5,13 +5,16 @@ _**app_rpt__ultra**_ was designed to be the ultimate controller experience for [
 All of the frameworks were written in Bash (Bourne again shell) using scripts that are called by _app_rpt_.  The intent was to modify as little as possible so frameworks were relatively immutable and could survive any code updates to Asterisk and _app_rpt_.  Most scripts are called either from within Asterisk or from local cron jobs.
 
 ## Key Features
-- Management of repeater states or personalities
-- Rotating identifier and tail messages
-- An advanced message editor with the ability to program messages, courtesy tones and telemetry via DTMF
-- A vocabulary of 877 words and sound effects with dozens of pre-defined phrases; these are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer from an Advanced Computer Controls (ACC) RC-850, version 3.8 controller
-- Weather alerting system, powered by NOAA NWS alerts
-- Reporting weather conditions, powered by Weather Underground (requires account registration and use of an API key)
-- Full integration with Asterisk AllStarLink app_rpt without any code modification
+- Management of repeater states or personalities;
+- Rotating identifier and tail messages;
+- An advanced message editor with the ability to program messages, courtesy tones and telemetry via DTMF;
+- A vocabulary of 877 words and sound effects with dozens of pre-defined phrases[^1];
+- Weather alerting system, powered by NOAA NWS alerts;
+- Reporting weather conditions, powered by Weather Underground;
+- Full integration with Asterisk AllStarLink app_rpt without any code modification!
+
+[^1]: These are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).
+[^2]: Weather reporting requires account registration and use of an API key from [Weather Underground](https://www.weatherunderground.com/).
 
 # Installation
 ## System Requirements
@@ -173,9 +176,9 @@ This follows _statekeeper.sh_ behavior and adjusts tail messages based upon oper
 This monitors NOAA National Weather Service alerts, if configured for your NWS zone, and will trigger _statekeeper.sh_ to change to a weather alert or severe weather alert, if enabled.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|NWSZONE|XXX000|The default value is invalid and should be replaced with your local NWS zone: [NWS Public Forecast Zones](https://www.weather.gov/gis/publiczones)|
+|NWSZONE|XXX000|The default value is invalid and should be replaced with your local NWS zone<br />[NWS Public Forecast Zones](https://www.weather.gov/gis/publiczones)|
 |NWSFILE|/opt/app_rpt/lib/nwsalerts.out|Temporary file where weather alerting data is kept for parsing|
-|SEVEREWEATHER|0,1,2,3|_**0**_ deactivated; _**1**_ incidcates a _severe_ weather alert; _**2**_ indicates a weather alert; _**3**_ indicates all conditions are normal|
+|SEVEREWEATHER|0,1,2,3|_**0**_ is deactivated<br />_**1**_ indicates a _severe_ weather alert<br />_**2**_ indicates a weather alert<br />_**3**_ indicates all conditions are normal|
 |RTWXALERT|tails/weather_alert|File path of tail message to be played for routine weather alert|
 |SVWXALERT|tails/severe_weather_alert|File path of tail message to be played for severe weather alert|
 ### weatherkeeper.sh
@@ -183,8 +186,8 @@ This monitors NOAA National Weather Service alerts, if configured for your NWS z
 This polls Weather Underground (if you setup an API key) to poll for weather station data in your region.  When invoked, this will generate temperature, humdity, wind speed and direction, et al., which can be called by invocation.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|FETCHLOCAL|0 or 1 (_boolean_)|Whether to pull data from a local system (i.e. hub system that collates your weather data); default is _**0**_|
-|WUAPIKEY|_empty_|Should be populated with your [Weather Underground API Key](https://www.weatherunderground.com/)|
+|FETCHLOCAL|0 or 1 (_boolean_)|Whether to pull data from a local system (i.e. hub system that collates your weather data)<br />The default is _**0**_.|
+|WUAPIKEY|_empty_|Should be populated with your Weather Underground API key|
 |WUSTATION|_empty_|ID of a Weather Underground station that provides you with local weather data|
 |WUOUTPUT|/opt/app_rpt/lib/wunderground.out|File where raw JSON data from Weather Underground raw is kept for parsing|
 ### datadumper.sh
@@ -192,10 +195,10 @@ This polls Weather Underground (if you setup an API key) to poll for weather sta
 This purges old recordings after they have aged by the defined period in the script.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|RETENTION|_integer_|The number of days to keep recordings (default is _**60**_ days).|
+|RETENTION|_integer_|The number of days to keep recordings<br />The default is _**60**_ days.|
 ### datekeeper.sh
 #### CRONTAB: midnight daily
-This generates date messages once daily for playback by invocation.  (_There are no configurable options._)
+This generates date messages once daily for playback by invocation.<br />_There are no configurable options._
 ### timekeeper.sh
 #### CRONTAB: every minute
-This generates time messages every minute for playback either in tail messages or by invocation.  (_There are no configurable options._)
+This generates time messages every minute for playback either in tail messages or by invocation.<br />_There are no configurable options._
