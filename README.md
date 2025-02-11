@@ -130,7 +130,11 @@ Now that you've set up the basics and have legal IDs, it's time to dive deeper i
 > All scripts reference _/opt/app_rpt/config.ini_ for both runtime and master configuration data.  Should you make any edits to scripts within _/opt/app_rpt/bin_, please be cognizant of any changes that may need to be carried over to _config.ini_ accordingly!
 ### statekeeper.sh
 #### BY INVOCATION ONLY
-This script basically the magic and the heart of it all.  The purpose of _statekeeper.sh_ is to manage all of your system's personalities, or states, and to modify those on demand.  States can be invoked in any number of ways:  through the command line, using DTMF, or through the internal scheduler.
+This script basically the magic and the heart of it all.  The purpose of _statekeeper.sh_ is to manage all of your system's personalities, or states, and effectively do so on demand or when conditions are met.\
+States can be invoked in any number of ways:
+- through the command line;
+- using DTMF;
+- or through the internal scheduler.
 Several default states have been pre-programmed to take on situational personalities:
 |State Name|Purpose|Behaviors|
 |-|-|-|
