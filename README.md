@@ -131,10 +131,11 @@ Now that you've set up the basics and have legal IDs, it's time to dive deeper i
 ### statekeeper.sh
 #### BY INVOCATION ONLY
 This script basically the magic and the heart of it all.  The purpose of _statekeeper.sh_ is to manage all of your system's personalities, or states, and effectively do so on demand or when conditions are met.\
+\
 States can be invoked in any number of ways:
 - through the command line;
-- using DTMF;
-- or through the internal scheduler.
+- through the internal scheduler;
+- or using DTMF commands.
 #### PERSONALITIES
 Several states, or personalities, have been pre-programmed to suit your general day-to-day needs:
 |State Name|Purpose|Behaviors|
