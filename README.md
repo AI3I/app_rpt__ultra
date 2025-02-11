@@ -135,7 +135,8 @@ States can be invoked in any number of ways:
 - through the command line;
 - using DTMF;
 - or through the internal scheduler.
-Several default states have been pre-programmed to take on situational personalities:
+#### Personalities
+Several states, or personalities, have been pre-programmed to suit your general day-to-day needs:
 |State Name|Purpose|Behaviors|
 |-|-|-|
 |default|Default Mode|This is the default power-up state that generally cleans up any modifications from other states, and puts your system back to a pre-defined running state.|
