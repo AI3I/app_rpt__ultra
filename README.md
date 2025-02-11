@@ -17,7 +17,6 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 ## System Requirements
 > [!WARNING]
 > Only [AllStarLink 3](https://allstarlink.github.io/) is supported; functionality for previous versions of _app_rpt_ have been removed.
-> All commands are executed as superuser _**root**_ for installation.  Permissions are reset at the completion of installation.
 ## Download Codebase
 ```
 mkdir -p /usr/src; cd /usr/src
@@ -66,7 +65,7 @@ Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
 ```
 ### Ensure permissions are properly set
 ```
-chmod -Rf asterisk:asterisk /etc/asterisk /opt/app_rpt /usr/src/app_rpt__ulra
+chmod -Rf asterisk:asterisk /etc/asterisk /opt/app_rpt /usr/src/app_rpt__ultra
 ```
 ### Configure crontab for _asterisk_ user
 ```
