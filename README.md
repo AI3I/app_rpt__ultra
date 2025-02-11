@@ -135,20 +135,20 @@ States can be invoked in any number of ways:
 - through the command line;
 - using DTMF;
 - or through the internal scheduler.
-#### Personalities
+#### PERSONALITIES
 Several states, or personalities, have been pre-programmed to suit your general day-to-day needs:
 |State Name|Purpose|Behaviors|
 |-|-|-|
-|default|Default Mode|This is the default power-up state that generally cleans up any modifications from other states, and puts your system back to a pre-defined running state.|
-|standard|Standard Mode|Ideal if you prefer a static state and don't leverage daytime or nighttime modes.|
-|daytime|Daytime Mode|Ideal for daytime operations.|
-|nighttime|Nighttime Mode|Ideal for nighttime operations.|
-|net|Net Mode|Changes behaviors for net, including brief IDs, courtesy tone change, and relaxed timers.|
-|tactical|Tactical Mode|Ideal for tactical operations with adjusted timers and courtesy tone.|
+|default|Default Mode|This is the default power-up state that generally cleans up any modifications from other states, and puts your system back to a pre-defined running state.<br />This reads values set to default in _config.ini_ and performs a number of _sed_ replacements, and reloads Asterisk.|
+|standard|Standard Mode|This is an alternate to the default power-up state and an ideal area for a general static operating state, especially if you don't intend to leverage daytime or nighttime modes with the scheduler.|
+|daytime|Daytime Mode|Fit for daytime operations, this is a great place to set all of your behaviors when both system users and control operators are somewhat attentive.|
+|nighttime|Nighttime Mode|This scenario is ideal for locking a few things down, adjusting timers, and preparing your system for nighttime operations when the repeater is largely unattended.|
+|net|Net Mode|This adds a lot of brevity, changes courtesy tones, relaxes a few timers, and suppresses telemetry and messaging.|
+|tactical|Tactical Mode|Similar to net mode, but ideal for tactical operations with adjusted timers and a distinct courtesy tone.|
 |weatheralert|Weather Alert|This announces "weather alert" as a tail message, relaxes timers, but maintains normal operations.|
-|severeweather|Severe Weather Mode|This changes the courtesy tone, announces "severe weather alert" for a tail message, suppresses timers, and sends a two-tone page alerting of severe weather.|
-|stealth|Stealth Mode|With the exception of required CW ID, this suppresses all telemetry including voice synthesis, courtesy tones, cuts hang timers, and disables the scheduler.|
-|litzalert|Long Tone Zero (LiTZ) Alert|This generates two-tone pages and announcements when the LiTZ command is executed.|
+|severeweather|Severe Weather Mode|This changes the courtesy tone, announces "severe weather alert" for a tail message with aggressive timing, suppresses time-out timers, and sends a two-tone page alerting of severe weather.|
+|stealth|Stealth Mode|With the exception of required CW ID, this suppresses all telemetry including voice synthesis, courtesy tones, eliminates hang/tail timers, and disables the scheduler.|
+|litzalert|Long Tone Zero (LiTZ) Alert|This generates two-tone pages and announcements when the LiTZ command is executed to garner the attention of control operators who may lend assistance.|
 |clock|Grandfather Clock|This emulates the CAT-1000 grandfather clock and can be called through the scheduler at the top of every hour.|
 ### idkeeper.sh
 #### CRONTAB: every minute
