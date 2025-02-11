@@ -171,7 +171,7 @@ This monitors NOAA National Weather Service alerts, if configured for your NWS z
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
 |NWSZONE|XXX000|The default value is invalid and should be replaced with your local NWS zone.<br />[NWS Public Forecast Zones](https://www.weather.gov/gis/publiczones)|
-|NWSFILE|/opt/app_rpt/lib/nwsalerts.out|Temporary file where weather alerting data is kept for parsing by **jq**.|
+|NWSFILE|/opt/app_rpt/lib/nwsalerts.out|Explicit file path where weather alerting data is kept for parsing by **jq**.|
 |SEVEREWEATHER|{ 0 .. 3 } (_fixed range integer_)|_**0**_: disables the feature<br />_**1**_: indicates a _severe_ weather alert<br />_**2**_: indicates a weather alert<br />_**3**_: deactivated/conditions are normal|
 |RTWXALERT|tails/weather_alert|Relative file path of tail message to be played for routine weather alert.|
 |SVWXALERT|tails/severe_weather_alert|Relative file path of tail message to be played for severe weather alert.|
