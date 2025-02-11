@@ -177,7 +177,7 @@ This monitors NOAA National Weather Service alerts, if configured for your NWS z
 |-|-|-|
 |NWSZONE|XXX000|The default value is invalid and should be replaced with your local NWS zone.<br />[NWS Public Forecast Zones](https://www.weather.gov/gis/publiczones)|
 |NWSFILE|/opt/app_rpt/lib/nwsalerts.out|Explicit file path where weather alerting data is kept for parsing by **jq**.|
-|SEVEREWEATHER|{ 0 .. 3 } (_fixed range integer_)|_**0**_: disables the feature<br />_**1**_: indicates a _severe_ weather alert<br />_**2**_: indicates a weather alert<br />_**3**_: deactivated/conditions are normal|
+|SEVEREWEATHER|{ 0 .. 3 } (_fixed range integer_)|_**0**_: disables the feature<br />_**1**_: indicates a _severe_ weather alert<br />_**2**_: indicates a weather alert<br />_**3**_: deactivated; conditions are normal|
 |RTWXALERT|tails/weather_alert|Relative file path of tail message to be played for routine weather alert.|
 |SVWXALERT|tails/severe_weather_alert|Relative file path of tail message to be played for severe weather alert.|
 ### weatherkeeper.sh
@@ -194,7 +194,7 @@ This polls Weather Underground[^2] to poll for weather station data in your regi
 This purges old recordings after they have aged by the defined period in the script.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|RETENTION|_integer_|The number of days to keep recordings.<br />The default is _**60**_ days and recordings are stored in _/opt/asterisk_.|
+|RETENTION|_integer_|The number of days to keep recordings.<br />The default is _**60**_ days and recordings are stored in _/opt/asterisk_ with status logs.|
 ### datekeeper.sh
 #### CRONTAB: midnight daily
 This generates date messages once daily for playback by invocation.\
