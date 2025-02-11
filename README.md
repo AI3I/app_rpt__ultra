@@ -1,21 +1,15 @@
 # Introduction
 _**app_rpt__ultra**_ was designed to be the ultimate controller experience for [Asterisk](https://www.asterisk.org/) [AllStarLink app_rpt](https://www.allstarlink.org/)!  Built on the history and capabilities of standalone repeater controllers from the 1980s-2000s, this platform was designed to combine the art and technology of today with yesteryear.  Some of the features included were takeaways and inspirations from controllers similar to Advanced Computer Controls, Link Communications, Computer Automation Technology and FF Systems.
-
 ## How does it work?
 All of the frameworks were written in Bash (Bourne again shell) using scripts that are called by _app_rpt_.  The intent was to modify as little as possible so frameworks were relatively immutable and could survive any code updates to Asterisk and _app_rpt_.  Most scripts are called either from within Asterisk or from local cron jobs.
-
 ## Key Features
 - Management of repeater states or personalities;
 - Rotating identifier and tail messages;
 - An advanced message editor with the ability to program messages, courtesy tones and telemetry via DTMF;
 - A vocabulary of 877 words and sound effects with dozens of pre-defined phrases[^1];
 - Weather alerting system, powered by NOAA NWS alerts;
-- Reporting weather conditions, powered by Weather Underground;
+- Reporting weather conditions, powered by Weather Underground[^2];
 - Full integration with Asterisk AllStarLink app_rpt without any code modification!
-
-[^1]: These are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).
-[^2]: Weather reporting requires account registration and use of an API key from [Weather Underground](https://www.weatherunderground.com/).
-
 # Installation
 ## System Requirements
 > [!WARNING]
@@ -202,3 +196,7 @@ This generates date messages once daily for playback by invocation.<br />_There 
 ### timekeeper.sh
 #### CRONTAB: every minute
 This generates time messages every minute for playback either in tail messages or by invocation.<br />_There are no configurable options._
+#Footnotes
+[^1]: These are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).
+[^2]: Weather reporting requires account registration and use of an API key from [Weather Underground](https://www.weatherunderground.com/).
+
