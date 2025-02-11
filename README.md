@@ -17,12 +17,19 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 ## System Requirements
 > [!WARNING]
 > Only [AllStarLink 3](https://allstarlink.github.io/) is supported; functionality for previous versions of _app_rpt_ have been removed.
+> All commands are executed as superuser _**root**_ for installation.  Permissions are reset at the completion of installation.
 
 ## Download Codebase
 
+Create a directory and change to it:
+
 `mkdir -p /usr/src; cd /usr/src`
 
+Pull the data:
+
 `git clone https://github.com/AI3I/app_rpt__ultra.git`
+
+Change working directory:
 
 `cd app_rpt__ultra`
 
@@ -51,18 +58,17 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 ## System Changes
 
 ### Install local software
-You will need a couple of packages for successful execution of all scripts within the suite.  Namely, a JSON parser, **jq** will be required, if not already present.
+You will need **jq** (a JSON parser) for successful execution of all scripts within the suite.
 
 `apt install jq -y`
 
 ### Modify the _asterisk_ account
 _**app_rpt__ultra**_ will require required unfettered use of Asterisk's native local account, _asterisk_, and requires an interactive shell with _sudo_ access.
-As superuser root, you should change the shell accordingly (and include other groups, including: _dialout_, _audio_, and _plugdev_):
 
 `usermod -s /bin/bash -G sudo,dialout,audio,plugdev asterisk`
 
 > [!CAUTION]
-> The _dialout_, _audio_, and _plugdev_ groups are important--if you remove access to those groups, any USB audio and control interfaces **will not work**.
+> The _dialout_, _audio_, and _plugdev_ groups are important for stable operation in ASL3.  Should you remove access to those groups, USB audio and control interfaces running under the _asterisk_ account **will not work**!
 
 ### Ensure _sudo_ has access without passwords
 Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
