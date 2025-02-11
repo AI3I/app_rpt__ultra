@@ -85,7 +85,7 @@ Use the following for your crontab:
 > 1. Replace `%MYNODE%` to match your AllStarLink node number (_we used **1999** as an example_)
 > 1. Replace all instances of `%MYCALL%` within the file with your call sign (_we used **MYC4LL** as an example_)
 > 3. Be sure to check your **duplex** and **rxchannel** values to ensure they align with desired operation (i.e. with _usbradio.conf_ or _simpleusb.conf_)
-> 4. _Do not change_ the **idrecording=voice_id** parameter; this is overwritten by _idkeeper.sh_ which you will learn more about later.
+> 4. _Do not change_ the **idrecording=voice_id** parameter in _rpt.conf_; this is overwritten by _idkeeper.sh_, which you will learn more about later.
 Copy configuration templates:
 ```
 cp rpt.conf /etc/asterisk/rpt.conf
