@@ -183,7 +183,7 @@ This polls Weather Underground[^2] to poll for weather station data in your regi
 |FETCHLOCAL|0 or 1 (_boolean_)|Whether to pull data from a local system (i.e. hub system that collates your weather data).<br />The default is _**0**_.|
 |WUAPIKEY|_empty_|Should be populated with your Weather Underground API key.[^2]|
 |WUSTATION|_empty_|ID of a Weather Underground station that provides you with local weather data.[^2]|
-|WUOUTPUT|/opt/app_rpt/lib/wunderground.out|Explicit file path where raw JSON data from Weather Underground raw is kept for parsing by **jq**.|
+|WUOUTPUT|/opt/app_rpt/lib/wunderground.out|Explicit file path where raw JSON data is kept for parsing by **jq**.|
 ### datadumper.sh
 #### CRONTAB: midnight daily
 This purges old recordings after they have aged by the defined period in the script.
