@@ -18,58 +18,46 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 > [!WARNING]
 > Only [AllStarLink 3](https://allstarlink.github.io/) is supported; functionality for previous versions of _app_rpt_ have been removed.
 > All commands are executed as superuser _**root**_ for installation.  Permissions are reset at the completion of installation.
-
 ## Download Codebase
-
-Create a directory and change to it:
-
-`mkdir -p /usr/src; cd /usr/src`
-
-Pull the data:
-
-`git clone https://github.com/AI3I/app_rpt__ultra.git`
-
-Change working directory:
-
-`cd app_rpt__ultra`
-
+```
+mkdir -p /usr/src; cd /usr/src
+git clone https://github.com/AI3I/app_rpt__ultra.git
+cd app_rpt__ultra
+```
 ### Create local directory to store _**app_rpt__ultra**_
-
-`mkdir -p /opt/app_rpt`
-
+```
+mkdir -p /opt/app_rpt
+```
 ### Remove local sound directories to make way for the vocabulary bank
-
-`rm -rf /var/lib/asterisk/sounds /usr/share/asterisk/sounds`
-
+```
+rm -rf /var/lib/asterisk/sounds /usr/share/asterisk/sounds
+```
 ### Copy provided sounds to _/opt/app_rpt/sounds_
-
-`cp -Rf sounds/* /opt/app_rpt/sounds/`
-
+```
+cp -Rf sounds/* /opt/app_rpt/sounds/
+```
 ### Copy executable scripts to _/opt/app_rpt/bin_
-
-`cp -Rf bin/* /opt/app_rpt/bin/`
-
+```
+cp -Rf bin/* /opt/app_rpt/bin/
+```
 ### Create symbolic links for the vocabulary bank
-
-`ln -s /opt/app_rpt/sounds /var/lib/asterisk/sounds`
-
-`ln -s /opt/app_rpt/sounds /usr/share/asterisk/sounds`
-
+```
+ln -s /opt/app_rpt/sounds /var/lib/asterisk/sounds
+ln -s /opt/app_rpt/sounds /usr/share/asterisk/sounds
+```
 ## System Changes
-
 ### Install local software
 You will need **jq** (a JSON parser) for successful execution of all scripts within the suite.
-
-`apt install jq -y`
-
+```
+apt install jq -y
+```
 ### Modify the _asterisk_ account
 _**app_rpt__ultra**_ will require required unfettered use of Asterisk's native local account, _asterisk_, and requires an interactive shell with _sudo_ access.
-
-`usermod -s /bin/bash -G sudo,dialout,audio,plugdev asterisk`
-
+```
+`usermod -s /bin/bash -G sudo,dialout,audio,plugdev asterisk
+```
 > [!CAUTION]
 > The _dialout_, _audio_, and _plugdev_ groups are important for stable operation in ASL3.  Should you remove access to those groups, USB audio and control interfaces running under the _asterisk_ account **will not work**!
-
 ### Ensure _sudo_ has access without passwords
 Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
 ```
@@ -77,15 +65,14 @@ Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
 %sudo	ALL=(ALL:ALL) NOPASSWD: ALL
 ```
 ### Ensure permissions are properly set
-
-`chmod -Rf asterisk:asterisk /opt/app_rpt /etc/asterisk`
-
+```
+chmod -Rf asterisk:asterisk /etc/asterisk /opt/app_rpt /usr/src/app_rpt__ulra
+```
 ### Configure crontab for _asterisk_ user
-
-`sudo su - asterisk`
-
-`crontab -e`
-
+```
+sudo su - asterisk
+crontab -e
+```
 Use the following for your crontab:
 ```
 # apt_rpt__ultra crontab
@@ -97,57 +84,48 @@ Use the following for your crontab:
 * * * * *      /opt/app_rpt/bin/tailkeeper.sh      # Manage all tail messages
 * * * * *      /opt/app_rpt/bin/weatheralert.sh    # Poll for (severe) weather alerts
 ```
-
 ### Copy configuration templates
-
 > [!TIP]
 > 1. Replace `%MYNODE%` to match your AllStarLink node number (_we used **1999** as an example_)
 > 1. Replace all instances of `%MYCALL%` within the file with your call sign (_we used **MYC4LL** as an example_)
 > 3. Be sure to check your **duplex** and **rxchannel** values to ensure they align with desired operation (i.e. with _usbradio.conf_ or _simpleusb.conf_)
 > 4. _Do not change_ the **idrecording=voice_id** parameter; this is overwritten by _idkeeper.sh_ which you will learn more about later.
-
 Copy configuration templates:
-
-`cp rpt.conf /etc/asterisk/rpt.conf`
-
-`cp extensions_custom.conf /etc/asterisk/extensions_custom.conf`
-
-`cp config.ini /opt/app_rpt/config.ini`
-
+```
+cp rpt.conf /etc/asterisk/rpt.conf
+cp extensions_custom.conf /etc/asterisk/extensions_custom.conf
+cp config.ini /opt/app_rpt/config.ini
+```
 In order to start with the basics, you can do a _sed_ replacement:
-
-`sed -i s/%MYNODE%/1999/g /etc/asterisk/rpt.conf`
-
-`sed -i s/%MYCALL%/MYC4LL/g /etc/asterisk/rpt.conf`
-
-`sed -i s/%MYNODE%/1999/g /opt/app_rpt/config.ini`
-
+```
+sed -i s/%MYNODE%/1999/g /etc/asterisk/rpt.conf
+sed -i s/%MYCALL%/MYC4LL/g /etc/asterisk/rpt.conf
+sed -i s/%MYNODE%/1999/g /opt/app_rpt/config.ini
+```
 ### Setup temporary voice identifier from vocabulary bank
-
 For example, using the word choices from the vocabulary bank, let us assume our voice ID will say "_This is M Y C 4 L L repeater._"  We can achieve this by concatenating several files together to produce our ID, as follows:
-
-`cd /opt/app_rpt/sounds/_male; cat this_is.ulaw m.ulaw y.ulaw c.ulaw 4.ulaw l.ulaw l.ulaw repeater.ulaw > /opt/app_rpt/sounds/voice_id.ulaw`
-
+```
+cd /opt/app_rpt/sounds/_male
+cat this_is.ulaw m.ulaw y.ulaw c.ulaw 4.ulaw l.ulaw l.ulaw repeater.ulaw > /opt/app_rpt/sounds/voice_id.ulaw
+```
 The message is written and can be tested through manual invocation by using:
-
-`rpt localplay 1999 voice_id`
-
+```
+sudo asterisk -rx 'rpt localplay 1999 voice_id'
+```
 ## Wrapping up
-
 ### Set permissions unilaterally
-
-`chown -Rf asterisk:asterisk /opt/app_rpt`
-
+```
+sudo chown -Rf asterisk:asterisk /etc/asterisk /opt/app_rpt
+```
 ### Set the initial date for readback
-
-`sudo su - asterisk`
-
-`/opt/app_rpt/bin/datekeeper.sh`
-
+```
+sudo su - asterisk
+/opt/app_rpt/bin/datekeeper.sh
+```
 ### Restart Asterisk
-
-`systemctl restart asterisk`
-
+```
+sudo systemctl restart asterisk
+```
 # Operation
 Now that you've set up the basics and have legal IDs, it's time to dive deeper into the general operation and behavior of _**app_rpt__ultra**_.  You have configured cron jobs that are now managing general operations of your system, and by periodically dispatching scripts to do our bidding.
 ## Script Operations
@@ -170,7 +148,6 @@ Several default states have been pre-programmed to take on situational personali
 |stealth|Stealth Mode|With the exception of required CW ID, this suppresses all telemetry including voice synthesis, courtesy tones, cuts hang timers, and disables the scheduler.|
 |litzalert|Long Tone Zero (LiTZ) Alert|This generates two-tone pages and announcements when the LiTZ command is executed.|
 |clock|Grandfather Clock|This emulates the CAT-1000 grandfather clock and can be called through the scheduler at the top of every hour.|
-
 ### idkeeper.sh
 #### CRONTAB: every minute
 This script makes calls into Asterisk to determine current repeater and identifier states, and based upon _config.ini_ and pre-defined behaviors in _statekeeper.sh_ will determine what identifiers it plays, and when.
@@ -181,7 +158,6 @@ This script makes calls into Asterisk to determine current repeater and identifi
 |ROTATEPIDS|0 or 1 (_boolean_)|Whether Pending IDs are rotated|
 |INITIALID|1,2,3|Overide with specific Initial ID|
 |PENDINGID|1,2,3,4,5|Override with specific Pending ID|
-
 ### tailkeeper.sh
 #### CRONTAB: every minute
 This follows _statekeeper.sh_ behavior and adjusts tail messages based upon operational condition and weather conditions.  By default, it will rotate in messages for current time and local temperature, if Weather Underground is configured.
@@ -192,7 +168,6 @@ This follows _statekeeper.sh_ behavior and adjusts tail messages based upon oper
 |ENABLETEMP|0 or 1 (_boolean_)|Whether periodic temperature readings are given in tail messages or not (requires Weather Underground configuration)|
 |ROTATETMSG|0 or 1 (_boolean_)|Whether to rotate tail messages or not|
 |TAILMSG|1,2,3,4,5,6,7,8,9|Override with specific tail message|
-
 ### weatheralert.sh
 #### CRONTAB: every minute
 This monitors NOAA National Weather Service alerts, if configured for your NWS zone, and will trigger _statekeeper.sh_ to change to a weather alert or severe weather alert, if enabled.
@@ -203,7 +178,6 @@ This monitors NOAA National Weather Service alerts, if configured for your NWS z
 |SEVEREWEATHER|0,1,2,3|_**0**_ deactivated; _**1**_ incidcates a _severe_ weather alert; _**2**_ indicates a weather alert; _**3**_ indicates all conditions are normal|
 |RTWXALERT|tails/weather_alert|File path of tail message to be played for routine weather alert|
 |SVWXALERT|tails/severe_weather_alert|File path of tail message to be played for severe weather alert|
-
 ### weatherkeeper.sh
 #### CRONTAB: every 15 minutes
 This polls Weather Underground (if you setup an API key) to poll for weather station data in your region.  It will generate temperature, humdity, wind speed and direction, et al., which can be called by invocation.
@@ -213,18 +187,15 @@ This polls Weather Underground (if you setup an API key) to poll for weather sta
 |WUAPIKEY|_empty_|Should be populated with your [Weather Underground API Key](https://www.weatherunderground.com/)|
 |WUSTATION|_empty_|ID of a Weather Underground station that provides you with local weather data|
 |WUOUTPUT|/opt/app_rpt/lib/wunderground.out|File where raw JSON data from Weather Underground raw is kept for parsing|
-
 ### datadumper.sh
 #### CRONTAB: midnight daily
 This purges old recordings after they have aged by the defined period in the script.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
 |RETENTION|_integer_|The number of days to keep recordings (default is _**60**_ days).|
-
 ### datekeeper.sh
 #### CRONTAB: midnight daily
 This generates date messages once daily for playback by invocation.  (_There are no configurable options._)
-
 ### timekeeper.sh
 #### CRONTAB: every minute
 This generates time messages every minute for playback either in tail messages or by invocation.  (_There are no configurable options._)
