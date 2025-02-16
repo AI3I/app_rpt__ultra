@@ -22,10 +22,7 @@
 source /opt/app_rpt/config.ini
 sourcefile=/opt/app_rpt/config.ini
 
-#    PURPOSE:  Allow changing 'unlinkedct' by specifying courtesy tone from
-#    table of courtesy tones defined in rpt.conf (template: 00-99) and
-#    announce change locally.
-sed -i "s/^unlinkedct=ct.*$/unlinkedct=ct$1/g" $RPTCONF
-asterisk -rx "rpt localplay $MYNODE rpt/change_c_t"
-sleep 4
-asterisk -rx "module reload"
+#    PURPOSE:  Read messages from table (as defined in messagetable.txt).
+msgid=$(cat $MSGTBL | grep $1 | cut -d' ' -f2)
+echo $msgid
+asterisk -rx "rpt localplay $MYNODE $msgid"

@@ -22,8 +22,7 @@
 source /opt/app_rpt/config.ini
 sourcefile=/opt/app_rpt/config.ini
 
-#    PURPOSE:  Ability to generate courtesy tones from CLI or DTMF
-#    dynamically without having to directly edit file.
+#    PURPOSE:  Ability to generate courtesy tones from CLI or DTMF dynamically without having to directly edit file.
 #
 #    USAGE:  <CT slot> A <vocabulary word>  use word from vocabulary (vocabulary.txt)
 #            <CT slot> B <character>        use character from CW table (characters.txt)
