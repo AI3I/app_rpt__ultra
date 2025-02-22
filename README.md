@@ -1043,7 +1043,7 @@ _There are no configurable options._
 |81|custom/rptrism01|Repeaterism #1|Short transmissions|
 |82|custom/rptrism02|Repeaterism #2|Think before transmitting|
 |83|custom/rptrism03|Repeaterism #3|Pause between conversation handovers|
-|84|custom/rptrism16|Repeaterism #16 (#4 is invalid)|Certain words, there are...OH, NO YOU DON'T!|
+|84|custom/rptrism16|Repeaterism #16 (replaced #4)|Certain words, there are... OH, NO YOU DON'T!|
 |85|custom/rptrism05|Repeaterism #5|Be courteous|
 |86|custom/rptrism06|Repeaterism #6|Use simplex when possible|
 |87|custom/rptrism07|Repeaterism #7|Use low power when possible|
