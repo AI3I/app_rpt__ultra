@@ -208,8 +208,8 @@ _There are no configurable options._
 ### CW Characters
 #### RADIO KEYPAD FORMAT
 | .     | .     | .     |.      |
-|   1   |   2   |   3   |   A   |
 | :---: | :---: | :---: | :---: |
+|   1   |   2   |   3   |   A   |
 | - % / : | A B C ; | , D E F + | none |
 | 10 11 12 14 | 21 22 23 24 | 30 31 32 33 24 | none |
 |   4   |   5   |   6   |   B   |
