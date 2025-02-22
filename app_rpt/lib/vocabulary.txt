@@ -671,7 +671,8 @@
 000 /opt/app_rpt/sounds/_male/zero.ulaw
 494 /opt/app_rpt/sounds/_male/zone.ulaw
 690 /opt/app_rpt/sounds/_male/zulu.ulaw
-034 /opt/app_rpt/sounds/_sndfx/pause.ulaw
+979 /opt/app_rpt/sounds/_sndfx/shortpause.ulaw
+034 /opt/app_rpt/sounds/_sndfx/longpause.ulaw
 860 /opt/app_rpt/sounds/_sndfx/tic.ulaw
 870 /opt/app_rpt/sounds/_sndfx/toc.ulaw
 873 /opt/app_rpt/sounds/_sndfx/laser.ulaw
