@@ -209,7 +209,7 @@ _There are no configurable options._
 #### RADIO KEYPAD FORMAT
 |                     |                     |                     |
 |        :---:        |        :---:        |        :---:        |
-| @settings { font-size: 100; }**1**               | **2**               | **3**               |
+| **1**               | **2**               | **3**               |
 | `-  %  /  :`        | `A  B  C  ;`        | `,  D  E  F  +`     |
 | 10 11 12 14         | 21 22 23 24         | 30 31 32 33 24      |
 | **4**               | **5**               | **6**               |
@@ -220,7 +220,7 @@ _There are no configurable options._
 | 70 71 72 73 74      | 80 81 82 83 84      | 91 92 93 90 94      |
 | *                   | **0**               | **#**               |
 | _none_              | 0 1 2 3 4 5 6 7 8 9 | _none_              |
-| _none_              | _digits 00 .. 09_   | _none_              |
+| _none_              | _enter 00..09_      | _none_              |
 #### NUMERICAL ORDER
 |Slot|Character
 |-|-|
