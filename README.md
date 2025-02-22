@@ -1062,7 +1062,19 @@ _There are no configurable options._
 ## Message Management
 ### msgreader.sh
 This reads back messages stored in the message table listed above.
-USAGE: `msgreader.sh <slot>`
+#### EXAMPLES
+* We want to hear the current temperature outside:
+```
+msgreader.sh 70
+```
+* We want to hear Repeaterism #16 because it's darn funny:
+```
+msgreader.sh 84
+```
+* We want to check to make sure our Special ID is as we programmed it:
+```
+msgreader.sh 10
+```
 #### BY INVOCATION ONLY
 ### msgwriter.sh
 #### BY INVOCATION ONLY
