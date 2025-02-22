@@ -1066,11 +1066,20 @@ USAGE: `msgreader.sh <slot>`
 #### BY INVOCATION ONLY
 ### msgwriter.sh
 #### BY INVOCATION ONLY
-This script can write messages into slots using the vocabulary and character tables listed above.  Slot _**00** is special_ and is for the Forced CW ID, which overwrites the values in the _**idtalkover**_ parameter.  Slots 01 through 50 are customizable through the message writer; slots 51 through 99 cannot be overwritten by this tool.
+This script can write messages into slots using the vocabulary and character tables listed above.
+> [!NOTE]
+> Slot _**00** is special_ and is for the Forced CW ID, which overwrites the values in the _**idtalkover**_ parameter.
+> Slots **01** through **50** are customizable through the message writer; slots **51** through **99** cannot be overwritten by this tool.
 
 EXAMPLES:
-* Write CW ID (to slot 00): `msgwriter.sh 00D61*93*23*04*53*53` ...writes MYC4LL to _**idtalkover** parameter.
-* Write Voice ID (to Anxious ID in slot 04): `msgwriter.sh 04D061*093*023*004*053*053*080` ...writes "M Y C 4 L L REPEATER" to _ids/anxious_id.ulaw_.
+* We want to write CW ID into slot 00 with "MYC4LL":
+```
+msgwriter.sh 00D61*93*23*04*53*53
+```
+* We want to write a voice message to the Anxious ID, which lives in slot 04:
+```
+`msgwriter.sh 04D061*093*023*004*053*053*080
+```
 
 
 ####    CW ID:  00 D <CW character> * <CW character> * <CW character>                      ... uses characters.txt (2 digits)
