@@ -206,6 +206,20 @@ This generates time messages every minute for playback either in tail messages o
 _There are no configurable options._
 ## Message Tables
 ### CW Characters
+#### RADIO KEYPAD FORMAT
+|   1   |   2   |   3   |   A   |
+| :---: | :---: | :---: | :---: |
+| % / : | A B C | D E F | G H I |
+|   4   |   5   |   6   |   B   |
+| :---: | :---: | :---: | :---: |
+| % / : | A B C | D E F | G H I |
+|   7   |   8   |   9   |   C   |
+| :---: | :---: | :---: | :---: |
+| | | | |
+|   *   |   0   |   #   |   D   |
+| :---: | :---: | :---: | :---: |
+| | | | |
+#### NUMERICAL ORDER
 |Slot|Character
 |-|-|
 |00|0|
