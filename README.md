@@ -212,7 +212,7 @@ _There are no configurable options._
 | <h1>1</h1> <br /> `-  %  /  :` <br /> 10 11 12 14 <br /> | <h1>2</h1> <br /> `A  B  C  ;` <br /> 21 22 23 24 <br /> | <h1>3</h1> <br /> `,  D  E  F  +` <br /> 30 31 32 33 34 <br /> |
 | <h1>4</h1> <br /> `'  G  H  I  "` <br /> 40 41 42 43 44 <br /> | <h1>5</h1> <br /> `(  J  K  L  )` <br /> 50 51 52 53 54 <br /> | <h1>6</h1> <br /> `.  M  N  O  @` <br /> 60 61 62 63 64 <br /> |
 | <h1>7</h1> <br /> `Q  P  R  S  =` <br /> 70 71 72 73 74 <br /> | <h1>8</h1> <br /> `_  T  U  V  $` <br /> 80 81 82 83 84 <br /> | <h1>9</h1> <br /> `W  X  Y  Z  &` <br /> 91 92 93 90 94 <br /> |
-| <h1>*</h1> <br /> <br /> _unassigned_ | <h1>0</h1> `0 1 2 3 4` <br /> 00 01 02 03 04 <br /> `5 6 7 8 9` <br /> 05 06 07 08 09 | <h1>#</h1> <br /> <br /> _unassigned_ |
+| <h1>*</h1> <br /> _unassigned (no characters mapped)_ | <h1>0</h1> `0 1 2 3 4` <br /> 00 01 02 03 04 <br /> `5 6 7 8 9` <br /> 05 06 07 08 09 | <h1>#</h1> <br /> _unassigned (no characters mapped)_ |
 #### NUMERICAL ORDER
 |Slot|Character
 |-|-|
