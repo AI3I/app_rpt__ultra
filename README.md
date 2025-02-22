@@ -1071,7 +1071,7 @@ This script can write messages into slots using the vocabulary and character tab
 > 1. Slot _**00** is special_ and is for the Forced CW ID, which overwrites the values in the _**idtalkover**_ parameter.
 > 2. Slots **01** through **50** are customizable through the message writer, while slots **51** through **99** are pre-programmed and cannot be overwritten by this tool.
 > 3. Character `D` delimits the slot from the message, and `*` delimits each character or vocabulary word.
-EXAMPLES:
+#### EXAMPLES:
 * We want to write CW ID into slot 00 with "MYC4LL":
 ```
 msgwriter.sh 00D61*93*23*04*53*53
@@ -1102,10 +1102,15 @@ This script lends the ability to select from 95 different courtesy tones to suit
 |linkunkeyct|{ 00 .. 95 }|Issued when link unkeys|
 |remotect|{ 00 .. 95 }|Issued when remote is activated|
 |unlinkedct|{ 00 .. 95 }|Issued when system is unlinked altogether|
-EXAMPLES:
+
+#### EXAMPLES:
 * We want to change _linkunkeyct_ to courtesy tone 24:
 ```
 ctkeeper.sh linkunkeyct 24
+```
+* We want to change _unlinkedct_ to courtesy tone 78:
+```
+ctkeeper.sh unlinkedct 78
 ```
 > [!TIP]
 > Add _ctkeeper.sh_ into your _rpt.conf_ for ability to change courtesy tones remotely!
