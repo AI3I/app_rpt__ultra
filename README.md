@@ -1098,6 +1098,12 @@ msgwriter.sh 04D061*093*023*004*053*053*080
 ## Courtesy Tone Management
 ### ctwriter.sh
 #### BY INVOCATION ONLY
+This is an invaluable script to write courtesy tones into various positions.  Special care was given to ensure three usable types could be written:  voice messages, tone stanzas, and CW characters.  Please refer to the examples below to understand how these are constructed.
+#### TELEMETRY TYPES
+|Type|Delineator|Description|
+|A|Vocabulary|Uses a voice vocabulary word or sound effect|
+|B|CW Characters|Uses a CW character|
+|C|Tone Telemetry|This is the standard sine wave tonal format|
 #### USABLE TYPES
 |Slot(s)|Type|Description|
 |-|-|-|
@@ -1106,6 +1112,29 @@ msgwriter.sh 04D061*093*023*004*053*053*080
 |97|remotetx|Issued when system is in remote transmit mode|
 |98|cmdmode|Issued when command mode is in operation|
 |99|functcomplete|Issued when a function is complete|
+#### EXAMPLES
+> [!NOTE]
+> 1. Slot _**00** is special_ and is to be silent.
+> 2. Slots **01** through **95** are customizable for general use and playback.
+> 3. Slots **96** through **99** have special purposes, as listed above--be careful!
+> 4. Character `D` is a delimter that allows multiple tone stanzas to be strung together, while `*` is a single parameter delimter.
+
+* We want to write the word "BATTERY" to courtesy tone 47:
+```
+ctwriter.sh 47A142
+```
+* We want to put CW character "N" (#62 from the CW table) in for our net courtesy tone in slot 54:
+```
+ctwriter.sh 54B62
+```
+* We want the "bumblebee" courtesy tone (a sequential 330, 500 and 660 Hz sequence) to reside in slot 36 with 100 millisecond tone lengths and an amplitude of 2048:
+```
+ctwriter.sh 36C330*0*100*2048*2048D500*0*100*2048D660*0*100*2048
+```
+* We want the "piano chord" courtesy tone (a chorded 660 and 880 Hz sequence) to reside in slot 12 with a 150 millisecond duration and amplitude of 4096:
+```
+ctwriter.sh 12C660*880*150*4096
+```
 ### ctkeeper.sh
 #### BY INVOCATION ONLY
 This script lends the ability to select from 95 different courtesy tones to suit your needs.
