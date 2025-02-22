@@ -1070,23 +1070,19 @@ This script can write messages into slots using the vocabulary and character tab
 > [!NOTE]
 > Slot _**00** is special_ and is for the Forced CW ID, which overwrites the values in the _**idtalkover**_ parameter.
 > Slots **01** through **50** are customizable through the message writer; slots **51** through **99** cannot be overwritten by this tool.
+> Character `D` delimits the slot from the message, and `*` delimits each character or vocabulary word.
 
 EXAMPLES:
 * We want to write CW ID into slot 00 with "MYC4LL":
 ```
 msgwriter.sh 00D61*93*23*04*53*53
 ```
-* We want to write a voice message to the Anxious ID, which lives in slot 04:
+* We want to write a voice message into slot 04 for the Anxious ID that reads back "MYC4LL REPEATER":
 ```
 `msgwriter.sh 04D061*093*023*004*053*053*080
 ```
-
-
-####    CW ID:  00 D <CW character> * <CW character> * <CW character>                      ... uses characters.txt (2 digits)
-####    USAGE:  <MSG slot> D <vocabulary word> * <vocabulary word> * <vocabulary word>     ... uses vocabulary.txt (3 digits) (vocabulary.txt)
-####           ...'D' is a delimiter from the CW ID or message slot
-####           ...'*' is a delimiter between characters or words
-
+> [!TIP]
+> Add _msgwriter.sh_ into your _rpt.conf_ for full DTMF capability!
 
 ## Courtesy Tone Management
 ### ctwriter.sh
