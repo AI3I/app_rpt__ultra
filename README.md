@@ -1085,22 +1085,23 @@ msgwriter.sh 04D061*093*023*004*053*053*080
 ## Courtesy Tone Management
 ### ctwriter.sh
 #### BY INVOCATION ONLY
-|Slot(s)|Type|
-|-|-|
-|00..95|Standard courtesy tones|
-|96|remotemon|
-|97|remotetx|
-|98|functcomplete|
-|99|cmdmode|
+#### USABLE TYPES
+|Slot(s)|Type|Description|
+|-|-|-|
+|00..95|_standard_|Standard courtesy tones|
+|96|remotemon|Issued when system is in remote monitoring mode|
+|97|remotetx|Issued when system is in remote transmit mode|
+|98|cmdmode|Issued when command mode is in operation|
+|99|functcomplete|Issued when a function is complete|
 ### ctkeeper.sh
 #### BY INVOCATION ONLY
 This script lends the ability to select from 95 different courtesy tones to suit your needs.
 #### USABLE TYPES
 |Types|Values|Description|
-|-|-|
-|linkunkeyct|00..95|Issued when link unkeys|
-|remotect|00..95|Issued when remote is activated|
-|unlinkedct|00..95|Issued when system is unlinked altogether|
+|-|-|-|
+|linkunkeyct|{ 00 .. 95 }|Issued when link unkeys|
+|remotect|{ 00 .. 95 }|Issued when remote is activated|
+|unlinkedct|{ 00 .. 95 }|Issued when system is unlinked altogether|
 EXAMPLES:
 * We want to change _linkunkeyct_ to courtesy tone 24:
 ```
