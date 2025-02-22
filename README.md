@@ -959,15 +959,16 @@ _There are no configurable options._
 ### Message Banks
 |Slot|Path|Description|Contents|
 |-|-|-|-|
+|00|_Forced CW ID_|Forced CW ID|_empty_|
 |01|ids/initial_id_1|Initial ID #1|_empty_|
 |02|ids/initial_id_2|Initial ID #2|_empty_|
 |03|ids/initial_id_3|Initial ID #3|_empty_|
 |04|ids/anxious_id|Anxious ID|_empty_|
 |05|ids/pending_id_1|Pending ID #1|_empty_|
-|06|ids/pending_id_2|Pending ID #2|_empty_||
-|07|ids/pending_id_3|Pending ID #3|_empty_||
-|08|ids/pending_id_4|Pending ID #4|_empty_||
-|09|ids/pending_id_5|Pending ID #5|_empty_||
+|06|ids/pending_id_2|Pending ID #2|_empty_|
+|07|ids/pending_id_3|Pending ID #3|_empty_|
+|08|ids/pending_id_4|Pending ID #4|_empty_|
+|09|ids/pending_id_5|Pending ID #5|_empty_|
 |10|ids/special_id|Special ID|_empty_|
 |11|tails/tail_message_1|Tail Message #1|_empty_|
 |12|tails/tail_message_2|Tail Message #2|_empty_|
