@@ -24,7 +24,6 @@ sourcefile=/opt/app_rpt/config.ini
 
 #    PURPOSE:  Read messages from table (as defined in messagetable.txt).
 msgid=$(cat $MSGTBL | grep $1 | cut -d' ' -f2)
-echo $msgid
 asterisk -rx "rpt localplay $MYNODE $msgid"
 
-###EDIT: Sat Feb 22 10:02:32 AM EST 2025
+###EDIT: Sat Feb 22 05:39:01 PM EST 2025
