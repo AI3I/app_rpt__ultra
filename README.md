@@ -218,7 +218,7 @@ _There are no configurable options._
 | **7**          | **8**          | **9**          |
 | Q  P  R  S  =  | _  T  U  V  $  | W  X  Y  Z  &  |
 | 70 71 72 73 74 | 80 81 82 83 84 | 91 92 93 90 94 |
-| *****          | **0**          | **#**          |
+| ** * **        | **0**          | **#**          |
 | none         | 0 1 2 3 4 5 6 7 8 9 | none        |
 | none         | digits 00 .. 09     | none        |
 #### NUMERICAL ORDER
