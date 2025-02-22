@@ -958,6 +958,7 @@ _There are no configurable options._
 |892|_sndfx/crowd.ulaw|_sound effect_|
 ### Message Banks
 |Slot|Path|Description|Contents|
+|-|-|-|-|
 |01|ids/initial_id_1|Initial ID #1|_empty_|
 |02|ids/initial_id_2|Initial ID #2|_empty_|
 |03|ids/initial_id_3|Initial ID #3|_empty_|
