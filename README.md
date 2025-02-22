@@ -84,7 +84,7 @@ Use the following for your crontab:
 ### Copy configuration templates
 > [!TIP]
 > 1. Replace `%MYNODE%` to match your AllStarLink node number (_we used **1999** as an example_)
-> 1. Replace all instances of `%MYCALL%` within the file with your call sign (_we used **MYC4LL** as an example_)
+> 2. Replace all instances of `%MYCALL%` within the file with your call sign (_we used **MYC4LL** as an example_)
 > 3. Be sure to check your **duplex** and **rxchannel** values to ensure they align with desired operation (i.e. with _usbradio.conf_ or _simpleusb.conf_)
 > 4. _Do not change_ the **idrecording=voice_id** parameter in _rpt.conf_; this is overwritten by _idkeeper.sh_, which you will learn more about later.
 Copy configuration templates:
@@ -1068,10 +1068,9 @@ USAGE: `msgreader.sh <slot>`
 #### BY INVOCATION ONLY
 This script can write messages into slots using the vocabulary and character tables listed above.
 > [!NOTE]
-> Slot _**00** is special_ and is for the Forced CW ID, which overwrites the values in the _**idtalkover**_ parameter.
-> Slots **01** through **50** are customizable through the message writer, while slots **51** through **99** are pre-programmed and cannot be overwritten by this tool.
-> Character `D` delimits the slot from the message, and `*` delimits each character or vocabulary word.
-
+> 1. Slot _**00** is special_ and is for the Forced CW ID, which overwrites the values in the _**idtalkover**_ parameter.
+> 2. Slots **01** through **50** are customizable through the message writer, while slots **51** through **99** are pre-programmed and cannot be overwritten by this tool.
+> 3. Character `D` delimits the slot from the message, and `*` delimits each character or vocabulary word.
 EXAMPLES:
 * We want to write CW ID into slot 00 with "MYC4LL":
 ```
@@ -1082,13 +1081,33 @@ msgwriter.sh 00D61*93*23*04*53*53
 msgwriter.sh 04D061*093*023*004*053*053*080
 ```
 > [!TIP]
-> Add _msgwriter.sh_ into your _rpt.conf_ for full DTMF capability!
-
+> Add _msgwriter.sh_ into your _rpt.conf_ for full DTMF versatility to write messages over the air!
 ## Courtesy Tone Management
 ### ctwriter.sh
 #### BY INVOCATION ONLY
+|Slot(s)|Type|
+|-|-|
+|00..95|Standard courtesy tones|
+|96|remotemon|
+|97|remotetx|
+|98|functcomplete|
+|99|cmdmode|
 ### ctkeeper.sh
 #### BY INVOCATION ONLY
+This script lends the ability to select from 95 different courtesy tones to suit your needs.
+#### USABLE TYPES
+|Types|Values|Description|
+|-|-|
+|linkunkeyct|00..95|Issued when link unkeys|
+|remotect|00..95|Issued when remote is activated|
+|unlinkedct|00..95|Issued when system is unlinked altogether|
+EXAMPLES:
+* We want to change _linkunkeyct_ to courtesy tone 24:
+```
+ctkeeper.sh linkunkeyct 24
+```
+> [!TIP]
+> Add _ctkeeper.sh_ into your _rpt.conf_ for ability to change courtesy tones remotely!
 # Footnotes
 [^1]: These are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).  Recordings were sourced using audio-in to a PC with Audacity; these are captured in μ-law companding algorithm 8-bit PCM format.
 [^2]: Weather reporting requires account registration and use of an API key from [Weather Underground](https://www.weatherunderground.com/).
