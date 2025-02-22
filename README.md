@@ -998,16 +998,16 @@ _There are no configurable options._
 |37|custom/emergency_autodial_7|Emergency Auto Dialer #7|_empty_|
 |38|custom/emergency_autodial_8|Emergency Auto Dialer #8|_empty_|
 |39|custom/emergency_autodial_9|Emergency Auto Dialer #9|_empty_|
-|40|custom/mailbox_0|Mailbox #0|_empty|
-|41|custom/mailbox_1|Mailbox #1|_empty|
-|42|custom/mailbox_2|Mailbox #2|_empty|
-|43|custom/mailbox_3|Mailbox #3|_empty|
-|44|custom/mailbox_4|Mailbox #4|_empty|
-|45|custom/mailbox_5|Mailbox #5|_empty|
-|46|custom/mailbox_6|Mailbox #6|_empty|
-|47|custom/mailbox_7|Mailbox #7|_empty|
-|48|custom/mailbox_8|Mailbox #8|_empty|
-|49|custom/mailbox_9|Mailbox #9|_empty|
+|40|custom/mailbox_0|Mailbox #0|_empty_|
+|41|custom/mailbox_1|Mailbox #1|_empty_|
+|42|custom/mailbox_2|Mailbox #2|_empty_|
+|43|custom/mailbox_3|Mailbox #3|_empty_|
+|44|custom/mailbox_4|Mailbox #4|_empty_|
+|45|custom/mailbox_5|Mailbox #5|_empty_|
+|46|custom/mailbox_6|Mailbox #6|_empty_|
+|47|custom/mailbox_7|Mailbox #7|_empty_|
+|48|custom/mailbox_8|Mailbox #8|_empty_|
+|49|custom/mailbox_9|Mailbox #9|_empty_|
 |50|rpt/litz_alert|Long Tone Zero (LiTZ) Alert|_empty_|
 |51|tails/weather_alert|Weather Alert|"WEATHER ALERT"|
 |52|tails/severe_weather_alert|Severe Weather Alert|"SEVERE WEATHER ALERT"|
@@ -1039,21 +1039,21 @@ _There are no configurable options._
 |78|wx/preciptotal|Weather: Precipitation Total|_precipitation total_|
 |79|rpt/empty|_Not Used_|"EMPTY"|
 |80|rpt/empty|_Not Used_|"EMPTY"|
-|81|custom/rptrism01|Repeaterism #1||
-|82|custom/rptrism02|Repeaterism #2||
-|83|custom/rptrism03|Repeaterism #3||
-|84|custom/rptrism16|Repeaterism #16 (#4 is invalid)||
-|85|custom/rptrism05|Repeaterism #5||
-|86|custom/rptrism06|Repeaterism #6||
-|87|custom/rptrism07|Repeaterism #7||
-|88|custom/rptrism08|Repeaterism #8||
-|89|custom/rptrism09|Repeaterism #9||
-|90|custom/rptrism10|Repeaterism #10||
-|91|custom/rptrism11|Repeaterism #11||
-|92|custom/rptrism12|Repeaterism #12||
-|93|custom/rptrism13|Repeaterism #13||
-|94|custom/rptrism14|Repeaterism #14||
-|95|custom/rptrism15|Repeaterism #15||
+|81|custom/rptrism01|Repeaterism #1|Short transmissions|
+|82|custom/rptrism02|Repeaterism #2|Think before transmitting|
+|83|custom/rptrism03|Repeaterism #3|Pause between conversation handovers|
+|84|custom/rptrism16|Repeaterism #16 (#4 is invalid)|Certain words, there are...OH, NO YOU DON'T!|
+|85|custom/rptrism05|Repeaterism #5|Be courteous|
+|86|custom/rptrism06|Repeaterism #6|Use simplex when possible|
+|87|custom/rptrism07|Repeaterism #7|Use low power when possible|
+|88|custom/rptrism08|Repeaterism #8|Support your local repeater club|
+|89|custom/rptrism09|Repeaterism #9|Butting in is not nice|
+|90|custom/rptrism10|Repeaterism #10|Blessed are those who listen|
+|91|custom/rptrism11|Repeaterism #11|Watch what you say|
+|92|custom/rptrism12|Repeaterism #12|One thought per transmission|
+|93|custom/rptrism13|Repeaterism #13|State your purpose|
+|94|custom/rptrism14|Repeaterism #14|When testing, say so, and be brief|
+|95|custom/rptrism15|Repeaterism #15|Identify your station|
 |96|rpt/empty|_Not Used_|"EMPTY"|
 |97|rpt/empty|_Not Used_|"EMPTY"|
 |98|rpt/empty|_Not Used_|"EMPTY"|
