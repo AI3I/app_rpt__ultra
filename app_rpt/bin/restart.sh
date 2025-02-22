@@ -22,27 +22,41 @@
 source /opt/app_rpt/config.ini
 sourcefile=/opt/app_rpt/config.ini
 
-#    PURPOSE:  Allow changing courtesy tones from table of courtesy tones
-#    defined in rpt.conf (template: 00-99) and announce change locally.
-
 case $1 in
-linkunkeyct)
-    sed -i "s/^linkuneyct=ct.*$/linkunkeyct=ct$2/g" $RPTCONF
-    $BINDIR/speaktext.sh LUCT$2
-    sleep 4
-    asterisk -rx "module reload"
+network) # Network Restart
+    sleep 2
+    asterisk -rx "rpt localplay $MYNODE rpt/start_internet"
+    sleep 2
+    systemctl restart NetworkManager
+    exit
     ;;
-remotect)
-    sed -i "s/^remotect=ct.*$/remotect=ct$2/g" $RPTCONF
-    $BINDIR/speaktext.sh RMCT$2
-    sleep 4
-    asterisk -rx "module reload"
+eth0) # Wireline Interface Restart
+    asterisk -rx "rpt localplay $MYNODE rpt/stop_and_start_eth0"
+    ifconfig eth0 down
+    sleep 5
+    ifconfig eth0 up
+    exit
     ;;
-unlinkedct)
-    sed -i "s/^unlinkedct=ct.*$/unlinkedct=ct$2/g" $RPTCONF
-    $BINDIR/speaktext.sh ULCT$2
-    sleep 4
-    asterisk -rx "module reload"
+wlan0) # Wireless Interface Restart
+    asterisk -rx "rpt localplay $MYNODE rpt/stop_and_start_wlan0"
+    ifconfig wlan0 down
+    sleep 5
+    ifconfig wlan0 up
+    exit
+    ;;
+openvpn) # OpenVPN Restart (if installed and enabled)
+    sleep 2
+    asterisk -rx "rpt localplay $MYNODE rpt/stop_and_start_v_p_n"
+    sleep 5
+    systemctl restart openvpn@client
+    exit
+    ;;
+wireguard) # WireGuard Restart (if installed and enabled)
+    sleep 2
+    asterisk -rx "rpt localplay $MYNODE rpt/stop_and_start_v_p_n"
+    sleep 5
+    systemctl restart wg-quick@wg0
+    exit
     ;;
 *) # Error
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"

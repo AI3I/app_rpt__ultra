@@ -30,82 +30,58 @@ message=`cat $NWSFILE | grep \<cap\:msgType\>Alert\<\/cap\:msgType\> | cut -d'>'
 severity=`cat $NWSFILE | grep \<cap\:severity\>Severe\<\/cap\:severity\> | cut -d'>' -f2 | cut -d'<' -f1 | uniq`
 urgency=`cat $NWSFILE | grep \<cap\:urgency\>Immediate\<\/cap\:urgency\> | cut -d'>' -f2 | cut -d'<' -f1 | uniq`
 
-if [ "$SEVEREWEATEHR" == "4" ]
-    then
-        echo "Skipping activation of alerts due to an automatic override!"
-        exit
-elif [ "$SEVEREWEATHER" == "3" ]
-    then
-    if [ "$severity" == "Severe" ] && [ "$urgency" == "Immediate" ]
-        then
-        sed -i "s/^SCHEDULER=.*$/SCHEDULER=0/g" $sourcefile
+if [ "$SEVEREWEATHER" == "3" ]; then
+    if [ "$severity" == "Severe" ] && [ "$urgency" == "Immediate" ]; then
         sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=1/g" $sourcefile
         sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" $sourcefile
         $STATEKEEPER severeweather
-        echo "Severe Weather Alert Activated!"
         exit
-    elif [ "$message" == "Alert" ]
-        then
-        sed -i "s/^SCHEDULER=.*$/SCHEDULER=0/g" $sourcefile
+    elif [ "$message" == "Alert" ]; then
         sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" $sourcefile
         sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" $sourcefile
         $STATEKEEPER weatheralert
-        echo "Weather Alert Activated!"
         exit
     else
         exit
     fi
-elif [ "$SEVEREWEATHER" == "2" ]
-    then
-    if [ "$severity" == "Severe" ] && [ "$urgency" == "Immediate" ]
-        then
-        sed -i "s/^SCHEDULER=.*$/SCHEDULER=0/g" $sourcefile
+elif [ "$SEVEREWEATHER" == "2" ]; then
+    if [ "$severity" == "Severe" ] && [ "$urgency" == "Immediate" ]; then
         sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=1/g" $sourcefile
         sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" $sourcefile
         $STATEKEEPER severeweather
-        echo "Weather Alert Activated!"
         exit
-    elif [ -z $message ] && [ -z $severity ]
-        then
+    elif [ -z $message ] && [ -z $severity ]; then
+        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" $sourcefile
+        sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" $sourcefile
+        asterisk -rx "rpt localplay $MYNODE rpt/cancel_weather_alert"
+        sleep 5
+        $STATEKEEPER standard
+        exit
+    else
+        exit
+    fi
+elif [ "$SEVEREWEATHER" == "1" ]; then
+    if [ "$message" == "Alert" ] && [ -z $severity ]; then
+        sed -i "s/^SCHEDULER=.*$/SCHEDULER=0/g" $sourcefile
+        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" $sourcefile
+        sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" $sourcefile
+        $STATEKEEPER weatheralert
+        exit
+    elif [ -z $message ] && [ -z $severity ]; then
         sed -i "s/^SCHEDULER=.*$/SCHEDULER=1/g" $sourcefile
         sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" $sourcefile
         sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" $sourcefile
         asterisk -rx "rpt localplay $MYNODE rpt/cancel_weather_alert"
         sleep 5
         $STATEKEEPER standard
-        echo "Weather Alert Deactivated."
         exit
     else
         exit
     fi
-elif [ "$SEVEREWEATHER" == "1" ]
-    then
-    if [ "$message" == "Alert" ] && [ -z $severity ]
-        then
-        sed -i "s/^SCHEDULER=.*$/SCHEDULER=0/g" $sourcefile
-        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" $sourcefile
-        sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" $sourcefile
-        $STATEKEEPER weatheralert
-        echo "Weather Alert Activated!"
-        exit
-    elif [ -z $message ] && [ -z $severity ]
-        then
-        sed -i "s/^SCHEDULER=.*$/SCHEDULER=1/g" $sourcefile
-        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" $sourcefile
-        sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" $sourcefile
-        asterisk -rx "rpt localplay $MYNODE rpt/cancel_weather_alert"
-        sleep 5
-        $STATEKEEPER standard
-        echo "Weather Alert Deactivated."
-        exit
-    else
-        exit
-    fi
-elif [ "$SEVEREWEATHER" == "0" ]
-    then
-        echo "Weather Alert Disabled!"
-        exit
-    fi
-else
+elif [ "$SEVEREWEATHER" == "0" ]; then
     exit
 fi
+else
+exit
+
+###EDIT: Sat Feb 22 10:02:32 AM EST 2025

@@ -22,9 +22,29 @@
 source /opt/app_rpt/config.ini
 sourcefile=/opt/app_rpt/config.ini
 
-sleep 2
-asterisk -rx "rpt localplay $MYNODE rpt/stop_system"
-sleep 10
-systemctl stop asterisk
-sleep 3
-poweroff
+case $1 in
+reboot) # Reboot System
+    sleep 2
+    asterisk -rx "rpt localplay $MYNODE rpt/stop_and_start_system"
+    sleep 5
+    systemctl stop asterisk
+    sleep 3
+    reboot
+    exit
+    ;;
+halt) # Halt System
+    sleep 2
+    asterisk -rx "rpt localplay $MYNODE rpt/stop_system"
+    sleep 10
+    systemctl stop asterisk
+    sleep 3
+    poweroff
+    exit
+    ;;
+*) # Error
+    asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+    exit
+    ;;
+esac
+
+###EDIT: Sat Feb 22 10:02:32 AM EST 2025

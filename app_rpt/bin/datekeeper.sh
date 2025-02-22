@@ -29,3 +29,5 @@ year=`date +%y`
 
 # Today is <day of week>, <month> <day>, <year>
 cat $SNDMALE/today.ulaw $SNDMALE/is.ulaw $SNDMALE/$dow.ulaw $SNDMALE/$month.ulaw $SNDMALE/$day.ulaw $SNDFX/pause.ulaw $SNDMALE/2000.ulaw $SNDMALE/$year.ulaw > $SNDRPT/current_date.ulaw
+
+###EDIT: Sat Feb 22 10:02:32 AM EST 2025

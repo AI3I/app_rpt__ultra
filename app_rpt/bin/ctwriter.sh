@@ -28,34 +28,61 @@ sourcefile=/opt/app_rpt/config.ini
 #            <CT slot> B <character>        use character from CW table (characters.txt)
 #            <CT slot> C <tone 1> * <tone 2> * <duration> * <amplitude> D <tone 1> * <tone 2> * <duration> * <amplitude>
 #                        ...'D' is a delimiter to allow multiple tones to be strung together
+#    SLOTS:  01-95  : standard courtesy tones
+#            96     : remotemon
+#            97     : remotetx
+#            98     : cmdmode
+#            99     : functcomplete
 
 type=$(echo $1 | cut -c3)
 ct=$(echo $1 | cut -c1,2)
+
+if [ -z $1 ]; then
+    asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+    exit
+fi
+
+if [ $ct -eq '99' ]; then
+    tone=functcomplete
+elif [ $ct -eq '98' ]; then
+    tone=cmdmode
+elif [ $ct -eq '97' ]; then
+    tone=remotetx
+elif [ $ct -eq '96' ]; then
+    tone=remotemon
+elif [ $ct -le "95" ]; then
+    tone=ct$ct
+else
+    exit
+fi
+
 if [ $type == "C" ]; then
     rewrite=$(echo $1 | cut -dC -f2 | sed "s/D/)(/g" | sed "s/*/,/g")
-    sed -i "s/^ct$ct=.*$/ct$ct=|t($rewrite)/g" $RPTCONF
+    sed -i "s/^$tone=.*$/$tone=|t($rewrite)/g" $RPTCONF
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_t"
-    sleep 2
+    sleep 3
     asterisk -rx "module reload"
     exit
 elif [ $type == "B" ]; then
     rewrite=$(echo $1 | cut -dB -f2)
     mychar=$(cat $CWCHARS | grep $rewrite | cut -d' ' -f2)
-    sed -i "s/^ct$ct=.*$/ct$ct=|m$mychar/g" $RPTCONF
+    sed -i "s/^$tone=.*$/$tone=|m$mychar/g" $RPTCONF
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_t"
-    sleep 2
+    sleep 3
     asterisk -rx "module reload"
     exit
 elif [ $type == "A" ]; then
     rewrite=$(echo $1 | cut -s -dA -f2)
     myword=$(cat $VOCAB | grep $rewrite | cut -d' ' -f2)
-    cat $VOCAB | grep $myword | cut -d' ' -f2 >$SOUNDS/ct$ct.ulaw
-    sed -i "s/^ct$ct=.*$/ct$ct=ct$ct/g" $RPTCONF
+    cat $VOCAB | grep $myword | cut -d' ' -f2 >$SNDCST/ct$ct.ulaw
+    sed -i "s/^$tone=.*$/$tone=custom\/ct$ct/g" $RPTCONF
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_t"
-    sleep 2
+    sleep 3
     asterisk -rx "module reload"
     exit
 else
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"
     exit
 fi
+
+###EDIT: Sat Feb 22 10:02:32 AM EST 2025

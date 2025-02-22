@@ -18,27 +18,41 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
 source /opt/app_rpt/config.ini
 sourcefile=/opt/app_rpt/config.ini
 
+#    USAGE:  Accept single digit commands from CLI or DTMF with
+#    prepended 0 or otherwise proceed with double digits as entered
 
-if [[ "$1" =~ ^[0] ]]
-    then
-        mygpio=`echo $1 | cut -c2`
-        asterisk -rx "rpt localplay $MYNODE rpt/g_p_i_o_operation"
-        asterisk -rx "rpt localplay $MYNODE digits/$mygpio"
-        gpio unexport $mygpio
-        sleep 3
-        echo $mygpio > /sys/class/gpio/export
-    exit
-elif [[ "$1" != ^[0] ]]
-    then
-        mygpio=`echo $1 | cut -c1,2`
-        asterisk -rx "rpt localplay $MYNODE rpt/g_p_i_o_operation"
-        asterisk -rx "rpt localplay $MYNODE digits/$mygpio"
-        gpio unexport $mygpio
-        sleep 3
-        echo $mygpio > /sys/class/gpio/export
-    exit
+
+if [[ "$2" =~ ^[0] ]]; then
+    myvar=$(echo $2 | cut -c2)
+elif [[ "$2" != ^[0] ]]; then
+    myvar=$(echo $2)
 fi
+
+
+case $1 in
+cop) # Control Operator Commands
+    asterisk -rx "rpt cmd $MYNODE cop $myvar"
+    exit
+    ;;
+ilink) # Internet Linking Commands
+    asterisk -rx "rpt cmd $MYNODE ilink $myvar"
+    exit
+    ;;
+remote) # Remote Base Commands
+    asterisk -rx "rpt cmd $MYNODE remote $myvar"
+    exit
+    ;;
+status) # Status Commands
+    asterisk -rx "rpt cmd $MYNODE status $myvar"
+    exit
+    ;;
+*) # Error
+    asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+    exit
+    ;;
+esac
+
+###EDIT: Sat Feb 22 10:02:32 AM EST 2025

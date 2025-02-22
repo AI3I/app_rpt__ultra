@@ -28,14 +28,21 @@ power=`iwconfig wlan0 | tr -d ' ' | grep Tx-Power | cut -d'=' -f3`
 quality=`iwconfig wlan0 | tr -d ' ' | grep LinkQuality | cut -d'=' -f2 | cut -d'/' -f1`
 rate=`iwconfig wlan0 | tr -d '\n' | tr -s ' ' | cut -d' ' -f13,14 | cut -d'=' -f2 | cut -d'/' -f1 | tr -d ' '`
 
-
-asterisk -rx "rpt localplay $MYNODE rpt/frequency_is"
-/opt/app_rpt/bin/speaktext.sh $frequency && sleep 5
-asterisk -rx "rpt localplay $MYNODE rpt/signal_level_is"
-/opt/app_rpt/bin/speaktext.sh $level && sleep 5
-asterisk -rx "rpt localplay $MYNODE rpt/transmit_power_is"
-/opt/app_rpt/bin/speaktext.sh $power && sleep 6
-asterisk -rx "rpt localplay $MYNODE rpt/flow_rate_is"
-/opt/app_rpt/bin/speaktext.sh $rate && sleep 5
 asterisk -rx "rpt localplay $MYNODE rpt/link_condition_is"
 /opt/app_rpt/bin/speaktext.sh $quality
+sleep 4
+asterisk -rx "rpt localplay $MYNODE rpt/out_of_70"
+sleep 3
+asterisk -rx "rpt localplay $MYNODE rpt/r_s_s_i_is"
+/opt/app_rpt/bin/speaktext.sh $level
+sleep 7
+asterisk -rx "rpt localplay $MYNODE rpt/transmit_power_is"
+/opt/app_rpt/bin/speaktext.sh $power
+sleep 7
+asterisk -rx "rpt localplay $MYNODE rpt/frequency_is"
+/opt/app_rpt/bin/speaktext.sh $frequency
+sleep 6
+asterisk -rx "rpt localplay $MYNODE rpt/flow_rate_is"
+/opt/app_rpt/bin/speaktext.sh $rate
+
+###EDIT: Sat Feb 22 10:02:32 AM EST 2025

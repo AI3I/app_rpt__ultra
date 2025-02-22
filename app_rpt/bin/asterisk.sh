@@ -18,22 +18,35 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
 source /opt/app_rpt/config.ini
 sourcefile=/opt/app_rpt/config.ini
 
-if [[ "$1" =~ ^[0] ]]
-    then
-        mygpio=`echo $1 | cut -c2`
-        asterisk -rx "rpt localplay $MYNODE rpt/g_p_i_o_set"
-        asterisk -rx "rpt localplay $MYNODE digits/$mygpio"
-        echo $mygpio > /sys/class/gpio/export
+case $1 in
+restart) # Restart Asterisk
+    sleep 2
+    asterisk -rx "rpt localplay $MYNODE rpt/stop_and_start_controller"
+    sleep 5
+    systemctl restart asterisk
+    ;;
+reload) # Reload Asterisk
+    sleep 2
+    asterisk -rx "rpt localplay $MYNODE rpt/controller_calibrate"
+    sleep 2
+    asterisk -rx "module reload"
+    ;;
+start) # Start Asterisk
+    systemctl start asterisk
+    ;;
+stop) # Stop Asterisk
+    sleep 2
+    asterisk -rx "rpt localplay $MYNODE rpt/stop_controller"
+    sleep 5
+    systemctl stop asterisk
+    ;;
+*) # Error
+    asterisk -rx "rpt localplay $MYNODE rpt/program_error"
     exit
-elif [[ "$1" != ^[0] ]]
-    then
-        mygpio=`echo $1 | cut -c1,2`
-        asterisk -rx "rpt localplay $MYNODE rpt/g_p_i_o_set"
-        asterisk -rx "rpt localplay $MYNODE digits/$mygpio"
-        echo $mygpio > /sys/class/gpio/export
-    exit
-fi
+    ;;
+esac
+
+###EDIT: Sat Feb 22 10:02:32 AM EST 2025

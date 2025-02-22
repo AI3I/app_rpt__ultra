@@ -47,7 +47,6 @@ if perl -e 'exit ((localtime)[8])'; then
         cat $SNDFEMALE/good_morning.ulaw $SNDFEMALE/pause.ulaw $SNDFEMALE/the_time_is.ulaw $SNDFEMALE/$newhour.ulaw $SNDFEMALE/$minutes.ulaw $SNDFEMALE/a_m.ulaw $SNDFEMALE/pause.ulaw $SNDTAIL/why_are_you_up.ulaw >$SNDRPT/current_time.ulaw
         exit
     else
-        echo "Something went wrong; we're bailing out!"
         exit
     fi
 else
@@ -72,7 +71,8 @@ else
         cat $SNDFEMALE/good_morning.ulaw $SNDFEMALE/pause.ulaw $SNDFEMALE/the_time_is.ulaw $SNDFEMALE/$newhour.ulaw $SNDFEMALE/$minutes.ulaw $SNDFEMALE/a_m.ulaw $SNDFEMALE/pause.ulaw $SNDTAIL/why_are_you_up.ulaw >$SNDRPT/current_time.ulaw
         exit
     else
-        echo "Something went wrong; we're bailing out!"
         exit
     fi
 fi
+
+###EDIT: Sat Feb 22 10:02:32 AM EST 2025
