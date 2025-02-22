@@ -204,11 +204,70 @@ _There are no configurable options._
 #### CRONTAB: every minute
 This generates time messages every minute for playback either in tail messages or by invocation.\
 _There are no configurable options._
-## Message Editors & Tables
-### ctkeeper.sh
-### idwriter.sh
+## Message Tables
+### CW Characters
+|Slot|Character
+|-|-|
+|00|0|
+|01|1|
+|02|2|
+|03|3|
+|04|4|
+|05|5|
+|06|6|
+|07|7|
+|08|8|
+|09|9|
+|10|-|
+|11|%|
+|12|/|
+|14|:|
+|20|?|
+|21|A|
+|22|B|
+|23|C|
+|24|;|
+|30|,|
+|31|D|
+|32|E|
+|33|F|
+|34|+|
+|40|'|
+|41|G|
+|42|H|
+|43|I|
+|44|"|
+|50|(|
+|51|J|
+|52|K|
+|53|L|
+|54|)|
+|60|.|
+|61|M|
+|62|N|
+|63|O|
+|64|@|
+|70|Q|
+|71|P|
+|72|R|
+|73|S|
+|74|=|
+|80|_|
+|81|T|
+|82|U|
+|83|V|
+|84|$|
+|90|Z|
+|91|W|
+|92|X|
+|93|Y|
+|94|&|
+### Word Vocabulary
+## Message Writers
 ### msgreader.sh
 ### msgwriter.sh
+### idwriter.sh
+### ctkeeper.sh
 # Footnotes
 [^1]: These are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).  Recordings were sourced using audio-in to a PC with Audacity; these are captured in μ-law companding algorithm 8-bit PCM format.
 [^2]: Weather reporting requires account registration and use of an API key from [Weather Underground](https://www.weatherunderground.com/).
