@@ -956,7 +956,108 @@ _There are no configurable options._
 |883|_sndfx/train.ulaw|_sound effect_|
 |891|_sndfx/explosion.ulaw|_sound effect_|
 |892|_sndfx/crowd.ulaw|_sound effect_|
-## Message Writers
+### Message Banks
+|Slot|Path|Description|Contents|
+|01|ids/initial_id_1|Initial ID #1|_empty_|
+|02|ids/initial_id_2|Initial ID #2|_empty_|
+|03|ids/initial_id_3|Initial ID #3|_empty_|
+|04|ids/anxious_id|Anxious ID|_empty_|
+|05|ids/pending_id_1|Pending ID #1|_empty_|
+|06|ids/pending_id_2|Pending ID #2|_empty_||
+|07|ids/pending_id_3|Pending ID #3|_empty_||
+|08|ids/pending_id_4|Pending ID #4|_empty_||
+|09|ids/pending_id_5|Pending ID #5|_empty_||
+|10|ids/special_id|Special ID|_empty_|
+|11|tails/tail_message_1|Tail Message #1|_empty_|
+|12|tails/tail_message_2|Tail Message #2|_empty_|
+|13|tails/tail_message_3|Tail Message #3|_empty_|
+|14|tails/tail_message_4|Tail Message #4|_empty_|
+|15|tails/tail_message_5|Tail Message #5|_empty_|
+|16|tails/tail_message_6|Tail Message #6|_empty_|
+|17|tails/tail_message_7|Tail Message #7|_empty_|
+|18|tails/tail_message_8|Tail Message #8|_empty_|
+|19|tails/tail_message_9|Tail Message #9|_empty_|
+|20|custom/bulletin_board_1|Bulletin Board #1|_empty_|
+|21|custom/bulletin_board_2|Bulletin Board #2|_empty_|
+|22|custom/bulletin_board_3|Bulletin Board #3|_empty_|
+|23|custom/bulletin_board_4|Bulletin Board #4|_empty_|
+|24|custom/bulletin_board_5|Bulletin Board #5|_empty_|
+|25|custom/demonstration_1|Demonstration Msg. #1|_empty_|
+|26|custom/demonstration_2|Demonstration Msg. #2|_empty_|
+|27|custom/demonstration_3|Demonstration Msg. #3|_empty_|
+|28|custom/demonstration_4|Demonstration Msg. #4|_empty_|
+|29|custom/demonstration_5|Demonstration Msg. #5|_empty_|
+|30|custom/emergency_autodial_0|Emergency Auto Dialer #0|_empty_|
+|31|custom/emergency_autodial_1|Emergency Auto Dialer #1|_empty_|
+|32|custom/emergency_autodial_2|Emergency Auto Dialer #2|_empty_|
+|33|custom/emergency_autodial_3|Emergency Auto Dialer #3|_empty_|
+|34|custom/emergency_autodial_4|Emergency Auto Dialer #4|_empty_|
+|35|custom/emergency_autodial_5|Emergency Auto Dialer #5|_empty_|
+|36|custom/emergency_autodial_6|Emergency Auto Dialer #6|_empty_|
+|37|custom/emergency_autodial_7|Emergency Auto Dialer #7|_empty_|
+|38|custom/emergency_autodial_8|Emergency Auto Dialer #8|_empty_|
+|39|custom/emergency_autodial_9|Emergency Auto Dialer #9|_empty_|
+|40|custom/mailbox_0|Mailbox #0|_empty|
+|41|custom/mailbox_1|Mailbox #1|_empty|
+|42|custom/mailbox_2|Mailbox #2|_empty|
+|43|custom/mailbox_3|Mailbox #3|_empty|
+|44|custom/mailbox_4|Mailbox #4|_empty|
+|45|custom/mailbox_5|Mailbox #5|_empty|
+|46|custom/mailbox_6|Mailbox #6|_empty|
+|47|custom/mailbox_7|Mailbox #7|_empty|
+|48|custom/mailbox_8|Mailbox #8|_empty|
+|49|custom/mailbox_9|Mailbox #9|_empty|
+|50|rpt/litz_alert|Long Tone Zero (LiTZ) Alert|_empty_|
+|51|tails/weather_alert|Weather Alert|"WEATHER ALERT"|
+|52|tails/severe_weather_alert|Severe Weather Alert|"SEVERE WEATHER ALERT"|
+|53|rpt/net_in_one_minute|Impending Net (1 minute)|"NET IN ONE MINUTE"|
+|54|rpt/net_in_five_minutes|Impending Net (5 minutes)|"NET IN FIVE MINUTES"|
+|55|rpt/net_in_ten_minutes|Impending Net (10 minutes)|"NET IN TEN MINUTES"|
+|56|rpt/empty|_Not Used_|"EMPTY"|
+|57|rpt/empty|_Not Used_|"EMPTY"|
+|58|rpt/empty|_Not Used_|"EMPTY"|
+|59|rpt/empty|_Not Used_|"EMPTY"|
+|60|rpt/empty|_Not Used_|"EMPTY"|
+|61|rpt/empty|_Not Used_|"EMPTY"|
+|62|rpt/empty|_Not Used_|"EMPTY"|
+|63|rpt/empty|_Not Used_|"EMPTY"|
+|64|rpt/empty|_Not Used_|"EMPTY"|
+|65|rpt/empty|_Not Used_|"EMPTY"|
+|66|rpt/empty|_Not Used_|"EMPTY"|
+|67|rpt/empty|_Not Used_|"EMPTY"|
+|68|rpt/empty|_Not Used_|"EMPTY"|
+|69|rpt/empty|_Not Used_|"EMPTY"|
+|70|wx/temp|Weather: Temperature|_temperature_|
+|71|wx/wind|Weather: Wind Conditions|_wind conditions_|
+|72|wx/pressure|Weather: Barometric Pressure|_barometric pressure_|
+|73|wx/humidity|Weather: Humidity|_humidity_|
+|74|wx/windchill|Weather: Wind Chill|_wind chill_|
+|75|wx/heatindex|Weather: Heat Index|_heat index_|
+|76|wx/dewpt|Weather: Dew Point|_dew point_|
+|77|wx/preciprate|Weather: Precipitation Rate|_precipitation rate_|
+|78|wx/preciptotal|Weather: Precipitation Total|_precipitation total_|
+|79|rpt/empty|_Not Used_|"EMPTY"|
+|80|rpt/empty|_Not Used_|"EMPTY"|
+|81|custom/rptrism01|Repeaterism #1||
+|82|custom/rptrism02|Repeaterism #2||
+|83|custom/rptrism03|Repeaterism #3||
+|84|custom/rptrism16|Repeaterism #16 (#4 is invalid)||
+|85|custom/rptrism05|Repeaterism #5||
+|86|custom/rptrism06|Repeaterism #6||
+|87|custom/rptrism07|Repeaterism #7||
+|88|custom/rptrism08|Repeaterism #8||
+|89|custom/rptrism09|Repeaterism #9||
+|90|custom/rptrism10|Repeaterism #10||
+|91|custom/rptrism11|Repeaterism #11||
+|92|custom/rptrism12|Repeaterism #12||
+|93|custom/rptrism13|Repeaterism #13||
+|94|custom/rptrism14|Repeaterism #14||
+|95|custom/rptrism15|Repeaterism #15||
+|96|rpt/empty|_Not Used_|"EMPTY"|
+|97|rpt/empty|_Not Used_|"EMPTY"|
+|98|rpt/empty|_Not Used_|"EMPTY"|
+|99|rpt/empty|_Not Used_|"EMPTY"|
+## Message Handlers
 ### msgreader.sh
 ### msgwriter.sh
 ### idwriter.sh
