@@ -1059,11 +1059,31 @@ _There are no configurable options._
 |97|rpt/empty|_Not Used_|"EMPTY"|
 |98|rpt/empty|_Not Used_|"EMPTY"|
 |99|rpt/empty|_Not Used_|"EMPTY"|
-## Message Handlers
+## Message Management
 ### msgreader.sh
+This reads back messages stored in the message table listed above.
+USAGE: `msgreader.sh <slot>`
+#### BY INVOCATION ONLY
 ### msgwriter.sh
-### idwriter.sh
+#### BY INVOCATION ONLY
+This script can write messages into slots using the vocabulary and character tables listed above.  Slot _**00** is special_ and is for the Forced CW ID, which overwrites the values in the _**idtalkover**_ parameter.  Slots 01 through 50 are customizable through the message writer; slots 51 through 99 cannot be overwritten by this tool.
+
+EXAMPLES:
+* Write CW ID (to slot 00): `msgwriter.sh 00D61*93*23*04*53*53` ...writes MYC4LL to _**idtalkover** parameter.
+* Write Voice ID (to Anxious ID in slot 04): `msgwriter.sh 04D061*093*023*004*053*053*080` ...writes "M Y C 4 L L REPEATER" to _ids/anxious_id.ulaw_.
+
+
+####    CW ID:  00 D <CW character> * <CW character> * <CW character>                      ... uses characters.txt (2 digits)
+####    USAGE:  <MSG slot> D <vocabulary word> * <vocabulary word> * <vocabulary word>     ... uses vocabulary.txt (3 digits) (vocabulary.txt)
+####           ...'D' is a delimiter from the CW ID or message slot
+####           ...'*' is a delimiter between characters or words
+
+
+## Courtesy Tone Management
+### ctwriter.sh
+#### BY INVOCATION ONLY
 ### ctkeeper.sh
+#### BY INVOCATION ONLY
 # Footnotes
 [^1]: These are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).  Recordings were sourced using audio-in to a PC with Audacity; these are captured in μ-law companding algorithm 8-bit PCM format.
 [^2]: Weather reporting requires account registration and use of an API key from [Weather Underground](https://www.weatherunderground.com/).
