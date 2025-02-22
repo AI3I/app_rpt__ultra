@@ -70,11 +70,11 @@ standard) # Standard Operations
     asterisk -rx "module reload"
     ;;
 litzalert) # Long Tone Zero (LiTZ) Alert
-    asterisk -rx "rpt fun $MYNODE *894#"
+    asterisk -rx "rpt cmd $MYNODE cop 48 !330.5/1000,!832.5/3000"
     sleep 5
     asterisk -rx "rpt localplay $MYNODE rpt/litz_alert"
     sleep 20
-    asterisk -rx "rpt fun $MYNODE *894#"
+    asterisk -rx "rpt cmd $MYNODE cop 48 !330.5/1000,!832.5/3000"
     sleep 5
     asterisk -rx "rpt localplay $MYNODE rpt/litz_alert"
     ;;
@@ -91,7 +91,7 @@ severeweather) # Severe Weather Alert
     sleep 15
     asterisk -rx "module reload"
     sleep 3
-    asterisk -rx "rpt fun $MYNODE *895#"
+    asterisk -rx "rpt cmd $MYNODE cop 48 !330.5/1000,!928.1/3000"
     sleep 6
     asterisk -rx "rpt cmd $MYNODE cop 48 !1051/5000"
     sleep 7
@@ -194,7 +194,7 @@ net) # Net
     asterisk -rx "module reload"
     ;;
 clock) # Grandfather Clock
-    asterisk -rx "rpt cmd $MYNODE cop 48 !830 827/450,!0/250,!659 656/450,!0/250,!739 736/450,!0/250,!493 490/450,!0/750,!493 490/450,!0/250,!739 736/450,!0/250,!830 827/450,!0/250,!659 656/450"
+    asterisk -rx "rpt cmd $MYNODE cop 48 !830+827/450,!0/250,!659+656/450,!0/250,!739+736/450,!0/250,!493+490/450,!0/750,!493+490/450,!0/250,!739+736/450,!0/250,!830+827/450,!0/250,!659+656/450"
     sleep 2
     asterisk -rx "rpt localplay $MYNODE rpt/current_time"
     ;;
