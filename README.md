@@ -207,13 +207,12 @@ _There are no configurable options._
 ## Message Tables
 ### CW Characters
 #### RADIO KEYPAD FORMAT
-|      |      |      |      |
+| .     | .     | .     |.      |
 |   1   |   2   |   3   |   A   |
 | :---: | :---: | :---: | :---: |
 | - % / : | A B C ; | , D E F + | none |
 | 10 11 12 14 | 21 22 23 24 | 30 31 32 33 24 | none |
 |   4   |   5   |   6   |   B   |
-| % / : | A B C | D E F | G H I |
 | ' G H I " | ( J K L ) | . M N O @ | none |
 | 40 41 42 43 44 | 50 51 52 53 54 | 60 61 62 63 64 | none |
 |   7   |   8   |   9   |   C   |
