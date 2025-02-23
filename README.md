@@ -1101,6 +1101,7 @@ msgwriter.sh 04D061*093*023*004*053*053*080
 This is an invaluable script to write courtesy tones into various positions.  Special care was given to ensure three usable types could be written:  voice messages, tone stanzas, and CW characters.  Please refer to the examples below to understand how these are constructed.
 #### TELEMETRY TYPES
 |Type|Delineator|Description|
+|-|-|-|
 |A|Vocabulary|Uses a voice vocabulary word or sound effect|
 |B|CW Characters|Uses a CW character|
 |C|Tone Telemetry|This is the standard sine wave tonal format|
