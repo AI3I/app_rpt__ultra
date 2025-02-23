@@ -100,7 +100,7 @@ sed -i s/%MYNODE%/1999/g /etc/asterisk/rpt.conf /opt/app_rpt/config.ini
 sed -i s/%MYCALL%/MYC4LL/g /etc/asterisk/rpt.conf
 ```
 ### Setup temporary voice identifier from vocabulary bank
-Let us assume our voice ID will say "_This is M Y C 4 L L repeater._"  We can achieve this by concatenating several files together to produce our ID, as follows:
+Let us assume our voice ID will say "_THIS IS M Y C 4 L L REPEATER_"  We can achieve this by concatenating several files together to produce our ID, as follows:
 ```
 cd /opt/app_rpt/sounds/_male
 cat this_is.ulaw m.ulaw y.ulaw c.ulaw 4.ulaw l.ulaw l.ulaw repeater.ulaw \
@@ -1090,7 +1090,7 @@ This script can write messages into slots using the vocabulary and character tab
 ```
 msgwriter.sh 00D61*93*23*04*53*53
 ```
-* We want to write a voice message into slot 04 for the Anxious ID that reads back "MYC4LL REPEATER":
+* We want to write a voice message into slot 04 for the Anxious ID that reads back "_M Y C 4 L L REPEATER_":
 ```
 msgwriter.sh 04D061*093*023*004*053*053*080
 ```
