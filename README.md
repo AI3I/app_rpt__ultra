@@ -1100,11 +1100,11 @@ msgwriter.sh 04D061*093*023*004*053*053*080
 #### BY INVOCATION ONLY
 This is an invaluable script to write courtesy tones into various positions.  Special care was given to ensure three usable types could be written:  voice messages, tone stanzas, and CW characters.  Please refer to the examples below to understand how these are constructed.
 #### TELEMETRY TYPES
-|Type|Delineator|Description|
+|Delineator|Type|Description|
 |-|-|-|
-|A|Vocabulary|Uses a voice vocabulary word or sound effect|
-|B|CW Characters|Uses a CW character|
-|C|Tone Telemetry|This is the standard sine wave tonal format|
+|A|vocabulary|Uses a voice vocabulary word or sound effect|
+|B|CW characters|Uses a CW character|
+|C|tone telemetry|This is the standard sine wave tonal format|
 #### USABLE TYPES
 |Slot(s)|Type|Description|
 |-|-|-|
@@ -1115,9 +1115,9 @@ This is an invaluable script to write courtesy tones into various positions.  Sp
 |99|functcomplete|Issued when a function is complete|
 #### EXAMPLES
 > [!NOTE]
-> 1. Slot _**00** is special_ and is to be silent.
+> 1. Slot **00** _is special_; while it can be overwritten, it is intended to be silent.
 > 2. Slots **01** through **95** are customizable for general use and playback.
-> 3. Slots **96** through **99** have special purposes, as listed above--be careful!
+> 3. Slots **96** through **99** have special purposes, as listed above...do be careful!
 > 4. Character `D` is a delimter that allows multiple tone stanzas to be strung together, while `*` is a single parameter delimter.
 
 * We want to write the word "BATTERY" to courtesy tone 47:
