@@ -90,7 +90,7 @@ Use the following for your crontab:
 Copy configuration templates:
 ```
 cp asterisk/rpt.conf /etc/asterisk/rpt.conf
-cp asterisk/extensions_custom.conf /etc/asterisk/custom/extensions_custom.conf
+cp asterisk/extensions_custom.conf /etc/asterisk/custom/extensions.conf
 cp config.ini /opt/app_rpt/config.ini
 ```
 In order to start with the basics, you can do a _sed_ replacement:
