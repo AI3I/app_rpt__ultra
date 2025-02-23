@@ -63,7 +63,7 @@ Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
 ```
 ### Ensure permissions are properly set
 ```
-chmod -Rf asterisk:asterisk /etc/asterisk /opt/asterisk /opt/app_rpt /usr/src/app_rpt__ultra
+chown -Rf asterisk:asterisk /etc/asterisk /opt/asterisk /opt/app_rpt /usr/src/app_rpt__ultra
 ```
 ### Configure crontab for _asterisk_ user
 ```
@@ -199,12 +199,112 @@ This purges old recordings after they have aged by the defined period in the scr
 |RETENTION|_integer_|The number of days to keep recordings.<br />The default is _**60**_ days and recordings are stored in _/opt/asterisk_ with status logs.|
 ### datekeeper.sh
 #### CRONTAB: midnight daily
-This generates date messages once daily for playback by invocation.\
+This generates a new date message at midnight daily for playback by invocation.\
 _There are no configurable options._
 ### timekeeper.sh
 #### CRONTAB: every minute
 This generates time messages every minute for playback either in tail messages or by invocation.\
 _There are no configurable options._
+## Message Management
+### msgreader.sh
+This reads back messages stored in the message table listed below.
+#### EXAMPLES
+* We want to hear the current temperature outside:
+```
+msgreader.sh 70
+```
+* We want to hear Repeaterism #16 because it's cute:
+```
+msgreader.sh 84
+```
+* We want to check to make sure our Special ID is as we programmed it:
+```
+msgreader.sh 10
+```
+#### BY INVOCATION ONLY
+### msgwriter.sh
+#### BY INVOCATION ONLY
+This script can write messages into slots using the vocabulary and character tables listed below.
+> [!NOTE]
+> 1. Slot _**00** is special_ and is for the Forced CW ID, which overwrites the values in the _**idtalkover**_ parameter.
+> 2. Slots **01** through **50** are customizable through the message writer, while slots **51** through **99** are pre-programmed and cannot be overwritten by this tool.
+> 3. Character `D` delimits the slot from the message, and `*` delimits each character or vocabulary word.
+
+#### EXAMPLES
+* We want to write CW ID into slot 00 with "MYC4LL":
+```
+msgwriter.sh 00D61*93*23*04*53*53
+```
+* We want to write a voice message into slot 04 for the Anxious ID that reads back "_M Y C 4 L L REPEATER_":
+```
+msgwriter.sh 04D061*093*023*004*053*053*080
+```
+> [!TIP]
+> Add _msgwriter.sh_ into your _rpt.conf_ for full DTMF versatility to write messages over the air!
+## Courtesy Tone Management
+### ctwriter.sh
+#### BY INVOCATION ONLY
+This is an invaluable script to write courtesy tones into various positions.  Special care was given to ensure three usable types could be written:  voice messages, tone stanzas, and CW characters.  Please refer to the examples below to understand how these are constructed.
+#### TELEMETRY TYPES
+|Delineator|Type|Description|
+|-|-|-|
+|A|vocabulary|Uses a voice vocabulary word or sound effect|
+|B|CW characters|Uses a CW character|
+|C|tone telemetry|This is the standard sine wave tonal format|
+#### USABLE TYPES
+|Slot(s)|Type|Description|
+|-|-|-|
+|00..95|_standard_|Standard courtesy tones|
+|96|remotemon|Issued when system is in remote monitoring mode|
+|97|remotetx|Issued when system is in remote transmit mode|
+|98|cmdmode|Issued when command mode is in operation|
+|99|functcomplete|Issued when a function is complete|
+#### EXAMPLES
+> [!NOTE]
+> 1. Slot **00** _is special_; while it can be overwritten, it is intended to be silent.
+> 2. Slots **01** through **95** are customizable for general use and playback.
+> 3. Slots **96** through **99** have special purposes, as listed above...do be careful!
+> 4. Character `D` is a delimter that allows multiple tone stanzas to be strung together, while `*` is a single parameter delimter.
+
+* We want to write the word "BATTERY" to courtesy tone 47:
+```
+ctwriter.sh 47A142
+```
+* We want to put CW character "N" (#62 from the CW table) in for our net courtesy tone in slot 54:
+```
+ctwriter.sh 54B62
+```
+* We want the "bumblebee" courtesy tone (a sequential 330, 500 and 660 Hz sequence) to reside in slot 36 with 100 millisecond tone lengths and an amplitude of 2048:
+```
+ctwriter.sh 36C330*0*100*2048*2048D500*0*100*2048D660*0*100*2048
+```
+* We want the "piano chord" courtesy tone (a chorded 660 and 880 Hz sequence) to reside in slot 12 with a 150 millisecond duration and amplitude of 4096:
+```
+ctwriter.sh 12C660*880*150*4096
+```
+> [!TIP]
+> Add _ctwriter.sh_ into your _rpt.conf_ for full DTMF versatility to write complex courtesy tones from your radio's keypad!
+### ctkeeper.sh
+#### BY INVOCATION ONLY
+This script lends the ability to select from 95 different courtesy tones to suit your needs.
+#### USABLE TYPES
+|Types|Values|Description|
+|-|-|-|
+|linkunkeyct|{ 00 .. 95 }|Issued when link unkeys|
+|remotect|{ 00 .. 95 }|Issued when remote is activated|
+|unlinkedct|{ 00 .. 95 }|Issued when system is unlinked altogether|
+
+#### EXAMPLES
+* We want to change _linkunkeyct_ to courtesy tone 24:
+```
+ctkeeper.sh linkunkeyct 24
+```
+* We want to change _unlinkedct_ to courtesy tone 78:
+```
+ctkeeper.sh unlinkedct 78
+```
+> [!TIP]
+> Add _ctkeeper.sh_ into your _rpt.conf_ for ability to change courtesy tones remotely!
 ## Message Tables
 ### CW Characters
 #### RADIO KEYPAD FORMAT
@@ -1060,106 +1160,6 @@ _There are no configurable options._
 |97|rpt/empty|_Not Used_|"EMPTY"|
 |98|rpt/empty|_Not Used_|"EMPTY"|
 |99|rpt/empty|_Not Used_|"EMPTY"|
-## Message Management
-### msgreader.sh
-This reads back messages stored in the message table listed above.
-#### EXAMPLES
-* We want to hear the current temperature outside:
-```
-msgreader.sh 70
-```
-* We want to hear Repeaterism #16 because it's darn funny:
-```
-msgreader.sh 84
-```
-* We want to check to make sure our Special ID is as we programmed it:
-```
-msgreader.sh 10
-```
-#### BY INVOCATION ONLY
-### msgwriter.sh
-#### BY INVOCATION ONLY
-This script can write messages into slots using the vocabulary and character tables listed above.
-> [!NOTE]
-> 1. Slot _**00** is special_ and is for the Forced CW ID, which overwrites the values in the _**idtalkover**_ parameter.
-> 2. Slots **01** through **50** are customizable through the message writer, while slots **51** through **99** are pre-programmed and cannot be overwritten by this tool.
-> 3. Character `D` delimits the slot from the message, and `*` delimits each character or vocabulary word.
-
-#### EXAMPLES
-* We want to write CW ID into slot 00 with "MYC4LL":
-```
-msgwriter.sh 00D61*93*23*04*53*53
-```
-* We want to write a voice message into slot 04 for the Anxious ID that reads back "_M Y C 4 L L REPEATER_":
-```
-msgwriter.sh 04D061*093*023*004*053*053*080
-```
-> [!TIP]
-> Add _msgwriter.sh_ into your _rpt.conf_ for full DTMF versatility to write messages over the air!
-## Courtesy Tone Management
-### ctwriter.sh
-#### BY INVOCATION ONLY
-This is an invaluable script to write courtesy tones into various positions.  Special care was given to ensure three usable types could be written:  voice messages, tone stanzas, and CW characters.  Please refer to the examples below to understand how these are constructed.
-#### TELEMETRY TYPES
-|Delineator|Type|Description|
-|-|-|-|
-|A|vocabulary|Uses a voice vocabulary word or sound effect|
-|B|CW characters|Uses a CW character|
-|C|tone telemetry|This is the standard sine wave tonal format|
-#### USABLE TYPES
-|Slot(s)|Type|Description|
-|-|-|-|
-|00..95|_standard_|Standard courtesy tones|
-|96|remotemon|Issued when system is in remote monitoring mode|
-|97|remotetx|Issued when system is in remote transmit mode|
-|98|cmdmode|Issued when command mode is in operation|
-|99|functcomplete|Issued when a function is complete|
-#### EXAMPLES
-> [!NOTE]
-> 1. Slot **00** _is special_; while it can be overwritten, it is intended to be silent.
-> 2. Slots **01** through **95** are customizable for general use and playback.
-> 3. Slots **96** through **99** have special purposes, as listed above...do be careful!
-> 4. Character `D` is a delimter that allows multiple tone stanzas to be strung together, while `*` is a single parameter delimter.
-
-* We want to write the word "BATTERY" to courtesy tone 47:
-```
-ctwriter.sh 47A142
-```
-* We want to put CW character "N" (#62 from the CW table) in for our net courtesy tone in slot 54:
-```
-ctwriter.sh 54B62
-```
-* We want the "bumblebee" courtesy tone (a sequential 330, 500 and 660 Hz sequence) to reside in slot 36 with 100 millisecond tone lengths and an amplitude of 2048:
-```
-ctwriter.sh 36C330*0*100*2048*2048D500*0*100*2048D660*0*100*2048
-```
-* We want the "piano chord" courtesy tone (a chorded 660 and 880 Hz sequence) to reside in slot 12 with a 150 millisecond duration and amplitude of 4096:
-```
-ctwriter.sh 12C660*880*150*4096
-```
-> [!TIP]
-> Add _ctwriter.sh_ into your _rpt.conf_ for full DTMF versatility to write complex courtesy tones from your radio's keypad!
-### ctkeeper.sh
-#### BY INVOCATION ONLY
-This script lends the ability to select from 95 different courtesy tones to suit your needs.
-#### USABLE TYPES
-|Types|Values|Description|
-|-|-|-|
-|linkunkeyct|{ 00 .. 95 }|Issued when link unkeys|
-|remotect|{ 00 .. 95 }|Issued when remote is activated|
-|unlinkedct|{ 00 .. 95 }|Issued when system is unlinked altogether|
-
-#### EXAMPLES
-* We want to change _linkunkeyct_ to courtesy tone 24:
-```
-ctkeeper.sh linkunkeyct 24
-```
-* We want to change _unlinkedct_ to courtesy tone 78:
-```
-ctkeeper.sh unlinkedct 78
-```
-> [!TIP]
-> Add _ctkeeper.sh_ into your _rpt.conf_ for ability to change courtesy tones remotely!
 # Footnotes
 [^1]: These are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).  Recordings were sourced using audio-in to a PC with Audacity; these are captured in μ-law companding algorithm 8-bit PCM format.
 [^2]: Weather reporting requires account registration and use of an API key from [Weather Underground](https://www.weatherunderground.com/).
