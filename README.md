@@ -1136,6 +1136,8 @@ ctwriter.sh 36C330*0*100*2048*2048D500*0*100*2048D660*0*100*2048
 ```
 ctwriter.sh 12C660*880*150*4096
 ```
+> [!TIP]
+> Add _ctwriter.sh_ into your _rpt.conf_ for full DTMF versatility to write complex courtesy tones from your radio's keypad!
 ### ctkeeper.sh
 #### BY INVOCATION ONLY
 This script lends the ability to select from 95 different courtesy tones to suit your needs.
