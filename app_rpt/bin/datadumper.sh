@@ -22,19 +22,14 @@
 source /opt/app_rpt/config.ini
 sourcefile=/opt/app_rpt/config.ini
 
-# Purge log files after retention period
-sudo find /var/log/asterisk/ -not -empty -type f -mtime $RETENTION -exec rm {} \;
-
-# Purge recordings after retention period
-find /opt/asterisk/ -not -empty -type f -mtime $RETENTION -exec rm {} \;
-
 # Upload recordings to master host
 if [ "$FETCHLOCAL" == "1" ]; then # Proceed if not a hub node
     rsync -azrv --delete $RECORDDIR/$MYNODE/ $FETCHPOINT:$RECORDDIR/$MYNODE/
 elif [ "$FETCHLOCAL" == "0" ]; then # Ignore if operating as a hub
-    echo 'Nothing to do...exiting.'
+    sudo find /var/log/asterisk/ -not -empty -type f -mtime +$RETENTION -exec rm {} \; # Purge log files after retention period
+    sudo find /opt/asterisk/ -not -empty -type f -mtime +$RETENTION -exec rm {} \; # Purge recordings after retention period
 else
     exit
 fi
 
-###EDIT: Sat Feb 22 10:02:32 AM EST 2025
+###EDIT: Sun Mar  2 01:28:29 PM EST 2025
