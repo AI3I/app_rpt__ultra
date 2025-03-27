@@ -23,7 +23,7 @@ cd app_rpt__ultra
 ```
 ### Create local directory to store _**app_rpt__ultra**_
 ```
-mkdir -p /opt/app_rpt /opt/asterisk /etc/asterisk/custom
+mkdir -p /opt/app_rpt/{bin,lib,sounds} /opt/asterisk /etc/asterisk/custom
 ```
 ### Remove local sound directories to make way for the vocabulary bank
 ```
