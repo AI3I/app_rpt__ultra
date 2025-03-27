@@ -65,6 +65,10 @@ Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
 ```
 chown -Rf asterisk:asterisk /etc/asterisk /opt/asterisk /opt/app_rpt /usr/src/app_rpt__ultra
 ```
+### Ensure working scripts are executable
+```
+chmod +x /opt/app_rpt/bin/*.sh
+```
 ### Configure crontab for _asterisk_ user
 ```
 sudo su - asterisk
@@ -111,10 +115,6 @@ The message is written and can be tested through manual invocation by using:
 sudo asterisk -rx "rpt localplay 1999 voice_id"
 ```
 ## Wrapping up
-### Set permissions unilaterally, again, just for good measure
-```
-sudo chown -Rf asterisk:asterisk /etc/asterisk /opt/app_rpt /opt/asterisk
-```
 ### Set the initial date for readback
 ```
 sudo su - asterisk
