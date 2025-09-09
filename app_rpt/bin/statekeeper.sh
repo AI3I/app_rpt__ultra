@@ -39,21 +39,21 @@ default) # Reset to Default Operations
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTUNK/g" $RPTCONF
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" $RPTCONF
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" $RPTCONF
-    asterisk -rx "rpt localplay $MYNODE rpt/change_over"
+    sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 14 $SSDEF"
+    sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSDEF"
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 33 $MYNODE" # Set Local Telemetry to ENABLED
+    sudo asterisk -rx "rpt cmd $MYNODE cop 33 $MYNODE" # Set Local Telemetry to ENABLED
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 38 $MYNODE" # Set Foreign Link Local Output to FOLLOW LOCAL TELEMETRY
+    sudo asterisk -rx "rpt cmd $MYNODE cop 38 $MYNODE" # Set Foreign Link Local Output to FOLLOW LOCAL TELEMETRY
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 42 $MYNODE" # Set EchoLink to ANNOUNCE NODE NUMBER ONLY
+    sudo asterisk -rx "rpt cmd $MYNODE cop 42 $MYNODE" # Set EchoLink to ANNOUNCE NODE NUMBER ONLY
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 45 $MYNODE" # Set Link Activity Timer to ENABLED
+    sudo asterisk -rx "rpt cmd $MYNODE cop 45 $MYNODE" # Set Link Activity Timer to ENABLED
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 15 $MYNODE" # Set Scheduler to ENABLED
+    sudo asterisk -rx "rpt cmd $MYNODE cop 15 $MYNODE" # Set Scheduler to ENABLED
     sleep 15
-    asterisk -rx "module reload"
+    sudo asterisk -rx "module reload"
     ;;
 standard) # Standard Operations
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" $sourcefile
@@ -63,20 +63,20 @@ standard) # Standard Operations
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTUNK/g" $RPTCONF
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" $RPTCONF
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" $RPTCONF
-    asterisk -rx "rpt localplay $MYNODE rpt/change_over"
+    sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 14 $SSSTD"
+    sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSSTD"
     sleep 15
-    asterisk -rx "module reload"
+    sudo asterisk -rx "module reload"
     ;;
 litzalert) # Long Tone Zero (LiTZ) Alert
-    asterisk -rx "rpt cmd $MYNODE cop 48 !330.5/1000,!832.5/3000"
+    sudo asterisk -rx "rpt fun $MYNODE *894#"
     sleep 5
-    asterisk -rx "rpt localplay $MYNODE rpt/litz_alert"
+    sudo asterisk -rx "rpt localplay $MYNODE rpt/litz_alert"
     sleep 20
-    asterisk -rx "rpt cmd $MYNODE cop 48 !330.5/1000,!832.5/3000"
+    sudo asterisk -rx "rpt fun $MYNODE *894#"
     sleep 5
-    asterisk -rx "rpt localplay $MYNODE rpt/litz_alert"
+    sudo asterisk -rx "rpt localplay $MYNODE rpt/litz_alert"
     ;;
 severeweather) # Severe Weather Alert
     sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMES/g" $RPTCONF
@@ -85,17 +85,17 @@ severeweather) # Severe Weather Alert
     sed -i "s/^remotect=.*$/remotect=$CTSWX/g" $RPTCONF
     sed -i "s/^remotemon=.*$/remotemon=|t(660,880,100,4096)/g" $RPTCONF
     sed -i "s/^remotetx=.*$/remotetx=|t(660,880,100,4096)/g" $RPTCONF
-    asterisk -rx "rpt localplay $MYNODE rpt/change_over"
+    sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 14 $SSSWX"
+    sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSSWX"
     sleep 15
-    asterisk -rx "module reload"
+    sudo asterisk -rx "module reload"
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 48 !330.5/1000,!928.1/3000"
+    sudo asterisk -rx "rpt fun $MYNODE *895#"
     sleep 6
-    asterisk -rx "rpt cmd $MYNODE cop 48 !1051/5000"
+    sudo asterisk -rx "rpt cmd $MYNODE cop 48 !1051/5000"
     sleep 7
-    asterisk -rx "rpt localplay $MYNODE rpt/severe_weather_alert"
+    sudo asterisk -rx "rpt localplay $MYNODE rpt/severe_weather_alert"
     ;;
 weatheralert) # Weather Alert
     sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEM/g" $RPTCONF
@@ -104,7 +104,7 @@ weatheralert) # Weather Alert
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTWXA/g" $RPTCONF
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" $RPTCONF
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" $RPTCONF
-    asterisk -rx "module reload"
+    sudo asterisk -rx "module reload"
     ;;
 tactical) # Tactical Operations
     sed -i "s/^SCHEDULER=.*$/SCHEDULER=0/g" $sourcefile
@@ -116,13 +116,13 @@ tactical) # Tactical Operations
     sed -i "s/^remotect=.*$/remotect=$CTTAC/g" $RPTCONF
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" $RPTCONF
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" $RPTCONF
-    asterisk -rx "rpt localplay $MYNODE rpt/change_over"
+    sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 14 $SSTAC"
+    sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSTAC"
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 16 $MYNODE" # Set Scheduler to DISABLED
+    sudo asterisk -rx "rpt cmd $MYNODE cop 16 $MYNODE" # Set Scheduler to DISABLED
     sleep 15
-    asterisk -rx "module reload"
+    sudo asterisk -rx "module reload"
     ;;
 stealth) # Stealth Operations
     sed -i "s/^SCHEDULER=.*$/SCHEDULER=0/g" $sourcefile
@@ -138,13 +138,13 @@ stealth) # Stealth Operations
     sed -i "s/^remotect=.*$/remotect=$CTSTL/g" $RPTCONF
     sed -i "s/^remotemon=.*$/remotemon=|t(0,0,50,0)/g" $RPTCONF
     sed -i "s/^remotetx=.*$/remotetx=|t(0,0,50,0)/g" $RPTCONF
-    asterisk -rx "rpt cmd $MYNODE cop 14 $SSSTL"
+    sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSSTL"
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 18 $MYNODE" # Set User Functions to DISABLED
+    sudo asterisk -rx "rpt cmd $MYNODE cop 18 $MYNODE" # Set User Functions to DISABLED
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 34 $MYNODE" # Set Local Telemetry to DISABLED
+    sudo asterisk -rx "rpt cmd $MYNODE cop 34 $MYNODE" # Set Local Telemetry to DISABLED
     sleep 15
-    asterisk -rx "module reload"
+    sudo asterisk -rx "module reload"
     ;;
 daytime) # Daytime Operations
     sed -i "s/^SCHEDULER=.*$/SCHEDULER=1/g" $sourcefile
@@ -156,11 +156,11 @@ daytime) # Daytime Operations
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTUNK/g" $RPTCONF
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" $RPTCONF
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" $RPTCONF
-    asterisk -rx "rpt localplay $MYNODE rpt/change_over"
+    sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 14 $SSDAY"
+    sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSDAY"
     sleep 15
-    asterisk -rx "module reload"
+    sudo asterisk -rx "module reload"
     ;;
 nighttime) # Nighttime Operations
     sed -i "s/^SCHEDULER=.*$/SCHEDULER=1/g" $sourcefile
@@ -172,11 +172,11 @@ nighttime) # Nighttime Operations
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTUNK/g" $RPTCONF
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" $RPTCONF
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" $RPTCONF
-    asterisk -rx "rpt localplay $MYNODE rpt/change_over"
+    sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 14 $SSNGT"
+    sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSNGT"
     sleep 15
-    asterisk -rx "module reload"
+    sudo asterisk -rx "module reload"
     ;;
 net) # Net
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=4/g" $sourcefile
@@ -187,21 +187,21 @@ net) # Net
     sed -i "s/^remotect=.*$/remotect=$CTNET/g" $RPTCONF
     sed -i "s/^remotemon=.*$/remotemon=|mN/g" $RPTCONF
     sed -i "s/^remotetx=.*$/remotetx=|mN/g" $RPTCONF
-    asterisk -rx "rpt localplay $MYNODE rpt/change_over"
+    sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
     sleep 3
-    asterisk -rx "rpt cmd $MYNODE cop 14 $SSNET"
+    sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSNET"
     sleep 15
-    asterisk -rx "module reload"
+    sudo asterisk -rx "module reload"
     ;;
 clock) # Grandfather Clock
-    asterisk -rx "rpt cmd $MYNODE cop 48 !830+827/450,!0/250,!659+656/450,!0/250,!739+736/450,!0/250,!493+490/450,!0/750,!493+490/450,!0/250,!739+736/450,!0/250,!830+827/450,!0/250,!659+656/450"
+    sudo asterisk -rx "rpt cmd $MYNODE cop 48 !830+829/450,!0/250,!659+658/450,!0/250,!739+738/450,!0/250,!493+492/450,!0/750,!493+492/450,!0/250,!739+738/450,!0/250,!830+829/450,!0/250,!659+658/450"
     sleep 2
-    asterisk -rx "rpt localplay $MYNODE rpt/current_time"
+    sudo asterisk -rx "rpt localplay $MYNODE rpt/current_time"
     ;;
 *) # Error
-    asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+    sudo asterisk -rx "rpt localplay $MYNODE rpt/program_error"
     exit
     ;;
 esac
 
-###EDIT: Sat Feb 22 10:02:32 AM EST 2025
+###EDIT: Tue  9 Sep 13:51:44 EDT 2025
