@@ -70,11 +70,11 @@ standard) # Standard Operations
     sudo asterisk -rx "module reload"
     ;;
 litzalert) # Long Tone Zero (LiTZ) Alert
-    sudo asterisk -rx "rpt fun $MYNODE *894#"
+    sudo asterisk -rx "rpt fun $MYNODE *8404#"
     sleep 5
     sudo asterisk -rx "rpt localplay $MYNODE rpt/litz_alert"
     sleep 20
-    sudo asterisk -rx "rpt fun $MYNODE *894#"
+    sudo asterisk -rx "rpt fun $MYNODE *8404#"
     sleep 5
     sudo asterisk -rx "rpt localplay $MYNODE rpt/litz_alert"
     ;;
@@ -91,7 +91,7 @@ severeweather) # Severe Weather Alert
     sleep 15
     sudo asterisk -rx "module reload"
     sleep 3
-    sudo asterisk -rx "rpt fun $MYNODE *895#"
+    sudo asterisk -rx "rpt fun $MYNODE *8405#"
     sleep 6
     sudo asterisk -rx "rpt cmd $MYNODE cop 48 !1051/5000"
     sleep 7
