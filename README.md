@@ -1161,5 +1161,5 @@ ctkeeper.sh unlinkedct 78
 |98|rpt/empty|_Not Used_|"EMPTY"|
 |99|rpt/empty|_Not Used_|"EMPTY"|
 # Footnotes
-[^1]: These are high fidelity recordings from a Texas Instruments TSP5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).  Recordings were sourced using audio-in to a PC with Audacity; these are captured in μ-law companding algorithm 8-bit PCM format.
+[^1]: These are high fidelity recordings from a Texas Instruments TMS5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).  Recordings were sourced using audio-in to a PC with Audacity; these are captured in μ-law companding algorithm 8-bit PCM format.
 [^2]: Weather reporting requires account registration and use of an API key from [Weather Underground](https://www.weatherunderground.com/).
