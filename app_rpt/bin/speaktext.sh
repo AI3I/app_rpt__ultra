@@ -20,54 +20,61 @@
 
 #    This script adapted from works provided Ramon Gonzalez, KP4TR (2014)
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
 speakfile=/tmp/speakfile
 
+# Usage: speak <text> [File]
+# If second argument is "File", only generate the file without playing
 function speak {
+    local speaktext
     speaktext=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-    let speaklen=$(echo "$speaktext" | /usr/bin/wc -m)-1
-    counter=0
-    rm -f $speakfile.ulaw
-    touch $speakfile.ulaw
-    while [ $counter -lt $speaklen ]; do
-        let counter=counter+1
-        character=$(echo "$speaktext" | cut -c$counter )
-        if [[ $character =~ ^[A-Za-z_]+$ ]]
-            then
-            cat $SOUNDS/letters/$character.ulaw >> $speakfile.ulaw
+    local speaklen
+    speaklen=$(($(echo "$speaktext" | /usr/bin/wc -m) - 1))
+    local counter=0
+    local character
+
+    rm -f "${speakfile}.ulaw"
+    touch "${speakfile}.ulaw"
+
+    while [[ $counter -lt $speaklen ]]; do
+        counter=$((counter + 1))
+        character=$(echo "$speaktext" | cut -c"$counter")
+
+        if [[ $character =~ ^[A-Za-z_]+$ ]]; then
+            cat "${SOUNDS}/letters/${character}.ulaw" >> "${speakfile}.ulaw"
         fi
-        if [[ $character =~ ^-?[0-9]+$ ]]
-            then
-            cat $SOUNDS/digits/$character.ulaw >> $speakfile.ulaw
+
+        if [[ $character =~ ^-?[0-9]+$ ]]; then
+            cat "${SOUNDS}/digits/${character}.ulaw" >> "${speakfile}.ulaw"
         fi
-        case $character in
-            '.') cat $SOUNDS/_male/point.ulaw >> $speakfile.ulaw ;;
-            '+') cat $SOUNDS/_male/plus.ulaw >> $speakfile.ulaw ;;
-            '-') cat $SOUNDS/_male/minus.ulaw >> $speakfile.ulaw ;;
-            '=') cat $SOUNDS/_male/equal.ulaw >> $speakfile.ulaw ;;
-            '@') cat $SOUNDS/_male/at.ulaw >> $speakfile.ulaw ;;
-            '#') cat $SOUNDS/_male/pound.ulaw >> $speakfile.ulaw ;;
-            '*') cat $SOUNDS/_male/star.ulaw >> $speakfile.ulaw ;;
+
+        case "$character" in
+            '.') cat "${SOUNDS}/_male/point.ulaw" >> "${speakfile}.ulaw" ;;
+            '+') cat "${SOUNDS}/_male/plus.ulaw" >> "${speakfile}.ulaw" ;;
+            '-') cat "${SOUNDS}/_male/minus.ulaw" >> "${speakfile}.ulaw" ;;
+            '=') cat "${SOUNDS}/_male/equal.ulaw" >> "${speakfile}.ulaw" ;;
+            '@') cat "${SOUNDS}/_male/at.ulaw" >> "${speakfile}.ulaw" ;;
+            '#') cat "${SOUNDS}/_male/pound.ulaw" >> "${speakfile}.ulaw" ;;
+            '*') cat "${SOUNDS}/_male/star.ulaw" >> "${speakfile}.ulaw" ;;
             *) ;;
         esac
     done
-    if [ $2 == "File" ]
-        then
-	exit
+
+    # If second argument is "File", just generate file without playing
+    if [[ "${2:-}" == "File" ]]; then
+        return 0
     else
-	asterisk -rx "rpt localplay $MYNODE $speakfile"
+        asterisk -rx "rpt localplay $MYNODE $speakfile"
     fi
 }
 
-if [ "$1" == "" ]
-    then
-    echo "$0 <characters>"
-    exit
+if [[ -z "$1" ]]; then
+    echo "Usage: $0 <characters> [File]"
+    echo "  If 'File' is specified, generates audio file without playing"
+    exit 1
 fi
 
-speak "$1" $MYNODE
+speak "$1" "${2:-}"
 
 ###EDIT: Sat Feb 22 10:02:32 AM EST 2025

@@ -18,12 +18,23 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
 #    PURPOSE:  Read messages from table (as defined in messagetable.txt).
-msgid=$(cat $MSGTBL | grep ^$1 | cut -d' ' -f2)
-asterisk -rx "rpt localplay $MYNODE $msgid"
+
+if [[ -z "$1" ]]; then
+    asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+    exit 1
+fi
+
+# Use grep -F for fixed string matching to avoid regex injection
+msgid=$(grep -F "$1 " "$MSGTBL" | head -1 | cut -d' ' -f2)
+
+if [[ -n "$msgid" ]]; then
+    asterisk -rx "rpt localplay $MYNODE $msgid"
+else
+    asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+    exit 1
+fi
 
 ###EDIT: Tue  9 Sep 12:17:25 EDT 2025

@@ -18,9 +18,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
 frequency=`iwconfig wlan0 | tr -d ' ' | grep Frequency | cut -d':' -f3 | cut -d'A' -f1`
 level=`iwconfig wlan0 | tr -d ' ' | grep Signallevel | cut -d'=' -f3 | cut -d'/' -f1`

@@ -18,61 +18,58 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
+
+# ==============================================================================
+#    Helper Function
+# ==============================================================================
+
+# Build time announcement audio
+# Usage: build_time_audio "greeting" "am_pm" ["extra_file"]
+build_time_audio() {
+    local greeting="$1"
+    local ampm="$2"
+    local extra="${3:-}"
+    local hour
+    hour=$(date +%l | tr -d ' ')
+    local mins
+    mins=$(date +%M)
+
+    if [[ -n "$extra" ]]; then
+        cat "$SNDFEMALE/${greeting}.ulaw" "$SNDFEMALE/pause.ulaw" \
+            "$SNDFEMALE/the_time_is.ulaw" "$SNDFEMALE/${hour}.ulaw" \
+            "$SNDFEMALE/${mins}.ulaw" "$SNDFEMALE/${ampm}.ulaw" \
+            "$SNDFEMALE/pause.ulaw" "$extra" > "$SNDRPT/current_time.ulaw"
+    else
+        cat "$SNDFEMALE/${greeting}.ulaw" "$SNDFEMALE/pause.ulaw" \
+            "$SNDFEMALE/the_time_is.ulaw" "$SNDFEMALE/${hour}.ulaw" \
+            "$SNDFEMALE/${mins}.ulaw" "$SNDFEMALE/${ampm}.ulaw" > "$SNDRPT/current_time.ulaw"
+    fi
+}
+
+# ==============================================================================
+#    Main Logic
+# ==============================================================================
 
 hours=$(date +%k)
-minutes=$(date +%M)
 
+# Determine evening cutoff based on DST
+# perl returns 0 (success) during standard time, 1 during DST
 if perl -e 'exit ((localtime)[8])'; then
-    if [ $hours -ge '17' -a $hours -le '23' ]; then
-        newhour=$(date +%l | tr -d ' ')
-        # Good evening! The time is <time> P.M.
-        cat $SNDFEMALE/good_evening.ulaw $SNDFEMALE/pause.ulaw $SNDFEMALE/the_time_is.ulaw $SNDFEMALE/$newhour.ulaw $SNDFEMALE/$minutes.ulaw $SNDFEMALE/p_m.ulaw >$SNDRPT/current_time.ulaw
-        exit
-    elif [ $hours -ge '12' -a $hours -lt '17' ]; then
-        newhour=$(date +%l | tr -d ' ')
-        # Good afternoon! The time is <time> P.M.
-        cat $SNDFEMALE/good_afternoon.ulaw $SNDFEMALE/pause.ulaw $SNDFEMALE/the_time_is.ulaw $SNDFEMALE/$newhour.ulaw $SNDFEMALE/$minutes.ulaw $SNDFEMALE/p_m.ulaw >$SNDRPT/current_time.ulaw
-        exit
-    elif [ $hours -ge '6' -a $hours -lt '12' ]; then
-        newhour=$(date +%l | tr -d ' ')
-        # Good morning! The time is <time> A.M.
-        cat $SNDFEMALE/good_morning.ulaw $SNDFEMALE/pause.ulaw $SNDFEMALE/the_time_is.ulaw $SNDFEMALE/$newhour.ulaw $SNDFEMALE/$minutes.ulaw $SNDFEMALE/a_m.ulaw >$SNDRPT/current_time.ulaw
-        exit
-    elif [ $hours -ge '0' -a $hours -lt '6' ]; then
-        newhour=$(date +%l | tr -d ' ')
-        # Good morning! The time is <time> A.M. ...why are you up?
-        cat $SNDFEMALE/good_morning.ulaw $SNDFEMALE/pause.ulaw $SNDFEMALE/the_time_is.ulaw $SNDFEMALE/$newhour.ulaw $SNDFEMALE/$minutes.ulaw $SNDFEMALE/a_m.ulaw $SNDFEMALE/pause.ulaw $SNDTAIL/why_are_you_up.ulaw >$SNDRPT/current_time.ulaw
-        exit
-    else
-        exit
-    fi
+    evening_start=17  # DST: evening starts at 5 PM
 else
-    if [ $hours -ge '18' -a $hours -le '23' ]; then
-        newhour=$(date +%l | tr -d ' ')
-        # Good evening! The time is <time> P.M.
-        cat $SNDFEMALE/good_evening.ulaw $SNDFEMALE/pause.ulaw $SNDFEMALE/the_time_is.ulaw $SNDFEMALE/$newhour.ulaw $SNDFEMALE/$minutes.ulaw $SNDFEMALE/p_m.ulaw >$SNDRPT/current_time.ulaw
-        exit
-    elif [ $hours -ge '12' -a $hours -lt '18' ]; then
-        newhour=$(date +%l | tr -d ' ')
-        # Good afternoon! The time is <time> P.M.
-        cat $SNDFEMALE/good_afternoon.ulaw $SNDFEMALE/pause.ulaw $SNDFEMALE/the_time_is.ulaw $SNDFEMALE/$newhour.ulaw $SNDFEMALE/$minutes.ulaw $SNDFEMALE/p_m.ulaw >$SNDRPT/current_time.ulaw
-        exit
-    elif [ $hours -ge '6' -a $hours -lt '12' ]; then
-        newhour=$(date +%l | tr -d ' ')
-        # Good morning! The time is <time> A.M.
-        cat $SNDFEMALE/good_morning.ulaw $SNDFEMALE/pause.ulaw $SNDFEMALE/the_time_is.ulaw $SNDFEMALE/$newhour.ulaw $SNDFEMALE/$minutes.ulaw $SNDFEMALE/a_m.ulaw >$SNDRPT/current_time.ulaw
-        exit
-    elif [ $hours -ge '0' -a $hours -lt '6' ]; then
-        newhour=$(date +%l | tr -d ' ')
-        # Good morning! The time is <time> A.M. ...why are you up?
-        cat $SNDFEMALE/good_morning.ulaw $SNDFEMALE/pause.ulaw $SNDFEMALE/the_time_is.ulaw $SNDFEMALE/$newhour.ulaw $SNDFEMALE/$minutes.ulaw $SNDFEMALE/a_m.ulaw $SNDFEMALE/pause.ulaw $SNDTAIL/why_are_you_up.ulaw >$SNDRPT/current_time.ulaw
-        exit
-    else
-        exit
-    fi
+    evening_start=18  # Standard: evening starts at 6 PM
 fi
 
-###EDIT: Sat Feb 22 10:02:32 AM EST 2025
+# Build time announcement based on time of day
+if [[ $hours -ge $evening_start ]] && [[ $hours -le 23 ]]; then
+    build_time_audio "good_evening" "p_m"
+elif [[ $hours -ge 12 ]] && [[ $hours -lt $evening_start ]]; then
+    build_time_audio "good_afternoon" "p_m"
+elif [[ $hours -ge 6 ]] && [[ $hours -lt 12 ]]; then
+    build_time_audio "good_morning" "a_m"
+elif [[ $hours -ge 0 ]] && [[ $hours -lt 6 ]]; then
+    build_time_audio "good_morning" "a_m" "$SNDTAIL/why_are_you_up.ulaw"
+fi
+
+###EDIT: Tue Dec 31 2025

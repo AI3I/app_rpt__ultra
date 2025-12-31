@@ -18,9 +18,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
 #    PURPOSE:  Ability to generate courtesy tones from CLI or DTMF dynamically without having to directly edit file.
 #
@@ -34,55 +32,57 @@ sourcefile=/opt/app_rpt/config.ini
 #            98     : cmdmode
 #            99     : functcomplete
 
-type=$(echo $1 | cut -c3)
-ct=$(echo $1 | cut -c1,2)
-
-if [ -z $1 ]; then
+if [[ -z "$1" ]]; then
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"
-    exit
+    exit 1
 fi
 
-if [ $ct -eq '99' ]; then
+type=$(echo "$1" | cut -c3)
+ct=$(echo "$1" | cut -c1,2)
+
+if [[ "$ct" == "99" ]]; then
     tone=functcomplete
-elif [ $ct -eq '98' ]; then
+elif [[ "$ct" == "98" ]]; then
     tone=cmdmode
-elif [ $ct -eq '97' ]; then
+elif [[ "$ct" == "97" ]]; then
     tone=remotetx
-elif [ $ct -eq '96' ]; then
+elif [[ "$ct" == "96" ]]; then
     tone=remotemon
-elif [ $ct -le "95" ]; then
-    tone=ct$ct
+elif [[ "$ct" -le 95 ]]; then
+    tone="ct${ct}"
 else
-    exit
+    exit 1
 fi
 
-if [ $type == "C" ]; then
-    rewrite=$(echo $1 | cut -dC -f2 | sed "s/D/)(/g" | sed "s/*/,/g")
-    sed -i "s/^$tone=.*$/$tone=|t($rewrite)/g" $RPTCONF
+if [[ "$type" == "C" ]]; then
+    rewrite=$(echo "$1" | cut -dC -f2 | sed "s/D/)(/g" | sed "s/*/,/g")
+    sed -i.bkp "s/^${tone}=.*$/${tone}=|t(${rewrite})/g" "$RPTCONF"
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_t"
     sleep 3
     asterisk -rx "module reload"
-    exit
-elif [ $type == "B" ]; then
-    rewrite=$(echo $1 | cut -dB -f2)
-    mychar=$(cat $CWCHARS | grep $rewrite | cut -d' ' -f2)
-    sed -i "s/^$tone=.*$/$tone=|m$mychar/g" $RPTCONF
+    exit 0
+elif [[ "$type" == "B" ]]; then
+    rewrite=$(echo "$1" | cut -dB -f2)
+    mychar=$(grep "^${rewrite} " "$CWCHARS" | cut -d' ' -f2)
+    sed -i.bkp "s/^${tone}=.*$/${tone}=|m${mychar}/g" "$RPTCONF"
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_t"
     sleep 3
     asterisk -rx "module reload"
-    exit
-elif [ $type == "A" ]; then
-    rewrite=$(echo $1 | cut -s -dA -f2)
-    myword=$(cat $VOCAB | grep $rewrite | cut -d' ' -f2)
-    cat $VOCAB | grep $myword | cut -d' ' -f2 >$SNDCST/ct$ct.ulaw
-    sed -i "s/^$tone=.*$/$tone=custom\/ct$ct/g" $RPTCONF
+    exit 0
+elif [[ "$type" == "A" ]]; then
+    rewrite=$(echo "$1" | cut -s -dA -f2)
+    myword=$(grep "^${rewrite} " "$VOCAB" | cut -d' ' -f2)
+    if [[ -n "$myword" && -f "${SOUNDS}/${myword}" ]]; then
+        cp "${SOUNDS}/${myword}" "${SNDCST}/ct${ct}.ulaw"
+    fi
+    sed -i.bkp "s/^${tone}=.*$/${tone}=custom\/ct${ct}/g" "$RPTCONF"
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_t"
     sleep 3
     asterisk -rx "module reload"
-    exit
+    exit 0
 else
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"
-    exit
+    exit 1
 fi
 
 ###EDIT: Sat Feb 22 10:02:32 AM EST 2025

@@ -18,54 +18,63 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
-#    PURPOSE:  Ability to generate courtesy tones from CLI or DTMF dynamically without having to directly edit files.
+#    PURPOSE:  Ability to generate messages from CLI or DTMF dynamically without having to directly edit files.
 #
 #    CW ID:  00 D <CW character> * <CW character> * <CW character>                      ... uses characters.txt (2 digits)
-#    USAGE:  <MSG slot> D <vocabulary word> * <vocabulary word> * <vocabulary word>     ... uses vocabulary.txt (3 digits) (vocabulary.txt)
+#    USAGE:  <MSG slot> D <vocabulary word> * <vocabulary word> * <vocabulary word>     ... uses vocabulary.txt (3 digits)
 #           ...'D' is a delimiter from the CW ID or message slot
 #           ...'*' is a delimiter between characters or words
 
-idstring=$(echo $1 | cut -c1,2)
+if [[ -z "${1:-}" ]]; then
+    die_with_error "No argument provided"
+fi
+
+idstring="${1:0:2}"
+rewrite=$(echo "$1" | cut -d'D' -f2 | sed "s/*/ /g")
 cwmsg=/tmp/cwmsg
 voicemsg=/tmp/voicemsg
 
-if [ "$idstring" -eq "00" ]; then
-    rewrite=$(echo $1 | cut -d'D' -f2 | sed "s/*/ /g")
-    cat /dev/null >$cwmsg
-    for i in $rewrite; do cat $CWCHARS | grep $i | cut -d' ' -f2 | tr -d '\n' >>$cwmsg; done
-    cwid=$(cat $cwmsg)
-    sed -i "s/^idtalkover=.*$/idtalkover=|i$cwid/g" $RPTCONF
-    cat /dev/null >$cwmsg
+if [[ "$idstring" == "00" ]]; then
+    : > "$cwmsg"
+    for i in $rewrite; do
+        grep "^${i} " "$CWCHARS" | cut -d' ' -f2 | tr -d '\n' >> "$cwmsg"
+    done
+    cwid=$(cat "$cwmsg")
+    sed -i.bkp "s/^idtalkover=.*$/idtalkover=|i$cwid/g" "$RPTCONF"
+    : > "$cwmsg"
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_w_i_d"
-    exit
+    exit 0
 else
-    msgid=$(grep ^$idstring $MSGTBL | cut -d' ' -f2)
-    cat /dev/null >$voicemsg
-    for i in $rewrite; do cat $VOCAB | grep $i | cut -d' ' -f2 >>$voicemsg; done
-    cat $(cat $voicemsg) >$SOUNDS/$msgid.ulaw
-    cat /dev/null >$voicemsg
-    if [ "$idstring" -le "10" ]; then
+    msgid=$(grep "^${idstring} " "$MSGTBL" | head -1 | cut -d' ' -f2)
+    if [[ -z "$msgid" ]]; then
+        die_with_error "Invalid message slot: $idstring"
+    fi
+    : > "$voicemsg"
+    for i in $rewrite; do
+        grep "^${i} " "$VOCAB" | cut -d' ' -f2 >> "$voicemsg"
+    done
+    # Read file paths from voicemsg and concatenate them safely
+    xargs cat < "$voicemsg" > "${SOUNDS}/${msgid}.ulaw"
+    : > "$voicemsg"
+    if [[ "$idstring" -le "10" ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/write_i_d"
         sleep 1
-        $BINDIR/speaktext.sh $idstring
-        exit
-    elif [ "$idstring" -le "19" ]; then
+        "$BINDIR/speaktext.sh" "$idstring"
+        exit 0
+    elif [[ "$idstring" -le "19" ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/write_t_m"
         sleep 1
-        $BINDIR/speaktext.sh $idstring
-        exit
-    elif [ "$idstring" -le "50" ]; then
+        "$BINDIR/speaktext.sh" "$idstring"
+        exit 0
+    elif [[ "$idstring" -le "50" ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/write_message"
         sleep 1
-        $BINDIR/speaktext.sh $idstring
-        exit
+        "$BINDIR/speaktext.sh" "$idstring"
+        exit 0
     else
-        asterisk -rx "rpt localplay $MYNODE rpt/program_error"
-        exit
+        die_with_error "Invalid message slot: $idstring (must be 01-50)"
     fi
 fi
 

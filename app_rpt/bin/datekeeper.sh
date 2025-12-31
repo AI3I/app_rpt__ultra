@@ -18,16 +18,22 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
-dow=`date +%A | tr '[:upper:]' '[:lower:]'`
-month=`date +%B | tr '[:upper:]' '[:lower:]'`
-day=`date +%-e | tr -d ' '`
-year=`date +%y`
+dow=$(date +%A | tr '[:upper:]' '[:lower:]')
+month=$(date +%B | tr '[:upper:]' '[:lower:]')
+day=$(date +%-e | tr -d ' ')
+year=$(date +%y)
 
 # Today is <day of week>, <month> <day>, <year>
-cat $SNDMALE/today.ulaw $SNDMALE/is.ulaw $SNDMALE/$dow.ulaw $SNDMALE/$month.ulaw $SNDMALE/$day.ulaw $SNDFX/pause.ulaw $SNDMALE/2000.ulaw $SNDMALE/$year.ulaw > $SNDRPT/current_date.ulaw
+cat "${SNDMALE}/today.ulaw" \
+    "${SNDMALE}/is.ulaw" \
+    "${SNDMALE}/${dow}.ulaw" \
+    "${SNDMALE}/${month}.ulaw" \
+    "${SNDMALE}/${day}.ulaw" \
+    "${SNDFX}/pause.ulaw" \
+    "${SNDMALE}/2000.ulaw" \
+    "${SNDMALE}/${year}.ulaw" \
+    > "${SNDRPT}/current_date.ulaw"
 
 ###EDIT: Sat Feb 22 10:02:32 AM EST 2025

@@ -18,36 +18,36 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
-idstate=$(sudo asterisk -rx "rpt xnode $MYNODE" | grep ^ider_state | cut -d'=' -f2 | cut -b1)
+idstate=$(sudo asterisk -rx "rpt xnode $MYNODE" | grep ^ider_state | cut -d'=' -f2 | cut -b1 || true)
 
-if [ "$SPECIALID" == "1" ]; then
-    ln -fs $SNDID/special_id.ulaw $SOUNDS/voice_id.ulaw
-elif [ "$SPECIALID" == "0" ]; then
-    if [ "$idstate" == "0" ]; then # QUEUED IN TAIL
-        ln -fs $SNDID/anxious_id.ulaw $SOUNDS/voice_id.ulaw
-    elif [ "$idstate" == "1" ]; then # QUEUED IN CLEANUP
-        if [ "$ROTATEPIDS" == "1" ]; then
+if [[ "$SPECIALID" == "1" ]]; then
+    ln -fs "$SNDID/special_id.ulaw" "$SOUNDS/voice_id.ulaw"
+elif [[ "$SPECIALID" == "0" ]]; then
+    if [[ "$idstate" == "0" ]]; then # QUEUED IN TAIL
+        ln -fs "$SNDID/anxious_id.ulaw" "$SOUNDS/voice_id.ulaw"
+    elif [[ "$idstate" == "1" ]]; then # QUEUED IN CLEANUP
+        if [[ "$ROTATEPIDS" == "1" ]]; then
             pidchurn=$(shuf -i1-5 -n1) # Randomize Pending IDs 1 through 5
-            ln -fs $SNDID/pending_id_$pidchurn.ulaw $SOUNDS/voice_id.ulaw
+            ln -fs "$SNDID/pending_id_${pidchurn}.ulaw" "$SOUNDS/voice_id.ulaw"
         else
-            ln -fs $SNDID/pending_id_$PENDINGID.ulaw $SOUNDS/voice_id.ulaw
+            ln -fs "$SNDID/pending_id_${PENDINGID}.ulaw" "$SOUNDS/voice_id.ulaw"
         fi
-    elif [ "$idstate" == "2" ]; then # CLEAN
-        if [ "$ROTATEIIDS" == "1" ]; then
+    elif [[ "$idstate" == "2" ]]; then # CLEAN
+        if [[ "$ROTATEIIDS" == "1" ]]; then
             iidchurn=$(shuf -i1-3 -n1) # Randomize Initial IDs 1 through 3
-            ln -fs $SNDID/initial_id_$iidchurn.ulaw $SOUNDS/voice_id.ulaw
+            ln -fs "$SNDID/initial_id_${iidchurn}.ulaw" "$SOUNDS/voice_id.ulaw"
         else
-            ln -fs $SNDID/initial_id_$INITIALID.ulaw $SOUNDS/voice_id.ulaw
+            ln -fs "$SNDID/initial_id_${INITIALID}.ulaw" "$SOUNDS/voice_id.ulaw"
         fi
     else
-        exit
+        echo "WARNING: Unknown idstate: $idstate" >&2
+        exit 0
     fi
 else
-    exit
+    echo "WARNING: Unknown SPECIALID value: $SPECIALID" >&2
+    exit 0
 fi
 
-###EDIT: Sat Feb 22 10:02:32 AM EST 2025
+###EDIT: Tue Dec 31 2025

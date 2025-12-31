@@ -18,11 +18,9 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
-case $1 in
+case "$1" in
 reboot) # Reboot System
     sleep 2
     asterisk -rx "rpt localplay $MYNODE rpt/stop_and_start_system"
@@ -30,7 +28,7 @@ reboot) # Reboot System
     systemctl stop asterisk
     sleep 3
     reboot
-    exit
+    exit 0
     ;;
 halt) # Halt System
     sleep 2
@@ -39,11 +37,11 @@ halt) # Halt System
     systemctl stop asterisk
     sleep 3
     poweroff
-    exit
+    exit 0
     ;;
 *) # Error
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"
-    exit
+    exit 1
     ;;
 esac
 

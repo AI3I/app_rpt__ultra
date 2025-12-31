@@ -18,51 +18,49 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
-if [ "$SEVEREWEATHER" == "1" ]; then
-    ln -sf $SOUNDS/$SVWXALERT.ulaw $SOUNDS/tail_message.ulaw
-    exit
-elif [ "$SEVEREWEATHER" == "2" ]; then
-    ln -sf $SOUNDS/$RTWXALERT.ulaw $SOUNDS/tail_message.ulaw
-    exit
-elif [ "$ENABLETAIL" == "1" ]; then
-    if [ "$ROTATETMSG" == "0" ]; then
-        if [ "$ENABLETEMP" == "1" ] && [ "$ENABLETIME" == "1" ]; then
-            ln -sf $(shuf -n 1 -e $SOUNDS/$TIMEMSG.ulaw $SOUNDS/$TEMPMSG.ulaw $SOUNDS/tail_message.ulaw_$TAILMSG) $SOUNDS/tail_message.ulaw
-            exit
-        elif [ "$ENABLETEMP" == "1" ]; then
-            ln -sf $(shuf -n 1 -e $SOUNDS/$TEMPMSG.ulaw $SOUNDS/tail_message.ulaw_$TAILMSG) $SOUNDS/tail_message.ulaw
-            exit
-        elif [ "$ENABLETIME" == "1" ]; then
-            ln -sf $(shuf -n 1 -e $SOUNDS/$TIMEMSG.ulaw $SOUNDS/tail_message.ulaw_$TAILMSG) $SOUNDS/tail_message.ulaw
-            exit
+if [[ "$SEVEREWEATHER" == "1" ]]; then
+    ln -sf "$SOUNDS/${SVWXALERT}.ulaw" "$SOUNDS/tail_message.ulaw"
+    exit 0
+elif [[ "$SEVEREWEATHER" == "2" ]]; then
+    ln -sf "$SOUNDS/${RTWXALERT}.ulaw" "$SOUNDS/tail_message.ulaw"
+    exit 0
+elif [[ "$ENABLETAIL" == "1" ]]; then
+    if [[ "$ROTATETMSG" == "0" ]]; then
+        if [[ "$ENABLETEMP" == "1" ]] && [[ "$ENABLETIME" == "1" ]]; then
+            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tail_message_${TAILMSG}.ulaw")" "$SOUNDS/tail_message.ulaw"
+            exit 0
+        elif [[ "$ENABLETEMP" == "1" ]]; then
+            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tail_message_${TAILMSG}.ulaw")" "$SOUNDS/tail_message.ulaw"
+            exit 0
+        elif [[ "$ENABLETIME" == "1" ]]; then
+            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/tail_message_${TAILMSG}.ulaw")" "$SOUNDS/tail_message.ulaw"
+            exit 0
         else
-            ln -sf $SOUNDS/tail_message_$TAILMSG.ulaw $SOUNDS/tail_message.ulaw
-            exit
+            ln -sf "$SOUNDS/tail_message_${TAILMSG}.ulaw" "$SOUNDS/tail_message.ulaw"
+            exit 0
         fi
-    elif [ "$ROTATETMSG" == "1" ]; then
+    elif [[ "$ROTATETMSG" == "1" ]]; then
         tailchurn=$(shuf -i1-9 -n1) # Randomize Tail Messages 1 through 9
-        if [ "$ENABLETEMP" == "1" ] && [ "$ENABLETIME" == "1" ]; then
-            ln -sf $(shuf -n 1 -e $SOUNDS/$TIMEMSG.ulaw $SOUNDS/$TEMPMSG.ulaw $SOUNDS/tail_message_$tailchurn.ulaw) $SOUNDS/tail_message.ulaw
-            exit
-        elif [ "$ENABLETEMP" == "1" ]; then
-            ln -sf $(shuf -n 1 -e $SOUNDS/$TEMPMSG.ulaw $SOUNDS/tail_message_$tailchurn.ulaw) $SOUNDS/tail_message.ulaw
-            exit
-        elif [ "$ENABLETIME" == "1" ]; then
-            ln -sf $(shuf -n 1 -e $SOUNDS/$TIMEMSG.ulaw $SOUNDS/tail_message_$tailchurn.ulaw) $SOUNDS/tail_message.ulaw
-            exit
+        if [[ "$ENABLETEMP" == "1" ]] && [[ "$ENABLETIME" == "1" ]]; then
+            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tail_message_${tailchurn}.ulaw")" "$SOUNDS/tail_message.ulaw"
+            exit 0
+        elif [[ "$ENABLETEMP" == "1" ]]; then
+            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tail_message_${tailchurn}.ulaw")" "$SOUNDS/tail_message.ulaw"
+            exit 0
+        elif [[ "$ENABLETIME" == "1" ]]; then
+            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/tail_message_${tailchurn}.ulaw")" "$SOUNDS/tail_message.ulaw"
+            exit 0
         else
-            ln -sf $SOUNDS/tail_message_$tailchurn.ulaw $SOUNDS/tail_message.ulaw
-            exit
+            ln -sf "$SOUNDS/tail_message_${tailchurn}.ulaw" "$SOUNDS/tail_message.ulaw"
+            exit 0
         fi
     else
-        exit
+        exit 0
     fi
 else
-    exit
+    exit 0
 fi
 
-###EDIT: Sat Feb 22 10:02:32 AM EST 2025
+###EDIT: Tue Dec 31 2025

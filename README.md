@@ -14,116 +14,52 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 ## System Requirements
 > [!WARNING]
 > Only [AllStarLink 3](https://allstarlink.github.io/) is supported; functionality for previous versions of _app_rpt_ have been removed.
-## Download Codebase
-```
+
+## Quick Install
+The installer script handles all setup automatically, including:
+- Installing dependencies (jq)
+- Creating directories and copying files
+- Configuring the asterisk user account
+- Setting up sound file symlinks
+- Generating a temporary voice ID from your callsign
+- Installing the crontab for automated operations
+- Configuring your node number, callsign, and optional weather services
+
+### Download and Install
+```bash
 mkdir -p /usr/src
 cd /usr/src
 git clone https://github.com/AI3I/app_rpt__ultra.git
 cd app_rpt__ultra
+sudo ./install.sh
 ```
-### Create local directory to store _**app_rpt__ultra**_
-```
-mkdir -p /opt/app_rpt/{bin,lib,sounds} /opt/asterisk /etc/asterisk/custom
-```
-### Remove local sound directories to make way for the vocabulary bank
-```
-rm -rf /var/lib/asterisk/sounds /usr/share/asterisk/sounds
-```
-### Copy provided sounds to _/opt/app_rpt/sounds_
-```
-cp -Rf app_rpt/sounds/* /opt/app_rpt/sounds/
-```
-### Copy executable scripts to _/opt/app_rpt/bin_
-```
-cp -Rf app_rpt/bin/* /opt/app_rpt/bin/
-```
-### Create symbolic links for the vocabulary bank
-```
-ln -s /opt/app_rpt/sounds /var/lib/asterisk/sounds
-ln -s /opt/app_rpt/sounds /usr/share/asterisk/sounds
-```
-## System Changes
-### Install local software
-You will need **jq**, a JSON parser, for successful execution of all scripts within the suite.
-```
-apt install jq -y
-```
-### Modify the _asterisk_ account
-_**app_rpt__ultra**_ will require required unfettered use of Asterisk's native local account, _asterisk_, and requires an interactive shell with _sudo_ access.
-```
-usermod -s /bin/bash -G sudo,dialout,audio,plugdev asterisk
-```
-> [!CAUTION]
-> The _dialout_, _audio_, and _plugdev_ groups are important for stable operation in ASL3.  Should you remove access to those groups, USB audio and control interfaces running under the _asterisk_ account **will not work**!
-### Ensure _sudo_ has access without passwords
-Modify _/etc/sudoers_ to ensure **NOPASSWD** is added to the sudo rule:
-```
-# Allow members of group sudo to execute any command without a password
-%sudo	ALL=(ALL:ALL) NOPASSWD: ALL
-```
-### Ensure permissions are properly set
-```
-chown -Rf asterisk:asterisk /etc/asterisk /opt/asterisk /opt/app_rpt /usr/src/app_rpt__ultra
-```
-### Ensure working scripts are executable
-```
-chmod +x /opt/app_rpt/bin/*.sh
-```
-### Configure crontab for _asterisk_ user
-```
-sudo su - asterisk
-crontab -e
-```
-Use the following for your crontab:
-```
-# apt_rpt__ultra crontab
-0 0 * * *      /opt/app_rpt/bin/datekeeper.sh      # Produce today's date for readback
-0 0 * * *      /opt/app_rpt/bin/datadumper.sh      # Purge old recordings
-*/15 * * * *   /opt/app_rpt/bin/weatherkeeper.sh   # Produce current weather conditions
-* * * * *      /opt/app_rpt/bin/timekeeper.sh      # Produce the current time for readback
-* * * * *      /opt/app_rpt/bin/idkeeper.sh        # Manage all system IDs
-* * * * *      /opt/app_rpt/bin/tailkeeper.sh      # Manage all tail messages
-* * * * *      /opt/app_rpt/bin/weatheralert.sh    # Poll for (severe) weather alerts
-```
-### Copy configuration templates
-> [!CAUTION]
-> 1. Replace `%MYNODE%` to match your AllStarLink node number (_we used **1999** as an example_)
-> 2. Replace all instances of `%MYCALL%` within the file with your call sign (_we used **MYC4LL** as an example_)
-> 3. Be sure to check your **duplex** and **rxchannel** values to ensure they align with desired operation (i.e. _usbradio.conf_ or _simpleusb.conf_)
-> 4. _Do not change_ the **idrecording=voice_id** parameter in _rpt.conf_; this is overwritten by _idkeeper.sh_, which you will learn more about later.
 
-Copy configuration templates:
+The installer will prompt you for:
+1. **Node Number** (required) - Your AllStarLink node number
+2. **Callsign** (required) - Your amateur radio callsign
+3. **NWS Zone** (optional) - For weather alerting via NOAA NWS
+4. **Weather Underground API Key** (optional) - For weather condition reporting
+5. **Weather Underground Station ID** (optional) - Local weather station
+
+### Non-Interactive Install
+For automated deployments, use the `-y` flag with environment variables:
+```bash
+export NODE_NUMBER=1999
+export CALLSIGN=MYC4LL
+export NWS_ZONE=PAC001
+export WU_API_KEY=your_api_key
+export WU_STATION=KPAPITTS123
+sudo -E ./install.sh -y
 ```
-cp asterisk/rpt.conf /etc/asterisk/rpt.conf
-cp asterisk/extensions_custom.conf /etc/asterisk/custom/extensions.conf
-cp config.ini /opt/app_rpt/config.ini
-```
-In order to start with the basics, you can do a _sed_ replacement:
-```
-sed -i s/%MYNODE%/1999/g /etc/asterisk/rpt.conf /opt/app_rpt/config.ini
-sed -i s/%MYCALL%/MYC4LL/g /etc/asterisk/rpt.conf
-```
-### Setup temporary voice identifier from vocabulary bank
-Let us assume our voice ID will say "_THIS IS M Y C 4 L L REPEATER_"  We can achieve this by concatenating several files together to produce our ID, as follows:
-```
-cd /opt/app_rpt/sounds/_male
-cat this_is.ulaw m.ulaw y.ulaw c.ulaw 4.ulaw l.ulaw l.ulaw repeater.ulaw \
-> /opt/app_rpt/sounds/voice_id.ulaw
-```
-The message is written and can be tested through manual invocation by using:
-```
-sudo asterisk -rx "rpt localplay 1999 voice_id"
-```
-## Wrapping up
-### Set the initial date for readback
-```
-sudo su - asterisk
-/opt/app_rpt/bin/datekeeper.sh
-```
-### Restart Asterisk
-```
-sudo systemctl restart asterisk
-```
+
+### Post-Installation
+After installation completes:
+1. Review `/etc/asterisk/rpt.conf` and verify **duplex** and **rxchannel** settings match your configuration (usbradio.conf or simpleusb.conf)
+2. The **idrecording=voice_id** parameter should remain unchanged; it is managed by _idkeeper.sh_
+3. Restart Asterisk: `sudo systemctl restart asterisk`
+
+> [!CAUTION]
+> The installer configures the _asterisk_ account with access to _dialout_, _audio_, and _plugdev_ groups. These are required for USB audio and control interfaces in ASL3.
 # Operation
 Now that you've set up the basics and have legal IDs, it's time to dive deeper into the general operation and behavior of _**app_rpt__ultra**_.  You have configured cron jobs that are now managing general operations of your system, and by periodically dispatching scripts to do our bidding.
 ## Script Operations

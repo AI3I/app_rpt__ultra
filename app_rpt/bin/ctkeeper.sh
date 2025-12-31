@@ -18,35 +18,33 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
 #    PURPOSE:  Allow changing courtesy tones from table of courtesy tones
 #    defined in rpt.conf (template: 00-99) and announce change locally.
 
-case $1 in
+case "$1" in
 linkunkeyct)
-    sed -i "s/^linkuneyct=ct.*$/linkunkeyct=ct$2/g" $RPTCONF
-    $BINDIR/speaktext.sh LUCT$2
+    sed -i.bkp "s/^linkunkeyct=ct.*$/linkunkeyct=ct${2}/g" "$RPTCONF"
+    "${BINDIR}/speaktext.sh" "LUCT${2}"
     sleep 5
     asterisk -rx "module reload"
     ;;
 remotect)
-    sed -i "s/^remotect=ct.*$/remotect=ct$2/g" $RPTCONF
-    $BINDIR/speaktext.sh RMCT$2
+    sed -i.bkp "s/^remotect=ct.*$/remotect=ct${2}/g" "$RPTCONF"
+    "${BINDIR}/speaktext.sh" "RMCT${2}"
     sleep 5
     asterisk -rx "module reload"
     ;;
 unlinkedct)
-    sed -i "s/^unlinkedct=ct.*$/unlinkedct=ct$2/g" $RPTCONF
-    $BINDIR/speaktext.sh ULCT$2
+    sed -i.bkp "s/^unlinkedct=ct.*$/unlinkedct=ct${2}/g" "$RPTCONF"
+    "${BINDIR}/speaktext.sh" "ULCT${2}"
     sleep 5
     asterisk -rx "module reload"
     ;;
 *) # Error
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"
-    exit
+    exit 1
     ;;
 esac
 

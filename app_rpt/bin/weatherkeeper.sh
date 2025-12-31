@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #
 #    app_rpt__ultra :: the ultimate controller experience for app_rpt
@@ -18,125 +18,235 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
+
+# ==============================================================================
+#    Helper Functions
+# ==============================================================================
+
+# Safely extract a value from the Weather Underground JSON
+# Usage: wx_get "path.to.value"
+wx_get() {
+    local result
+    result=$(jq -r ".observations[0] | $1 // empty" < "$WUOUTPUT" 2>/dev/null)
+    # Remove quotes that @sh adds and handle null/empty
+    result="${result//\'/}"
+    if [[ -z "$result" || "$result" == "null" ]]; then
+        echo "0"
+    else
+        echo "$result"
+    fi
+}
+
+# Build an audio file from sound segments
+# Usage: build_audio "output_file" "segment1" "segment2" ...
+build_audio() {
+    local output="$1"
+    shift
+    local files=()
+    for seg in "$@"; do
+        if [[ -f "$seg" ]]; then
+            files+=("$seg")
+        else
+            log_error "Missing sound file: $seg"
+        fi
+    done
+    if [[ ${#files[@]} -gt 0 ]]; then
+        cat "${files[@]}" > "$output"
+    fi
+}
+
+# ==============================================================================
+#    Fetch Weather Data
+# ==============================================================================
 
 # Reach out and grab the latest Weather Underground data
-if [ "$FETCHLOCAL" == "1" ]; then # Copy a file from a local hub
-    sudo rsync -azr --delete $FETCHPOINT:$WUOUTPUT $WUOUTPUT
-elif [ "$FETCHLOCAL" == "0" ]; then # Pull directly from Weather Underground
-    curl -s -k https://api.weather.com/v2/pws/observations/current?stationId=$WUSTATION\&format=json\&units=e\&apiKey=$WUAPIKEY -o $WUOUTPUT
+if [[ "$FETCHLOCAL" == "1" ]]; then
+    # Copy a file from a local hub
+    if ! sudo rsync -azr --delete "$FETCHPOINT:$WUOUTPUT" "$WUOUTPUT" 2>/dev/null; then
+        log_error "Failed to fetch weather data from $FETCHPOINT"
+        exit 1
+    fi
+elif [[ "$FETCHLOCAL" == "0" ]]; then
+    # Pull directly from Weather Underground
+    if [[ -z "${WUAPIKEY:-}" || "$WUAPIKEY" == "empty" ]]; then
+        log "Weather Underground API key not configured, skipping"
+        exit 0
+    fi
+    if ! curl -s -k --fail --max-time 30 \
+        "https://api.weather.com/v2/pws/observations/current?stationId=${WUSTATION}&format=json&units=e&apiKey=${WUAPIKEY}" \
+        -o "$WUOUTPUT" 2>/dev/null; then
+        log_error "Failed to fetch weather data from Weather Underground API"
+        exit 1
+    fi
 else
+    log_error "Invalid FETCHLOCAL value: $FETCHLOCAL"
     exit 1
 fi
 
-# Parse the JSON data for weather data using jq
-temp=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .temp] | @sh')
-windchill=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .windChill] | @sh')
-heatindex=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .heatIndex] | @sh')
-dewpt=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .dewpt] | @sh')
-negtemp=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .temp] | @sh' | cut -d'-' -f2)
-negwindchill=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .windChill] | @sh' | cut -d'-' -f2)
-negheatindex=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .heatIndex] | @sh' | cut -d'-' -f2)
-negdewpt=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .dewpt] | @sh' | cut -d'-' -f2)
-windspd=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .windSpeed] | @sh')
-windgust=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .windGust] | @sh')
-winddir=$(cat $WUOUTPUT | jq -r '.observations[] | [.winddir] | @sh')
-humidity=$(cat $WUOUTPUT | jq -r '.observations[] | [.humidity] | @sh')
-pressure_left=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .pressure] | @sh' | cut -d'.' -f1)
-pressure_right=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .pressure] | @sh' | cut -d'.' -f2)
-uv=$(cat $WUOUTPUT | jq -r '.observations[] | [.uv] | @sh' | cut -d'.' -f1)
-preciprate_left=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .precipRate] | @sh' | cut -d'.' -f1)
-preciprate_right=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .precipRate] | @sh' | cut -d'.' -f2)
-preciptotal_left=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .precipTotal] | @sh' | cut -d'.' -f1)
-preciptotal_right=$(cat $WUOUTPUT | jq -r '.observations[] | [.imperial | .precipTotal] | @sh' | cut -d'.' -f2)
-
-# Humidity
-cat $SNDMALE/current.ulaw $SNDMALE/suffix_ly.ulaw $SNDMALE/indicated.ulaw $SNDMALE/at.ulaw $SNDMALE/$humidity.ulaw $SNDMALE/percent.ulaw >$SNDWX/humidity.ulaw
-
-# Barometer
-cat $SNDMALE/current.ulaw $SNDMALE/pressure.ulaw $SNDMALE/is.ulaw $SNDMALE/$pressure_left.ulaw $SNDMALE/point.ulaw $SNDMALE/$pressure_right.ulaw >$SNDWX/pressure.ulaw
-
-# UV Index
-cat $SNDMALE/current.ulaw $SNDMALE/suffix_ly.ulaw $SNDMALE/indicated.ulaw $SNDMALE/at.ulaw $SNDMALE/$uv.ulaw >$SNDWX/uv.ulaw
-
-# Precipitation Per Hour
-cat $SNDMALE/current.ulaw $SNDMALE/suffix_ly.ulaw $SNDMALE/indicated.ulaw $SNDMALE/at.ulaw $SNDMALE/$preciprate_left.ulaw $SNDMALE/point.ulaw $SNDMALE/$preciprate_right.ulaw $SNDMALE/inch.ulaw $SNDMALE/suffix_s.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw >$SNDWX/preciprate.ulaw
-
-# Precipitation Total
-cat $SNDMALE/current.ulaw $SNDMALE/suffix_ly.ulaw $SNDMALE/indicated.ulaw $SNDMALE/at.ulaw $SNDMALE/$preciptotal_left.ulaw $SNDMALE/point.ulaw $SNDMALE/$preciptotal_right.ulaw $SNDMALE/inch.ulaw $SNDMALE/suffix_s.ulaw >$SNDWX/preciptotal.ulaw
-
-# Temperature
-if [ $temp -lt '0' ]; then
-    cat $SNDMALE/current.ulaw $SNDMALE/temperature.ulaw $SNDMALE/is.ulaw $SNDMALE/minus.ulaw $SNDMALE/$negtemp.ulaw $SNDMALE/degrees.ulaw >$SNDWX/temp.ulaw
-elif [ $temp -ge '0' ]; then
-    cat $SNDMALE/current.ulaw $SNDMALE/temperature.ulaw $SNDMALE/is.ulaw $SNDMALE/$temp.ulaw $SNDMALE/degrees.ulaw >$SNDWX/temp.ulaw
-else
-    echo "I can't figure out the temperature!"
-    exit
+# Validate the JSON response
+if [[ ! -s "$WUOUTPUT" ]]; then
+    log_error "Weather data file is empty: $WUOUTPUT"
+    exit 1
 fi
 
-# Wind Chill
-if [ $temp -lt '0' ]; then
-    cat $SNDMALE/current.ulaw $SNDMALE/suffix_ly.ulaw $SNDMALE/indicated.ulaw $SNDMALE/at.ulaw $SNDMALE/minus.ulaw $SNDMALE/$negwindchill.ulaw $SNDMALE/degrees.ulaw >$SNDWX/windchill.ulaw
-elif [ $temp -ge '0' ]; then
-    cat $SNDMALE/current.ulaw $SNDMALE/suffix_ly.ulaw $SNDMALE/indicated.ulaw $SNDMALE/at.ulaw $SNDMALE/$windchill.ulaw $SNDMALE/degrees.ulaw >$SNDWX/windchill.ulaw
-else
-    echo "I can't figure out the wind chill!"
-    exit
+if ! jq -e '.observations[0]' < "$WUOUTPUT" &>/dev/null; then
+    log_error "Invalid or empty weather data in: $WUOUTPUT"
+    exit 1
 fi
 
-# Heat Index
-if [ $temp -lt '0' ]; then
-    cat $SNDMALE/current.ulaw $SNDMALE/suffix_ly.ulaw $SNDMALE/indicated.ulaw $SNDMALE/at.ulaw $SNDMALE/minus.ulaw $SNDMALE/$negheatindex.ulaw $SNDMALE/degrees.ulaw >$SNDWX/heatindex.ulaw
-elif [ $temp -ge '0' ]; then
-    cat $SNDMALE/current.ulaw $SNDMALE/suffix_ly.ulaw $SNDMALE/indicated.ulaw $SNDMALE/at.ulaw $SNDMALE/$heatindex.ulaw $SNDMALE/degrees.ulaw >$SNDWX/heatindex.ulaw
+# ==============================================================================
+#    Parse Weather Data
+# ==============================================================================
+
+# Parse the JSON data using jq
+temp=$(wx_get ".imperial.temp")
+windchill=$(wx_get ".imperial.windChill")
+heatindex=$(wx_get ".imperial.heatIndex")
+dewpt=$(wx_get ".imperial.dewpt")
+windspd=$(wx_get ".imperial.windSpeed")
+windgust=$(wx_get ".imperial.windGust")
+winddir=$(wx_get ".winddir")
+humidity=$(wx_get ".humidity")
+pressure=$(wx_get ".imperial.pressure")
+uv=$(wx_get ".uv")
+preciprate=$(wx_get ".imperial.precipRate")
+preciptotal=$(wx_get ".imperial.precipTotal")
+
+# Handle negative values
+negtemp="${temp#-}"
+negwindchill="${windchill#-}"
+negheatindex="${heatindex#-}"
+negdewpt="${dewpt#-}"
+
+# Split decimal values
+pressure_left="${pressure%%.*}"
+pressure_right="${pressure#*.}"
+preciprate_left="${preciprate%%.*}"
+preciprate_right="${preciprate#*.}"
+preciptotal_left="${preciptotal%%.*}"
+preciptotal_right="${preciptotal#*.}"
+uv="${uv%%.*}"
+
+# ==============================================================================
+#    Build Audio Files
+# ==============================================================================
+
+# Humidity: "Currently indicated at X percent"
+build_audio "$SNDWX/humidity.ulaw" \
+    "$SNDMALE/current.ulaw" "$SNDMALE/suffix_ly.ulaw" "$SNDMALE/indicated.ulaw" \
+    "$SNDMALE/at.ulaw" "$SNDMALE/${humidity}.ulaw" "$SNDMALE/percent.ulaw"
+
+# Barometer: "Current pressure is X point Y"
+build_audio "$SNDWX/pressure.ulaw" \
+    "$SNDMALE/current.ulaw" "$SNDMALE/pressure.ulaw" "$SNDMALE/is.ulaw" \
+    "$SNDMALE/${pressure_left}.ulaw" "$SNDMALE/point.ulaw" "$SNDMALE/${pressure_right}.ulaw"
+
+# UV Index: "Currently indicated at X"
+build_audio "$SNDWX/uv.ulaw" \
+    "$SNDMALE/current.ulaw" "$SNDMALE/suffix_ly.ulaw" "$SNDMALE/indicated.ulaw" \
+    "$SNDMALE/at.ulaw" "$SNDMALE/${uv}.ulaw"
+
+# Precipitation Rate: "Currently indicated at X point Y inches per hour"
+build_audio "$SNDWX/preciprate.ulaw" \
+    "$SNDMALE/current.ulaw" "$SNDMALE/suffix_ly.ulaw" "$SNDMALE/indicated.ulaw" \
+    "$SNDMALE/at.ulaw" "$SNDMALE/${preciprate_left}.ulaw" "$SNDMALE/point.ulaw" \
+    "$SNDMALE/${preciprate_right}.ulaw" "$SNDMALE/inch.ulaw" "$SNDMALE/suffix_s.ulaw" \
+    "$SNDMALE/per.ulaw" "$SNDMALE/hour.ulaw"
+
+# Precipitation Total: "Currently indicated at X point Y inches"
+build_audio "$SNDWX/preciptotal.ulaw" \
+    "$SNDMALE/current.ulaw" "$SNDMALE/suffix_ly.ulaw" "$SNDMALE/indicated.ulaw" \
+    "$SNDMALE/at.ulaw" "$SNDMALE/${preciptotal_left}.ulaw" "$SNDMALE/point.ulaw" \
+    "$SNDMALE/${preciptotal_right}.ulaw" "$SNDMALE/inch.ulaw" "$SNDMALE/suffix_s.ulaw"
+
+# Temperature: "Current temperature is [minus] X degrees"
+if [[ $temp -lt 0 ]]; then
+    build_audio "$SNDWX/temp.ulaw" \
+        "$SNDMALE/current.ulaw" "$SNDMALE/temperature.ulaw" "$SNDMALE/is.ulaw" \
+        "$SNDMALE/minus.ulaw" "$SNDMALE/${negtemp}.ulaw" "$SNDMALE/degrees.ulaw"
 else
-    echo "I can't figure out the heat index!"
-    exit
+    build_audio "$SNDWX/temp.ulaw" \
+        "$SNDMALE/current.ulaw" "$SNDMALE/temperature.ulaw" "$SNDMALE/is.ulaw" \
+        "$SNDMALE/${temp}.ulaw" "$SNDMALE/degrees.ulaw"
 fi
 
-# Dew Point
-if [ $temp -lt '0' ]; then
-    cat $SNDMALE/current.ulaw $SNDMALE/suffix_ly.ulaw $SNDMALE/indicated.ulaw $SNDMALE/at.ulaw $SNDMALE/minus.ulaw $SNDMALE/$negdewpt.ulaw $SNDMALE/degrees.ulaw >$SNDWX/dewpt.ulaw
-elif [ $temp -ge '0' ]; then
-    cat $SNDMALE/current.ulaw $SNDMALE/suffix_ly.ulaw $SNDMALE/indicated.ulaw $SNDMALE/at.ulaw $SNDMALE/$dewpt.ulaw $SNDMALE/degrees.ulaw >$SNDWX/dewpt.ulaw
+# Wind Chill: "Currently indicated at [minus] X degrees"
+if [[ $windchill -lt 0 ]]; then
+    build_audio "$SNDWX/windchill.ulaw" \
+        "$SNDMALE/current.ulaw" "$SNDMALE/suffix_ly.ulaw" "$SNDMALE/indicated.ulaw" \
+        "$SNDMALE/at.ulaw" "$SNDMALE/minus.ulaw" "$SNDMALE/${negwindchill}.ulaw" "$SNDMALE/degrees.ulaw"
 else
-    echo "I can't figure out the dew point!"
-    exit
+    build_audio "$SNDWX/windchill.ulaw" \
+        "$SNDMALE/current.ulaw" "$SNDMALE/suffix_ly.ulaw" "$SNDMALE/indicated.ulaw" \
+        "$SNDMALE/at.ulaw" "$SNDMALE/${windchill}.ulaw" "$SNDMALE/degrees.ulaw"
 fi
 
-# Wind Direction (North)
-if [ $winddir -ge '337' -a $winddir -le '360' ]; then
-    cat $SNDMALE/wind.ulaw $SNDMALE/is.ulaw $SNDMALE/out.ulaw $SNDMALE/of.ulaw $SNDMALE/the.ulaw $SNDMALE/north.ulaw $SNDMALE/at.ulaw $SNDMALE/$windspd.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw $SNDMALE/and.ulaw $SNDMALE/gusting_to.ulaw $SNDMALE/$windgust.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw >$SNDWX/wind.ulaw
-# Wind Direction (Northwest)
-elif [ $winddir -ge '294' -a $winddir -le '336' ]; then
-    cat $SNDMALE/wind.ulaw $SNDMALE/is.ulaw $SNDMALE/out.ulaw $SNDMALE/of.ulaw $SNDMALE/the.ulaw $SNDMALE/north.ulaw $SNDMALE/west.ulaw $SNDMALE/at.ulaw $SNDMALE/$windspd.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw $SNDMALE/and.ulaw $SNDMALE/gusting_to.ulaw $SNDMALE/$windgust.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw >$SNDWX/wind.ulaw
-# Wind Direction (West)
-elif [ $winddir -ge '247' -a $winddir -le '293' ]; then
-    cat $SNDMALE/wind.ulaw $SNDMALE/is.ulaw $SNDMALE/out.ulaw $SNDMALE/of.ulaw $SNDMALE/the.ulaw $SNDMALE/west.ulaw $SNDMALE/at.ulaw $SNDMALE/$windspd.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw $SNDMALE/and.ulaw $SNDMALE/gusting_to.ulaw $SNDMALE/$windgust.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw >$SNDWX/wind.ulaw
-# Wind Direction (Southwest)
-elif [ $winddir -ge '204' -a $winddir -le '246' ]; then
-    cat $SNDMALE/wind.ulaw $SNDMALE/is.ulaw $SNDMALE/out.ulaw $SNDMALE/of.ulaw $SNDMALE/the.ulaw $SNDMALE/south.ulaw $SNDMALE/west.ulaw $SNDMALE/at.ulaw $SNDMALE/$windspd.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw $SNDMALE/and.ulaw $SNDMALE/gusting_to.ulaw $SNDMALE/$windgust.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw >$SNDWX/wind.ulaw
-# Wind Direction (South)
-elif [ $winddir -ge '157' -a $winddir -le '203' ]; then
-    cat $SNDMALE/wind.ulaw $SNDMALE/is.ulaw $SNDMALE/out.ulaw $SNDMALE/of.ulaw $SNDMALE/the.ulaw $SNDMALE/south.ulaw $SNDMALE/at.ulaw $SNDMALE/$windspd.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw $SNDMALE/and.ulaw $SNDMALE/gusting_to.ulaw $SNDMALE/$windgust.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw >$SNDWX/wind.ulaw
-# Wind Direction (Southeast)
-elif [ $winddir -ge '114' -a $winddir -le '156' ]; then
-    cat $SNDMALE/wind.ulaw $SNDMALE/is.ulaw $SNDMALE/out.ulaw $SNDMALE/of.ulaw $SNDMALE/the.ulaw $SNDMALE/south.ulaw $SNDMALE/east.ulaw $SNDMALE/at.ulaw $SNDMALE/$windspd.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw $SNDMALE/and.ulaw $SNDMALE/gusting_to.ulaw $SNDMALE/$windgust.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw >$SNDWX/wind.ulaw
-# Wind Direction (East)
-elif [ $winddir -ge '67' -a $winddir -le '113' ]; then
-    cat $SNDMALE/wind.ulaw $SNDMALE/is.ulaw $SNDMALE/out.ulaw $SNDMALE/of.ulaw $SNDMALE/the.ulaw $SNDMALE/east.ulaw $SNDMALE/at.ulaw $SNDMALE/$windspd.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw $SNDMALE/and.ulaw $SNDMALE/gusting_to.ulaw $SNDMALE/$windgust.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw >$SNDWX/wind.ulaw
-# Wind Direction (Northeast)
-elif [ $winddir -ge '24' -a $winddir -le '66' ]; then
-    cat $SNDMALE/wind.ulaw $SNDMALE/is.ulaw $SNDMALE/out.ulaw $SNDMALE/of.ulaw $SNDMALE/the.ulaw $SNDMALE/north.ulaw $SNDMALE/east.ulaw $SNDMALE/at.ulaw $SNDMALE/$windspd.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw $SNDMALE/and.ulaw $SNDMALE/gusting_to.ulaw $SNDMALE/$windgust.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw >$SNDWX/wind.ulaw
-# Wind Direction (North)
-elif [ $winddir -ge '0' -a $winddir -le '23' ]; then
-    cat $SNDMALE/wind.ulaw $SNDMALE/is.ulaw $SNDMALE/out.ulaw $SNDMALE/of.ulaw $SNDMALE/the.ulaw $SNDMALE/north.ulaw $SNDMALE/at.ulaw $SNDMALE/$windspd.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw $SNDMALE/and.ulaw $SNDMALE/gusting_to.ulaw $SNDMALE/$windgust.ulaw $SNDMALE/miles.ulaw $SNDMALE/per.ulaw $SNDMALE/hour.ulaw >$SNDWX/wind.ulaw
+# Heat Index: "Currently indicated at [minus] X degrees"
+if [[ $heatindex -lt 0 ]]; then
+    build_audio "$SNDWX/heatindex.ulaw" \
+        "$SNDMALE/current.ulaw" "$SNDMALE/suffix_ly.ulaw" "$SNDMALE/indicated.ulaw" \
+        "$SNDMALE/at.ulaw" "$SNDMALE/minus.ulaw" "$SNDMALE/${negheatindex}.ulaw" "$SNDMALE/degrees.ulaw"
 else
-    echo "I can't figure out the wind direction!"
-    exit
+    build_audio "$SNDWX/heatindex.ulaw" \
+        "$SNDMALE/current.ulaw" "$SNDMALE/suffix_ly.ulaw" "$SNDMALE/indicated.ulaw" \
+        "$SNDMALE/at.ulaw" "$SNDMALE/${heatindex}.ulaw" "$SNDMALE/degrees.ulaw"
 fi
 
-###EDIT: Sat Feb 22 10:02:32 AM EST 2025
+# Dew Point: "Currently indicated at [minus] X degrees"
+if [[ $dewpt -lt 0 ]]; then
+    build_audio "$SNDWX/dewpt.ulaw" \
+        "$SNDMALE/current.ulaw" "$SNDMALE/suffix_ly.ulaw" "$SNDMALE/indicated.ulaw" \
+        "$SNDMALE/at.ulaw" "$SNDMALE/minus.ulaw" "$SNDMALE/${negdewpt}.ulaw" "$SNDMALE/degrees.ulaw"
+else
+    build_audio "$SNDWX/dewpt.ulaw" \
+        "$SNDMALE/current.ulaw" "$SNDMALE/suffix_ly.ulaw" "$SNDMALE/indicated.ulaw" \
+        "$SNDMALE/at.ulaw" "$SNDMALE/${dewpt}.ulaw" "$SNDMALE/degrees.ulaw"
+fi
+
+# ==============================================================================
+#    Wind Direction
+# ==============================================================================
+
+# Determine cardinal direction from degrees
+get_wind_direction() {
+    local dir=$1
+    if [[ $dir -ge 337 ]] || [[ $dir -le 23 ]]; then
+        echo "north"
+    elif [[ $dir -ge 24 ]] && [[ $dir -le 66 ]]; then
+        echo "north east"
+    elif [[ $dir -ge 67 ]] && [[ $dir -le 113 ]]; then
+        echo "east"
+    elif [[ $dir -ge 114 ]] && [[ $dir -le 156 ]]; then
+        echo "south east"
+    elif [[ $dir -ge 157 ]] && [[ $dir -le 203 ]]; then
+        echo "south"
+    elif [[ $dir -ge 204 ]] && [[ $dir -le 246 ]]; then
+        echo "south west"
+    elif [[ $dir -ge 247 ]] && [[ $dir -le 293 ]]; then
+        echo "west"
+    elif [[ $dir -ge 294 ]] && [[ $dir -le 336 ]]; then
+        echo "north west"
+    else
+        echo "north"
+    fi
+}
+
+# Build wind direction audio files array
+direction=$(get_wind_direction "$winddir")
+dir_files=()
+for word in $direction; do
+    dir_files+=("$SNDMALE/${word}.ulaw")
+done
+
+# Wind: "Wind is out of the <direction> at X miles per hour and gusting to Y miles per hour"
+build_audio "$SNDWX/wind.ulaw" \
+    "$SNDMALE/wind.ulaw" "$SNDMALE/is.ulaw" "$SNDMALE/out.ulaw" "$SNDMALE/of.ulaw" \
+    "$SNDMALE/the.ulaw" "${dir_files[@]}" "$SNDMALE/at.ulaw" "$SNDMALE/${windspd}.ulaw" \
+    "$SNDMALE/miles.ulaw" "$SNDMALE/per.ulaw" "$SNDMALE/hour.ulaw" "$SNDMALE/and.ulaw" \
+    "$SNDMALE/gusting_to.ulaw" "$SNDMALE/${windgust}.ulaw" "$SNDMALE/miles.ulaw" \
+    "$SNDMALE/per.ulaw" "$SNDMALE/hour.ulaw"
+
+log "Weather data updated successfully"
+
+###EDIT: Tue Dec 31 2025

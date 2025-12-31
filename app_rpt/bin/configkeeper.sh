@@ -18,27 +18,25 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
 # Update local node master configuration file
-sudo rsync -azr --delete $FETCHPOINT:$BACKUPDIR/$MYNODE/config.ini $BASEDIR/config.ini
+sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/config.ini" "${BASEDIR}/config.ini"
 sleep 2
 
 # Replace configuration files with newer version, if necessary
-sudo rsync -azr --delete $FETCHPOINT:$BACKUPDIR/$MYNODE/rpt.conf /etc/asterisk/rpt.conf
-sudo rsync -azr --delete $FETCHPOINT:$BACKUPDIR/$MYNODE/manager.conf /etc/asterisk/manager.conf
-sudo rsync -azr --delete $FETCHPOINT:$BACKUPDIR/$MYNODE/extensions.conf /etc/asterisk/custom/extensions.conf
-sudo rsync -azr --delete $FETCHPOINT:$BACKUPDIR/$MYNODE/allmon3.ini /etc/allmon3/allmon3.ini
+sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/rpt.conf" /etc/asterisk/rpt.conf
+sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/manager.conf" /etc/asterisk/manager.conf
+sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/extensions.conf" /etc/asterisk/custom/extensions.conf
+sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/allmon3.ini" /etc/allmon3/allmon3.ini
 
 # Update scripts from bin directory
-sudo rsync -azr --delete $FETCHPOINT:$BINDIR/ $BINDIR
+sudo rsync -azr --delete "${FETCHPOINT}:${BINDIR}/" "${BINDIR}"
 
 # Update sound files
-sudo rsync -azr --delete $FETCHPOINT:$SNDNODES/ $SNDNODES
-sudo rsync -azr --delete $FETCHPOINT:$SNDRPT/ $SNDRPT
-sudo rsync -azr --delete $FETCHPOINT:$BACKUPDIR/$MYNODE/sounds/ids/ $SNDID
+sudo rsync -azr --delete "${FETCHPOINT}:${SNDNODES}/" "${SNDNODES}"
+sudo rsync -azr --delete "${FETCHPOINT}:${SNDRPT}/" "${SNDRPT}"
+sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/sounds/ids/" "${SNDID}"
 
 # Reload configuration changes for Asterisk
 sleep 5

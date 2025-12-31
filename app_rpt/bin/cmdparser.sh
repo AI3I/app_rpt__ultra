@@ -18,40 +18,41 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
 #    USAGE:  Accept single digit commands from CLI or DTMF with
 #    prepended 0 or otherwise proceed with double digits as entered
 
-
-if [[ "$2" =~ ^[0] ]]; then
-    myvar=$(echo $2 | cut -c2)
-elif [[ "$2" != ^[0] ]]; then
-    myvar=$(echo $2)
+if [[ -z "${2:-}" ]]; then
+    die_with_error "No command argument provided"
 fi
 
+if [[ "$2" =~ ^0 ]]; then
+    myvar="${2:1}"  # Remove leading 0
+else
+    myvar="$2"
+fi
 
-case $1 in
+case "$1" in
 cop) # Control Operator Commands
     asterisk -rx "rpt cmd $MYNODE cop $myvar"
-    exit
+    exit 0
     ;;
 ilink) # Internet Linking Commands
     asterisk -rx "rpt cmd $MYNODE ilink $myvar"
-    exit
+    exit 0
     ;;
 remote) # Remote Base Commands
     asterisk -rx "rpt cmd $MYNODE remote $myvar"
-    exit
+    exit 0
     ;;
 status) # Status Commands
     asterisk -rx "rpt cmd $MYNODE status $myvar"
-    exit
+    exit 0
     ;;
 *) # Error
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"
-    exit
+    exit 1
     ;;
 esac
 

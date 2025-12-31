@@ -18,70 +18,69 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
+sourcefile="$CONFIG_FILE"
 
 # Reach out and grab the latest NWS alerts
-curl -s -k https://api.weather.gov/alerts/active.atom?zone=$NWSZONE -o $NWSFILE
+curl -s -k "https://api.weather.gov/alerts/active.atom?zone=${NWSZONE}" -o "$NWSFILE"
 
 # Parse the file for message contents
-message=`cat $NWSFILE | grep \<cap\:msgType\>Alert\<\/cap\:msgType\> | cut -d'>' -f2 | cut -d'<' -f1 | uniq`
-severity=`cat $NWSFILE | grep \<cap\:severity\>Severe\<\/cap\:severity\> | cut -d'>' -f2 | cut -d'<' -f1 | uniq`
-urgency=`cat $NWSFILE | grep \<cap\:urgency\>Immediate\<\/cap\:urgency\> | cut -d'>' -f2 | cut -d'<' -f1 | uniq`
+message=$(grep '<cap:msgType>Alert</cap:msgType>' "$NWSFILE" 2>/dev/null | cut -d'>' -f2 | cut -d'<' -f1 | uniq || true)
+severity=$(grep '<cap:severity>Severe</cap:severity>' "$NWSFILE" 2>/dev/null | cut -d'>' -f2 | cut -d'<' -f1 | uniq || true)
+urgency=$(grep '<cap:urgency>Immediate</cap:urgency>' "$NWSFILE" 2>/dev/null | cut -d'>' -f2 | cut -d'<' -f1 | uniq || true)
 
-if [ "$SEVEREWEATHER" == "3" ]; then
-    if [ "$severity" == "Severe" ] && [ "$urgency" == "Immediate" ]; then
-        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=1/g" $sourcefile
-        sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" $sourcefile
-        $STATEKEEPER severeweather
-        exit
-    elif [ "$message" == "Alert" ]; then
-        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" $sourcefile
-        sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" $sourcefile
-        $STATEKEEPER weatheralert
-        exit
+if [[ "$SEVEREWEATHER" == "3" ]]; then
+    if [[ "$severity" == "Severe" ]] && [[ "$urgency" == "Immediate" ]]; then
+        sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=1/g" "$sourcefile"
+        sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
+        "$STATEKEEPER" severeweather
+        exit 0
+    elif [[ "$message" == "Alert" ]]; then
+        sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" "$sourcefile"
+        sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
+        "$STATEKEEPER" weatheralert
+        exit 0
     else
-        exit
+        exit 0
     fi
-elif [ "$SEVEREWEATHER" == "2" ]; then
-    if [ "$severity" == "Severe" ] && [ "$urgency" == "Immediate" ]; then
-        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=1/g" $sourcefile
-        sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" $sourcefile
-        $STATEKEEPER severeweather
-        exit
-    elif [ -z $message ] && [ -z $severity ]; then
-        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" $sourcefile
-        sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" $sourcefile
+elif [[ "$SEVEREWEATHER" == "2" ]]; then
+    if [[ "$severity" == "Severe" ]] && [[ "$urgency" == "Immediate" ]]; then
+        sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=1/g" "$sourcefile"
+        sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
+        "$STATEKEEPER" severeweather
+        exit 0
+    elif [[ -z "$message" ]] && [[ -z "$severity" ]]; then
+        sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
+        sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
         asterisk -rx "rpt localplay $MYNODE rpt/cancel_weather_alert"
         sleep 5
-        $STATEKEEPER standard
-        exit
+        "$STATEKEEPER" standard
+        exit 0
     else
-        exit
+        exit 0
     fi
-elif [ "$SEVEREWEATHER" == "1" ]; then
-    if [ "$message" == "Alert" ] && [ -z $severity ]; then
-        sed -i "s/^SCHEDULER=.*$/SCHEDULER=0/g" $sourcefile
-        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" $sourcefile
-        sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" $sourcefile
-        $STATEKEEPER weatheralert
-        exit
-    elif [ -z $message ] && [ -z $severity ]; then
-        sed -i "s/^SCHEDULER=.*$/SCHEDULER=1/g" $sourcefile
-        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" $sourcefile
-        sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" $sourcefile
+elif [[ "$SEVEREWEATHER" == "1" ]]; then
+    if [[ "$message" == "Alert" ]] && [[ -z "$severity" ]]; then
+        sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"
+        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" "$sourcefile"
+        sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
+        "$STATEKEEPER" weatheralert
+        exit 0
+    elif [[ -z "$message" ]] && [[ -z "$severity" ]]; then
+        sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
+        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
+        sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
         asterisk -rx "rpt localplay $MYNODE rpt/cancel_weather_alert"
         sleep 5
-        $STATEKEEPER standard
-        exit
+        "$STATEKEEPER" standard
+        exit 0
     else
-        exit
+        exit 0
     fi
-elif [ "$SEVEREWEATHER" == "0" ]; then
-    exit
-fi
+elif [[ "$SEVEREWEATHER" == "0" ]]; then
+    exit 0
 else
-exit
+    exit 0
+fi
 
-###EDIT: Sat Feb 22 10:02:32 AM EST 2025
+###EDIT: Tue Dec 31 2025

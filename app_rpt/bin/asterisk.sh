@@ -18,10 +18,9 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
-case $1 in
+case "$1" in
 restart) # Restart Asterisk
     sleep 2
     asterisk -rx "rpt localplay $MYNODE rpt/stop_and_start_controller"
@@ -45,7 +44,7 @@ stop) # Stop Asterisk
     ;;
 *) # Error
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"
-    exit
+    exit 1
     ;;
 esac
 

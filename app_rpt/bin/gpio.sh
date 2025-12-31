@@ -18,69 +18,67 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
-if [[ "$2" =~ ^[0] ]]; then
-    mygpio=$(echo $2 | cut -c2)
-elif [[ "$2" != ^[0] ]]; then
-    mygpio=$(echo $2 | cut -c1,2)
+if [[ "$2" =~ ^0 ]]; then
+    mygpio=$(echo "$2" | cut -c2)
+else
+    mygpio=$(echo "$2" | cut -c1,2)
 fi
 
-case $1 in
+case "$1" in
 direction) # GPIO Direction
-    myvar=$(echo $2 | cut -c3)
-    if [ "$myvar" == "1" ]; then
+    myvar=$(echo "$2" | cut -c3)
+    if [[ "$myvar" == "1" ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/g_p_i_o_direction"
         asterisk -rx "rpt localplay $MYNODE digits/$mygpio"
         asterisk -rx "rpt localplay $MYNODE _male/in"
-        echo in >/sys/class/gpio/gpio$mygpio/direction
-    elif [ "$myvar" == "0" ]; then
+        echo in >"/sys/class/gpio/gpio${mygpio}/direction"
+    elif [[ "$myvar" == "0" ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/g_p_i_o_direction"
         asterisk -rx "rpt localplay $MYNODE digits/$mygpio"
         asterisk -rx "rpt localplay $MYNODE _male/out"
-        echo out >/sys/class/gpio/gpio$mygpio/direction
+        echo out >"/sys/class/gpio/gpio${mygpio}/direction"
     fi
-    exit
+    exit 0
     ;;
 export) # Export
     asterisk -rx "rpt localplay $MYNODE rpt/g_p_i_o_set"
     asterisk -rx "rpt localplay $MYNODE digits/$mygpio"
-    echo $mygpio >/sys/class/gpio/export
-    exit
+    echo "$mygpio" >/sys/class/gpio/export
+    exit 0
     ;;
 sleep) # Sleep
-    mysleep=$(echo $2 | cut -c3,4,5,6)
+    mysleep=$(echo "$2" | cut -c3,4,5,6)
     asterisk -rx "rpt localplay $MYNODE rpt/g_p_i_o_operation"
     asterisk -rx "rpt localplay $MYNODE digits/$mygpio"
     asterisk -rx "rpt localplay $MYNODE _male/off"
-    echo 0 >/sys/class/gpio/gpio$mygpio/value
-    sleep $mysleep
+    echo 0 >"/sys/class/gpio/gpio${mygpio}/value"
+    sleep "$mysleep"
     asterisk -rx "rpt localplay $MYNODE rpt/g_p_i_o_operation"
     asterisk -rx "rpt localplay $MYNODE digits/$mygpio"
     asterisk -rx "rpt localplay $MYNODE _male/on"
-    echo 1 >/sys/class/gpio/gpio$mygpio/value
-    exit
+    echo 1 >"/sys/class/gpio/gpio${mygpio}/value"
+    exit 0
     ;;
 toggle) # Toggle On/Off
     asterisk -rx "rpt localplay $MYNODE rpt/g_p_i_o_operation"
     asterisk -rx "rpt localplay $MYNODE digits/$mygpio"
-    gpio unexport $mygpio
+    gpio unexport "$mygpio"
     sleep 3
-    echo $mygpio >/sys/class/gpio/export
-    exit
+    echo "$mygpio" >/sys/class/gpio/export
+    exit 0
     ;;
 unexport) # Un-Export
     asterisk -rx "rpt localplay $MYNODE rpt/g_p_i_o_set"
     asterisk -rx "rpt localplay $MYNODE digits/$mygpio"
-    gpio unexport $mygpio
-    gpio unexport $mygpio
-    exit
+    gpio unexport "$mygpio"
+    gpio unexport "$mygpio"
+    exit 0
     ;;
 *) # Error
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"
-    exit
+    exit 1
     ;;
 esac
 

@@ -18,20 +18,22 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
-sudo find /var/log/asterisk/ -not -empty -type f -mtime +$RETENTION -exec rm {} \; # Purge log files after retention period
-sudo find /opt/asterisk/ -not -empty -type f -mtime +$RETENTION -exec rm {} \; # Purge recordings after retention period
+# Purge log files after retention period
+sudo find /var/log/asterisk/ -not -empty -type f -mtime +"${RETENTION}" -exec rm {} \;
+# Purge recordings after retention period
+sudo find /opt/asterisk/ -not -empty -type f -mtime +"${RETENTION}" -exec rm {} \;
 
 # Upload recordings to master host
-if [ "$FETCHLOCAL" == "1" ]; then # Proceed if not a hub node
-    rsync -azrv --delete $RECORDDIR/$MYNODE/ $FETCHPOINT:$RECORDDIR/$MYNODE/
-elif [ "$FETCHLOCAL" == "0" ]; then # Ignore if operating as a hub
+if [[ "$FETCHLOCAL" == "1" ]]; then
+    # Proceed if not a hub node
+    rsync -azrv --delete "${RECORDDIR}/${MYNODE}/" "${FETCHPOINT}:${RECORDDIR}/${MYNODE}/"
+elif [[ "$FETCHLOCAL" == "0" ]]; then
+    # Ignore if operating as a hub
     exit 0
 else
-    exit
+    exit 1
 fi
 
 ###EDIT: Sun Mar  2 02:02:33 PM EST 2025

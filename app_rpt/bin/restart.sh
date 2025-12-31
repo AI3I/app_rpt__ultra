@@ -18,50 +18,58 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-#    Source local variables
-source /opt/app_rpt/config.ini
-sourcefile=/opt/app_rpt/config.ini
+source "%%BASEDIR%%/bin/common.sh"
 
-case $1 in
+case "$1" in
 network) # Network Restart
     sleep 2
     asterisk -rx "rpt localplay $MYNODE rpt/start_internet"
     sleep 2
     systemctl restart NetworkManager
-    exit
+    exit 0
     ;;
-eth0) # Wireline Interface Restart
+lan) # Wireline Interface Restart
+    if [[ -z "${landevice:-}" ]]; then
+        log_error "landevice not configured"
+        asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+        exit 1
+    fi
     asterisk -rx "rpt localplay $MYNODE rpt/stop_and_start_eth0"
-    ifconfig eth0 down
+    ip link set "$landevice" down
     sleep 5
-    ifconfig eth0 up
-    exit
+    ip link set "$landevice" up
+    exit 0
     ;;
-wlan0) # Wireless Interface Restart
+wlan) # Wireless Interface Restart
+    if [[ -z "${wlandevice:-}" ]]; then
+        log_error "wlandevice not configured"
+        asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+        exit 1
+    fi
     asterisk -rx "rpt localplay $MYNODE rpt/stop_and_start_wlan0"
-    ifconfig wlan0 down
+    ip link set "$wlandevice" down
     sleep 5
-    ifconfig wlan0 up
-    exit
+    ip link set "$wlandevice" up
+    exit 0
     ;;
 openvpn) # OpenVPN Restart (if installed and enabled)
     sleep 2
     asterisk -rx "rpt localplay $MYNODE rpt/stop_and_start_v_p_n"
     sleep 5
     systemctl restart openvpn@client
-    exit
+    exit 0
     ;;
 wireguard) # WireGuard Restart (if installed and enabled)
     sleep 2
     asterisk -rx "rpt localplay $MYNODE rpt/stop_and_start_v_p_n"
     sleep 5
     systemctl restart wg-quick@wg0
-    exit
+    exit 0
     ;;
 *) # Error
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"
-    exit
+    exit 1
     ;;
 esac
 
-###EDIT: Sat Feb 22 10:02:32 AM EST 2025
+###EDIT: Tue Dec 31 2025
