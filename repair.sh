@@ -366,6 +366,103 @@ check_directory_structure() {
 }
 
 # ==============================================================================
+#    Ownership and Permissions Checks
+# ==============================================================================
+
+check_ownership_permissions() {
+    echo ""
+    echo "╔═══════════════════════════════════════╗"
+    echo "║  Ownership & Permissions              ║"
+    echo "╚═══════════════════════════════════════╝"
+    echo ""
+
+    # Check /opt/app_rpt ownership
+    if [[ -d "$INSTALL_BASE" ]]; then
+        local owner
+        owner=$(stat -c '%U:%G' "$INSTALL_BASE" 2>/dev/null || echo "unknown")
+        if [[ "$owner" != "asterisk:asterisk" ]]; then
+            log_fail "Incorrect ownership on $INSTALL_BASE: $owner"
+            ask_repair "Fix ownership on $INSTALL_BASE (recursive)" \
+                "chown -R asterisk:asterisk '$INSTALL_BASE'"
+        else
+            log_pass "Ownership correct on $INSTALL_BASE: $owner"
+        fi
+
+        # Check directory is readable/executable
+        if [[ ! -r "$INSTALL_BASE" ]] || [[ ! -x "$INSTALL_BASE" ]]; then
+            log_fail "$INSTALL_BASE is not readable/executable"
+            ask_repair "Fix permissions on $INSTALL_BASE" \
+                "chmod 755 '$INSTALL_BASE'"
+        fi
+    fi
+
+    # Check critical Asterisk directories
+    local asterisk_dirs=(
+        "/var/lib/asterisk"
+        "/var/log/asterisk"
+        "/var/spool/asterisk"
+        "/var/run/asterisk"
+    )
+
+    for dir in "${asterisk_dirs[@]}"; do
+        if [[ -d "$dir" ]]; then
+            local owner
+            owner=$(stat -c '%U:%G' "$dir" 2>/dev/null || echo "unknown")
+            if [[ "$owner" != "asterisk:asterisk" ]]; then
+                log_warn "Incorrect ownership on $dir: $owner (expected asterisk:asterisk)"
+                ask_repair "Fix ownership on $dir (recursive)" \
+                    "chown -R asterisk:asterisk '$dir'"
+            else
+                log_pass "Ownership correct on $dir"
+            fi
+        else
+            log_verbose "Optional directory not present: $dir"
+        fi
+    done
+
+    # Check /etc/asterisk ownership
+    if [[ -d "/etc/asterisk" ]]; then
+        local owner
+        owner=$(stat -c '%U:%G' "/etc/asterisk" 2>/dev/null || echo "unknown")
+        if [[ "$owner" != "asterisk:asterisk" ]] && [[ "$owner" != "root:asterisk" ]]; then
+            log_warn "Unusual ownership on /etc/asterisk: $owner"
+            log_info "  Typically should be asterisk:asterisk or root:asterisk"
+            ask_repair "Fix ownership on /etc/asterisk (recursive)" \
+                "chown -R asterisk:asterisk '/etc/asterisk'"
+        else
+            log_pass "Ownership acceptable on /etc/asterisk: $owner"
+        fi
+
+        # Check if asterisk user can read configs
+        if ! sudo -u asterisk test -r "/etc/asterisk/asterisk.conf" 2>/dev/null; then
+            log_fail "asterisk user cannot read /etc/asterisk/asterisk.conf"
+            ask_repair "Fix /etc/asterisk permissions for asterisk user" \
+                "chmod -R u+rX,g+rX /etc/asterisk && chown -R asterisk:asterisk /etc/asterisk"
+        fi
+    fi
+
+    # Check sound directory symlinks are readable
+    local sound_symlinks=(
+        "/var/lib/asterisk/sounds"
+        "/usr/share/asterisk/sounds"
+    )
+
+    for link in "${sound_symlinks[@]}"; do
+        if [[ -L "$link" ]]; then
+            if ! sudo -u asterisk test -r "$link" 2>/dev/null; then
+                log_fail "asterisk user cannot read symlink: $link"
+                local target
+                target=$(readlink -f "$link")
+                ask_repair "Fix permissions on sound symlink target" \
+                    "chown -R asterisk:asterisk '$target' && chmod -R u+rX,g+rX '$target'"
+            else
+                log_pass "Sound symlink readable: $link"
+            fi
+        fi
+    done
+}
+
+# ==============================================================================
 #    Script File Checks
 # ==============================================================================
 
@@ -1045,6 +1142,7 @@ main() {
     # Run all check categories
     check_system_basics
     check_directory_structure
+    check_ownership_permissions
     check_script_files
     check_configuration
     check_asterisk_config

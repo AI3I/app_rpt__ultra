@@ -647,18 +647,46 @@ EOF
 set_permissions() {
     print_step "Setting Permissions"
 
+    # Set ownership on app_rpt installation
     chown -R "$OWNER_USER:$OWNER_GROUP" "$DEST_DIR"
-    chown -R "$OWNER_USER:$OWNER_GROUP" /opt/asterisk
-    chown -R "$OWNER_USER:$OWNER_GROUP" /etc/asterisk
     chmod 755 "$DEST_DIR"
     chmod 644 "$DEST_DIR/config.ini"
     chmod 755 "$DEST_DIR/bin/"*.sh
+    chmod 755 "$DEST_DIR/util/"*.sh 2>/dev/null || true
 
-    # Create log file
+    # Set ownership on recordings directory
+    if [[ -d /opt/asterisk ]]; then
+        chown -R "$OWNER_USER:$OWNER_GROUP" /opt/asterisk
+    fi
+
+    # Set ownership on Asterisk config directory
+    if [[ -d /etc/asterisk ]]; then
+        chown -R "$OWNER_USER:$OWNER_GROUP" /etc/asterisk
+    fi
+
+    # Ensure critical Asterisk runtime directories exist with proper ownership
+    local asterisk_dirs=(
+        "/var/lib/asterisk"
+        "/var/log/asterisk"
+        "/var/spool/asterisk"
+        "/var/run/asterisk"
+    )
+
+    for dir in "${asterisk_dirs[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            mkdir -p "$dir"
+            print_info "Created Asterisk directory: $dir"
+        fi
+        chown -R "$OWNER_USER:$OWNER_GROUP" "$dir"
+        chmod 755 "$dir"
+    done
+
+    # Create log file with proper permissions
     touch /var/log/app_rpt.log
     chown "$OWNER_USER:$OWNER_GROUP" /var/log/app_rpt.log
+    chmod 664 /var/log/app_rpt.log
 
-    print_success "Permissions set"
+    print_success "Permissions set (all directories owned by $OWNER_USER:$OWNER_GROUP)"
 }
 
 run_initial_setup() {

@@ -637,6 +637,45 @@ update_version_file() {
 }
 
 # ==============================================================================
+#    Fix Ownership and Permissions
+# ==============================================================================
+
+fix_permissions() {
+    log_step "Verifying ownership and permissions..."
+
+    if [[ "$DRY_RUN" == false ]]; then
+        # Ensure all of /opt/app_rpt is owned by asterisk:asterisk
+        chown -R asterisk:asterisk "$INSTALL_BASE"
+        log_info "Set ownership on $INSTALL_BASE"
+
+        # Ensure critical Asterisk directories have correct ownership
+        local asterisk_dirs=(
+            "/var/lib/asterisk"
+            "/var/log/asterisk"
+            "/var/spool/asterisk"
+            "/var/run/asterisk"
+        )
+
+        for dir in "${asterisk_dirs[@]}"; do
+            if [[ -d "$dir" ]]; then
+                chown -R asterisk:asterisk "$dir"
+                log_verbose "Set ownership on $dir"
+            fi
+        done
+
+        # Ensure log file has proper permissions
+        if [[ -f /var/log/app_rpt.log ]]; then
+            chown asterisk:asterisk /var/log/app_rpt.log
+            chmod 664 /var/log/app_rpt.log
+        fi
+
+        log_success "Ownership and permissions verified"
+    else
+        log_info "[DRY RUN] Would verify ownership and permissions"
+    fi
+}
+
+# ==============================================================================
 #    Rollback Function
 # ==============================================================================
 
@@ -825,7 +864,11 @@ main() {
         echo ""
     fi
 
-    # Step 5: Update version
+    # Step 5: Fix ownership and permissions
+    fix_permissions
+    echo ""
+
+    # Step 6: Update version
     update_version_file
     echo ""
 
