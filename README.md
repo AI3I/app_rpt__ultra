@@ -15,6 +15,9 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 > [!WARNING]
 > Only [AllStarLink 3](https://allstarlink.github.io/) is supported; functionality for previous versions of _app_rpt_ have been removed.
 
+> [!NOTE]
+> Debian 12 (bookworm) and Debian 13 (trixie) have been tested, along with Asterisk 20 and 22.
+
 ## Quick Install
 The installer script handles all setup automatically, including:
 - Installing dependencies (jq)
