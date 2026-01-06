@@ -127,6 +127,14 @@ This polls Weather Underground[^2] to poll for weather station data in your regi
 |WUAPIKEY|_empty_|Should be populated with your Weather Underground API key.[^2]|
 |WUSTATION|_empty_|ID of a Weather Underground station that provides you with local weather data.[^2]|
 |WUOUTPUT|/opt/app_rpt/lib/wunderground.out|Explicit file path where raw JSON data is kept for parsing by **jq**.|
+### configkeeper.sh
+#### CRONTAB: every 5 minutes (child nodes only)
+This script maintains configuration synchronization between hub and child nodes in a distributed architecture.  It syncs scripts, configs, sounds, and can automatically upgrade child nodes when the hub version changes.
+|Variables|Values|Description & Behaviors (config.ini)|
+|-|-|-|
+|FETCHLOCAL|0 or 1 (_boolean_)|Whether this node pulls from a hub system.<br />_**0**_: standalone or hub node<br />_**1**_: child node (pulls from FETCHPOINT)|
+|FETCHPOINT|_hostname_|The hub system hostname/IP to pull configuration from.<br />Only used when FETCHLOCAL=1.|
+|AUTOUPGRADE|0 or 1 (_boolean_)|Whether to automatically upgrade child nodes when hub version changes.<br />_**0**_: manual upgrades only (default)<br />_**1**_: automatic upgrades via configkeeper.sh<br />**NOTE:** Only applies to child nodes (FETCHLOCAL=1).|
 ### datadumper.sh
 #### CRONTAB: midnight daily
 This purges old recordings after they have aged by the defined period in the script.
@@ -1149,6 +1157,24 @@ sudo ./upgrade.sh --auto-yes         # Automatic upgrade (no prompts)
 - 3 - Config migration failed
 - 4 - Script installation failed
 - 5 - Validation failed (rollback triggered)
+
+### Upgrading Hub-Spoke Architectures
+For distributed systems with a hub and multiple child nodes:
+
+**Hub Node (FETCHLOCAL=0):**
+1. Run `upgrade.sh` on the hub as normal
+2. Child nodes will automatically detect and upgrade (if AUTOUPGRADE=1)
+
+**Child Nodes (FETCHLOCAL=1):**
+- **Automatic Upgrade:** Set `AUTOUPGRADE=1` in config.ini
+  - configkeeper.sh (runs every 5 minutes via cron) checks hub version
+  - Automatically runs `upgrade.sh --force --auto-yes` when hub version differs
+  - All output logged to `/var/log/app_rpt.log`
+- **Manual Upgrade:** Keep `AUTOUPGRADE=0` (default)
+  - SSH to each child node and run `upgrade.sh` manually
+
+> [!TIP]
+> Enable AUTOUPGRADE on child nodes to automatically propagate upgrades from the hub. This eliminates the need to manually upgrade each child node after upgrading the hub.
 
 ## System Health & Repair
 ### repair.sh
