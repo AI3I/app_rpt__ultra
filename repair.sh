@@ -437,7 +437,32 @@ check_script_files() {
     fi
 
     if [[ ${#missing_scripts[@]} -gt 0 ]]; then
-        log_info "Missing ${#missing_scripts[@]} scripts - consider running upgrade.sh"
+        log_info "Missing ${#missing_scripts[@]} scripts"
+
+        # If more than 3 scripts missing, offer to run upgrade.sh
+        if [[ ${#missing_scripts[@]} -ge 3 ]]; then
+            log_info "  Multiple scripts missing - suggesting full upgrade"
+
+            # Try to find upgrade.sh
+            local upgrade_script=""
+            if [[ -f "$INSTALL_BASE/util/upgrade.sh" ]]; then
+                upgrade_script="$INSTALL_BASE/util/upgrade.sh"
+            elif [[ -f "./upgrade.sh" ]]; then
+                upgrade_script="./upgrade.sh"
+            fi
+
+            if [[ -n "$upgrade_script" ]] && [[ "$CHECK_ONLY" != true ]]; then
+                if ask_repair "Run upgrade.sh to restore all scripts" \
+                    "sudo '$upgrade_script' --force"; then
+                    log_fixed "Scripts restored via upgrade.sh"
+                else
+                    log_fail "Failed to run upgrade.sh"
+                    log_info "  Try running: sudo $upgrade_script --force"
+                fi
+            else
+                log_info "  Run: sudo upgrade.sh --force"
+            fi
+        fi
     fi
 
     # Check utility scripts
@@ -450,7 +475,7 @@ check_script_files() {
         local util_path="$INSTALL_BASE/util/$util"
 
         if [[ ! -f "$util_path" ]]; then
-            log_warn "Missing utility script: $util"
+            log_fail "Missing utility script: $util"
             missing_utils+=("$util")
         elif [[ ! -x "$util_path" ]]; then
             log_warn "Utility script not executable: $util"
@@ -462,7 +487,18 @@ check_script_files() {
     done
 
     if [[ ${#missing_utils[@]} -gt 0 ]]; then
-        log_info "Missing ${#missing_utils[@]} utility scripts (this is not critical)"
+        log_info "Missing ${#missing_utils[@]} utility scripts"
+        log_info "  These can be restored by running upgrade.sh from the repository"
+
+        # Offer to run upgrade.sh if it exists in common locations
+        if [[ -f "$INSTALL_BASE/util/upgrade.sh" ]] && [[ "$AUTO_FIX" == true ]]; then
+            log_info "Running upgrade.sh to restore utility scripts..."
+            if sudo -u asterisk "$INSTALL_BASE/util/upgrade.sh" --force; then
+                log_fixed "Utility scripts restored via upgrade.sh"
+            else
+                log_fail "Failed to restore utility scripts"
+            fi
+        fi
     fi
 
     return 0
@@ -653,7 +689,7 @@ check_cron_jobs() {
     echo ""
 
     # Check if asterisk user has a crontab
-    if crontab -u asterisk -l &>/dev/null; then
+    if crontab -u asterisk -l &>/dev/null 2>&1; then
         log_pass "asterisk user has crontab"
         local job_count
         job_count=$(crontab -u asterisk -l 2>/dev/null | grep -v '^#' | grep -v '^$' | wc -l)
@@ -666,7 +702,30 @@ check_cron_jobs() {
         fi
     else
         log_fail "asterisk user has no crontab"
-        log_info "  Run install.sh to configure cron jobs"
+        log_info "  Cron jobs are needed for automatic ID rotation, time announcements, weather alerts, etc."
+
+        # Offer to create basic crontab if scripts exist
+        if [[ "$CHECK_ONLY" != true ]] && [[ -d "$INSTALL_BASE/bin" ]]; then
+            if ask_repair "Create crontab with standard app_rpt__ultra jobs" \
+                "cat > /tmp/crontab.$$ <<'CRON'
+*/5  * * * * $INSTALL_BASE/bin/idkeeper.sh
+*/15 * * * * $INSTALL_BASE/bin/tailkeeper.sh
+*/30 * * * * $INSTALL_BASE/bin/timekeeper.sh
+*/5  * * * * $INSTALL_BASE/bin/weatheralert.sh
+0    3 * * * $INSTALL_BASE/bin/weatherkeeper.sh
+0    0 * * * $INSTALL_BASE/bin/datekeeper.sh
+*/30 * * * * $INSTALL_BASE/bin/datadumper.sh
+CRON
+crontab -u asterisk /tmp/crontab.$$
+rm -f /tmp/crontab.$$"; then
+                log_fixed "Crontab created for asterisk user"
+            else
+                log_fail "Failed to create crontab"
+                log_info "  Try running: sudo install.sh to configure cron jobs"
+            fi
+        else
+            log_info "  Run: sudo install.sh to configure cron jobs"
+        fi
         return 1
     fi
 
