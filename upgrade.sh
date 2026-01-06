@@ -489,6 +489,18 @@ install_scripts() {
     fi
 
     rm -f "$temp_config"
+
+    # Remove conflicting Asterisk en directory if it exists
+    if [[ -d "/var/lib/asterisk/sounds/en" ]] || [[ -d "$INSTALL_BASE/sounds/en" ]]; then
+        log_info "Removing conflicting Asterisk en directory..."
+        if [[ "$DRY_RUN" == false ]]; then
+            rm -rf /var/lib/asterisk/sounds/en 2>/dev/null || true
+            rm -rf "$INSTALL_BASE/sounds/en" 2>/dev/null || true
+            log_success "Removed conflicting en directory (conflicts with app_rpt__ultra vocabulary)"
+        else
+            log_info "[DRY RUN] Would remove conflicting en directory"
+        fi
+    fi
 }
 
 # ==============================================================================

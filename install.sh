@@ -400,6 +400,13 @@ create_directories() {
 setup_sound_symlinks() {
     print_step "Setting Up Sound Symlinks"
 
+    # Remove conflicting Asterisk en directory if it exists
+    if [[ -d "/var/lib/asterisk/sounds/en" ]]; then
+        print_info "Removing conflicting Asterisk en directory"
+        rm -rf /var/lib/asterisk/sounds/en
+        print_success "Removed /var/lib/asterisk/sounds/en (conflicts with app_rpt__ultra vocabulary)"
+    fi
+
     # Remove existing sound directories (they'll be replaced with symlinks)
     local sound_dirs=("/var/lib/asterisk/sounds" "/usr/share/asterisk/sounds")
 
@@ -417,6 +424,13 @@ setup_sound_symlinks() {
             print_success "Created symlink: $dir -> $DEST_DIR/sounds"
         fi
     done
+
+    # Also check for en directory in destination sounds directory
+    if [[ -d "$DEST_DIR/sounds/en" ]]; then
+        print_info "Removing conflicting en directory from $DEST_DIR/sounds"
+        rm -rf "$DEST_DIR/sounds/en"
+        print_success "Removed en directory (conflicts with app_rpt__ultra vocabulary)"
+    fi
 }
 
 install_scripts() {

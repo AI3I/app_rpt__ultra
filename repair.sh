@@ -702,6 +702,23 @@ check_sound_files() {
         log_fail "vocabulary.txt missing"
     fi
 
+    # Check for conflicting Asterisk en directory
+    if [[ -d "/var/lib/asterisk/sounds/en" ]]; then
+        log_fail "Conflicting directory found: /var/lib/asterisk/sounds/en"
+        log_info "   This conflicts with app_rpt__ultra's internal vocabulary"
+        if [[ "$CHECK_ONLY" != true ]]; then
+            if ask_repair "Remove /var/lib/asterisk/sounds/en directory?"; then
+                if rm -rf /var/lib/asterisk/sounds/en 2>/dev/null; then
+                    log_fixed "Removed conflicting en directory"
+                else
+                    log_fail "Failed to remove en directory"
+                fi
+            fi
+        fi
+    else
+        log_pass "No conflicting en directory"
+    fi
+
     # Check male/female voice directories
     if [[ -d "$INSTALL_BASE/sounds/_male" ]]; then
         local male_count
