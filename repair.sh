@@ -759,14 +759,18 @@ check_sound_files() {
         fi
     done
 
-    # Check voice ID exists
+    # Check voice ID symlink exists (created by idkeeper.sh)
     set +u
     source "$CONFIG_FILE" 2>/dev/null
     if [[ -n "${MYNODE:-}" ]]; then
-        if [[ -f "$INSTALL_BASE/sounds/ids/voice_id.ulaw" ]]; then
-            log_pass "Voice ID file exists"
+        if [[ -L "$INSTALL_BASE/sounds/voice_id.ulaw" ]]; then
+            local target
+            target=$(readlink "$INSTALL_BASE/sounds/voice_id.ulaw")
+            log_pass "Voice ID symlink exists: $(basename "$target")"
+        elif [[ -f "$INSTALL_BASE/sounds/voice_id.ulaw" ]]; then
+            log_warn "Voice ID exists but is not a symlink (should be managed by idkeeper.sh)"
         else
-            log_warn "Voice ID file missing (may not be generated yet)"
+            log_warn "Voice ID symlink missing (will be created by idkeeper.sh cron job)"
         fi
     fi
     set -u
