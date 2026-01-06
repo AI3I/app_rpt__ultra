@@ -186,9 +186,9 @@ EOF
 
 check_system_basics() {
     echo ""
-    echo "╔════════════════════════════════════════╗"
-    echo "║  System Prerequisites                  ║"
-    echo "╚════════════════════════════════════════╝"
+    echo "╔═══════════════════════════════════════╗"
+    echo "║  System Prerequisites                 ║"
+    echo "╚═══════════════════════════════════════╝"
     echo ""
 
     # Check running as root
@@ -288,9 +288,9 @@ check_system_basics() {
 
 check_directory_structure() {
     echo ""
-    echo "╔════════════════════════════════════════╗"
-    echo "║  Directory Structure                   ║"
-    echo "╚════════════════════════════════════════╝"
+    echo "╔═══════════════════════════════════════╗"
+    echo "║  Directory Structure                  ║"
+    echo "╚═══════════════════════════════════════╝"
     echo ""
 
     local required_dirs=(
@@ -370,9 +370,9 @@ check_directory_structure() {
 
 check_script_files() {
     echo ""
-    echo "╔════════════════════════════════════════╗"
-    echo "║  Script Files                          ║"
-    echo "╚════════════════════════════════════════╝"
+    echo "╔═══════════════════════════════════════╗"
+    echo "║  Script Files                         ║"
+    echo "╚═══════════════════════════════════════╝"
     echo ""
 
     local expected_scripts=(
@@ -448,9 +448,9 @@ check_script_files() {
 
 check_configuration() {
     echo ""
-    echo "╔════════════════════════════════════════╗"
-    echo "║  Configuration File                    ║"
-    echo "╚════════════════════════════════════════╝"
+    echo "╔═══════════════════════════════════════╗"
+    echo "║  Configuration File                   ║"
+    echo "╚═══════════════════════════════════════╝"
     echo ""
 
     # Check config.ini exists
@@ -554,9 +554,9 @@ check_configuration() {
 
 check_asterisk_config() {
     echo ""
-    echo "╔════════════════════════════════════════╗"
-    echo "║  Asterisk Configuration                ║"
-    echo "╚════════════════════════════════════════╝"
+    echo "╔═══════════════════════════════════════╗"
+    echo "║  Asterisk Configuration               ║"
+    echo "╚═══════════════════════════════════════╝"
     echo ""
 
     # Check rpt.conf exists
@@ -621,9 +621,9 @@ check_asterisk_config() {
 
 check_cron_jobs() {
     echo ""
-    echo "╔════════════════════════════════════════╗"
-    echo "║  Cron Jobs                             ║"
-    echo "╚════════════════════════════════════════╝"
+    echo "╔═══════════════════════════════════════╗"
+    echo "║  Cron Jobs                            ║"
+    echo "╚═══════════════════════════════════════╝"
     echo ""
 
     # Check if asterisk user has a crontab
@@ -688,9 +688,9 @@ check_cron_jobs() {
 
 check_sound_files() {
     echo ""
-    echo "╔════════════════════════════════════════╗"
-    echo "║  Sound Files                           ║"
-    echo "╚════════════════════════════════════════╝"
+    echo "╔═══════════════════════════════════════╗"
+    echo "║  Sound Files                          ║"
+    echo "╚═══════════════════════════════════════╝"
     echo ""
 
     # Check vocabulary exists
@@ -761,9 +761,9 @@ check_sound_files() {
 
 check_log_file() {
     echo ""
-    echo "╔════════════════════════════════════════╗"
-    echo "║  Log File                              ║"
-    echo "╚════════════════════════════════════════╝"
+    echo "╔═══════════════════════════════════════╗"
+    echo "║  Log File                             ║"
+    echo "╚═══════════════════════════════════════╝"
     echo ""
 
     if [[ -f "$LOG_FILE" ]]; then
@@ -813,9 +813,9 @@ check_log_file() {
 
 check_runtime_tests() {
     echo ""
-    echo "╔════════════════════════════════════════╗"
-    echo "║  Runtime Tests                         ║"
-    echo "╚════════════════════════════════════════╝"
+    echo "╔═══════════════════════════════════════╗"
+    echo "║  Runtime Tests                        ║"
+    echo "╚═══════════════════════════════════════╝"
     echo ""
 
     # Test common.sh can be sourced
@@ -850,9 +850,9 @@ check_runtime_tests() {
 
 generate_summary() {
     echo ""
-    echo "╔════════════════════════════════════════╗"
-    echo "║  Health Check Summary                  ║"
-    echo "╚════════════════════════════════════════╝"
+    echo "╔═══════════════════════════════════════╗"
+    echo "║  Health Check Summary                 ║"
+    echo "╚═══════════════════════════════════════╝"
     echo ""
 
     local total_checks=$((CHECKS_PASSED + CHECKS_FAILED + CHECKS_WARNING))
@@ -911,10 +911,10 @@ done
 main() {
     # Banner
     echo ""
-    echo "╔════════════════════════════════════════╗"
-    echo "║  app_rpt__ultra System Repair Tool    ║"
-    echo "║  Version $SCRIPT_VERSION                       ║"
-    echo "╚════════════════════════════════════════╝"
+    echo "╔═══════════════════════════════════════╗"
+    echo "║  app_rpt__ultra System Repair Tool   ║"
+    echo "║  Version $SCRIPT_VERSION                      ║"
+    echo "╚═══════════════════════════════════════╝"
     echo ""
 
     if [[ "$CHECK_ONLY" == true ]]; then
