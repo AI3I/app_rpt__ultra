@@ -686,7 +686,6 @@ fix_permissions() {
         for dir in "${asterisk_dirs[@]}"; do
             if [[ -d "$dir" ]]; then
                 chown -R asterisk:asterisk "$dir"
-                log_verbose "Set ownership on $dir"
             fi
         done
 
