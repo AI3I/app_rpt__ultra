@@ -72,4 +72,4 @@ elif [[ $hours -ge 0 ]] && [[ $hours -lt 6 ]]; then
     build_time_audio "good_morning" "a_m" "$SNDTAIL/why_are_you_up.ulaw"
 fi
 
-###EDIT: Tue Dec 31 2025
+###VERSION=2.0.1

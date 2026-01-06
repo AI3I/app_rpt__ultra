@@ -77,4 +77,4 @@ fi
 
 speak "$1" "${2:-}"
 
-###EDIT: Sat Feb 22 10:02:32 AM EST 2025
+###VERSION=2.0.1

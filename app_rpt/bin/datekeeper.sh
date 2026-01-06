@@ -36,4 +36,4 @@ cat "${SNDMALE}/today.ulaw" \
     "${SNDMALE}/${year}.ulaw" \
     > "${SNDRPT}/current_date.ulaw"
 
-###EDIT: Sat Feb 22 10:02:32 AM EST 2025
+###VERSION=2.0.1
