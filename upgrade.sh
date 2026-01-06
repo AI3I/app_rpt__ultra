@@ -53,23 +53,23 @@ readonly NC='\033[0m' # No Color
 # ==============================================================================
 
 log_info() {
-    echo -e "${GREEN}[INFO]${NC} $*"
+    echo -e "${GREEN}[INFO]${NC} $*" >&2
 }
 
 log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $*"
+    echo -e "${YELLOW}[WARN]${NC} $*" >&2
 }
 
 log_error() {
-    echo -e "${RED}[ERROR]${NC} $*"
+    echo -e "${RED}[ERROR]${NC} $*" >&2
 }
 
 log_step() {
-    echo -e "${BLUE}[STEP]${NC} $*"
+    echo -e "${BLUE}[STEP]${NC} $*" >&2
 }
 
 log_success() {
-    echo -e "${CYAN}[✓]${NC} $*"
+    echo -e "${CYAN}[✓]${NC} $*" >&2
 }
 
 # ==============================================================================
