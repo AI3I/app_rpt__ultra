@@ -13,7 +13,7 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 # Installation
 ## System Requirements
 > [!WARNING]
-> Only [AllStarLink 3](https://allstarlink.github.io/) is supported; functionality for previous versions of _app_rpt_ have been removed.
+> Only [AllStarLink 3](https://allstarlink.github.io/) is supported; functionality for previous versions of _app_rpt_ and interoperability with HamVoIP have been removed.
 
 > [!NOTE]
 > Debian 12 (bookworm) and Debian 13 (trixie) have been tested, along with Asterisk 20 and 22.
