@@ -642,16 +642,22 @@ check_asterisk_config() {
 
     # Check Asterisk is running
     if command -v asterisk &>/dev/null; then
-        if asterisk -rx "core show version" &>/dev/null; then
+        # Run asterisk commands as asterisk user (Asterisk runs as asterisk, not root)
+        local ast_cmd="asterisk"
+        if [[ $EUID -eq 0 ]]; then
+            ast_cmd="sudo -u asterisk asterisk"
+        fi
+
+        if $ast_cmd -rx "core show version" &>/dev/null; then
             log_pass "Asterisk is running and responding"
             if [[ "$VERBOSE" == true ]]; then
                 local version
-                version=$(asterisk -rx 'core show version' 2>/dev/null | head -1)
+                version=$($ast_cmd -rx 'core show version' 2>/dev/null | head -1)
                 log_verbose "$version"
             fi
 
             # Test app_rpt is loaded
-            if asterisk -rx "module show like app_rpt" 2>/dev/null | grep -q "app_rpt"; then
+            if $ast_cmd -rx "module show like app_rpt" 2>/dev/null | grep -q "app_rpt"; then
                 log_pass "app_rpt module loaded"
             else
                 log_warn "app_rpt module not loaded"
@@ -661,7 +667,7 @@ check_asterisk_config() {
             set +u
             source "$CONFIG_FILE" 2>/dev/null
             if [[ -n "${MYNODE:-}" ]]; then
-                if asterisk -rx "rpt showvars ${MYNODE}" &>/dev/null 2>&1; then
+                if $ast_cmd -rx "rpt showvars ${MYNODE}" &>/dev/null 2>&1; then
                     log_pass "Node ${MYNODE} configured in Asterisk"
                 else
                     log_warn "Node ${MYNODE} not found in Asterisk config"
