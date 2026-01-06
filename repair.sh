@@ -181,6 +181,23 @@ EOF
 }
 
 # ==============================================================================
+#    Platform Detection
+# ==============================================================================
+
+detect_platform() {
+    # Detect AllStarLink appliance type to determine hardware expectations
+    if dpkg -l 2>/dev/null | grep -q "ii.*asl3-appliance-pi"; then
+        echo "pi"
+    elif dpkg -l 2>/dev/null | grep -q "ii.*asl3-appliance-pc"; then
+        echo "pc"
+    elif dpkg -l 2>/dev/null | grep -q "ii.*asl3-appliance"; then
+        echo "generic"
+    else
+        echo "unknown"
+    fi
+}
+
+# ==============================================================================
 #    System Prerequisites Checks
 # ==============================================================================
 
@@ -663,8 +680,26 @@ check_configuration() {
         fi
     done
 
-    # Check v2.0 specific variables
+    # Check v2.0 specific variables (with platform-aware validation)
+    local platform
+    platform=$(detect_platform)
+
     for var in "${v2_required_vars[@]}"; do
+        # Skip wlandevice check on non-Pi systems (they may not have wireless)
+        if [[ "$var" == "wlandevice" ]] && [[ "$platform" != "pi" ]]; then
+            if [[ -n "${!var:-}" ]]; then
+                log_pass "Network variable set: $var=${!var}"
+                if ip link show "${!var}" &>/dev/null; then
+                    log_verbose "  Interface ${!var} exists"
+                else
+                    log_warn "  Interface ${!var} not found on system"
+                fi
+            else
+                log_verbose "wlandevice not set (OK for $platform platform)"
+            fi
+            continue
+        fi
+
         if [[ -n "${!var:-}" ]]; then
             log_pass "Network variable set: $var=${!var}"
             # Validate interface exists
@@ -674,7 +709,11 @@ check_configuration() {
                 log_warn "  Interface ${!var} not found on system"
             fi
         else
-            log_fail "Network variable missing: $var (required in v2.0+)"
+            if [[ "$var" == "wlandevice" ]]; then
+                log_fail "Network variable missing: $var (required for Pi platform)"
+            else
+                log_fail "Network variable missing: $var (required in v2.0+)"
+            fi
             log_info "  Add to config.ini or run upgrade.sh to migrate"
             missing_vars+=("$var")
         fi

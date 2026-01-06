@@ -155,22 +155,50 @@ validate_nws_zone() {
 }
 
 # ------------------------------------------------------------------------------
+#    Platform Detection
+# ------------------------------------------------------------------------------
+
+detect_platform() {
+    # Detect AllStarLink appliance type
+    if dpkg -l 2>/dev/null | grep -q "ii.*asl3-appliance-pi"; then
+        echo "pi"
+    elif dpkg -l 2>/dev/null | grep -q "ii.*asl3-appliance-pc"; then
+        echo "pc"
+    elif dpkg -l 2>/dev/null | grep -q "ii.*asl3-appliance"; then
+        echo "generic"
+    else
+        echo "unknown"
+    fi
+}
+
+# ------------------------------------------------------------------------------
 #    Network Interface Detection
 # ------------------------------------------------------------------------------
 
 detect_network_interfaces() {
+    local platform
+    platform=$(detect_platform)
+
     # Detect LAN interface (first non-loopback, non-wireless, non-virtual interface)
     LAN_DEVICE=$(ip -o link show | awk -F': ' '{print $2}' | grep -v '^lo$' | \
         grep -v '^wlan' | grep -v '^wl' | grep -v '^tun' | grep -v '^tap' | \
         grep -v '^docker' | grep -v '^br-' | grep -v '^veth' | head -1)
     LAN_DEVICE="${LAN_DEVICE:-eth0}"
 
-    # Detect WLAN interface (first wireless interface)
+    # Detect WLAN interface (platform-aware)
     WLAN_DEVICE=$(iw dev 2>/dev/null | awk '/Interface/{print $2}' | head -1)
     if [[ -z "$WLAN_DEVICE" ]]; then
         WLAN_DEVICE=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^wlan|^wl' | head -1)
     fi
-    WLAN_DEVICE="${WLAN_DEVICE:-wlan0}"
+
+    # Only default to wlan0 on Pi platform (which always has wireless)
+    if [[ -z "$WLAN_DEVICE" ]]; then
+        if [[ "$platform" == "pi" ]]; then
+            WLAN_DEVICE="wlan0"
+        else
+            WLAN_DEVICE=""
+        fi
+    fi
 
     # Detect VPN interface (first tun/tap interface, or default)
     VPN_DEVICE=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^tun|^tap' | head -1)

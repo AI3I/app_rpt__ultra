@@ -300,6 +300,23 @@ create_backup() {
 }
 
 # ==============================================================================
+#    Platform Detection
+# ==============================================================================
+
+detect_platform() {
+    # Detect AllStarLink appliance type to determine hardware expectations
+    if dpkg -l 2>/dev/null | grep -q "ii.*asl3-appliance-pi"; then
+        echo "pi"
+    elif dpkg -l 2>/dev/null | grep -q "ii.*asl3-appliance-pc"; then
+        echo "pc"
+    elif dpkg -l 2>/dev/null | grep -q "ii.*asl3-appliance"; then
+        echo "generic"
+    else
+        echo "unknown"
+    fi
+}
+
+# ==============================================================================
 #    Network Interface Detection
 # ==============================================================================
 
@@ -308,14 +325,24 @@ detect_network_interfaces() {
     local lan_iface=""
     local wlan_iface=""
     local vpn_iface=""
+    local platform
+    platform=$(detect_platform)
 
     # Find primary ethernet interface
     lan_iface=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^(eth|enp|ens)' | head -1)
     [[ -z "$lan_iface" ]] && lan_iface="eth0"
 
-    # Find wireless interface
+    # Find wireless interface (platform-aware)
     wlan_iface=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^(wlan|wlp)' | head -1)
-    [[ -z "$wlan_iface" ]] && wlan_iface="wlan0"
+    if [[ -z "$wlan_iface" ]]; then
+        # Only default to wlan0 on Pi platform (which always has wireless)
+        if [[ "$platform" == "pi" ]]; then
+            wlan_iface="wlan0"
+        else
+            # On PC/generic, leave empty if no wireless found
+            wlan_iface=""
+        fi
+    fi
 
     # VPN interface (usually tun0 or wg0)
     vpn_iface=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^(tun|wg)' | head -1)
