@@ -388,7 +388,7 @@ EOF
 create_directories() {
     print_step "Creating Directory Structure"
 
-    mkdir -p "$DEST_DIR"/{bin,lib,sounds,backups}
+    mkdir -p "$DEST_DIR"/{bin,lib,util,sounds,backups}
     mkdir -p "$DEST_DIR"/sounds/{ids,rpt,tails,wx,letters,digits,custom}
     mkdir -p "$DEST_DIR"/sounds/{_male,_female,_sndfx}
     mkdir -p /opt/asterisk
@@ -445,6 +445,23 @@ install_scripts() {
     chmod +x "$DEST_DIR/bin/"*.sh
 
     print_success "Scripts installed"
+}
+
+install_utils() {
+    print_step "Installing Utility Scripts"
+
+    if [[ -d "$SOURCE_APP_RPT/util" ]]; then
+        cp -r "$SOURCE_APP_RPT/util/"* "$DEST_DIR/util/"
+
+        # Replace %%BASEDIR%% placeholder in util scripts
+        find "$DEST_DIR/util" -name "*.sh" -type f -exec \
+            sed -i "s|%%BASEDIR%%|$DEST_DIR|g" {} \;
+
+        chmod +x "$DEST_DIR/util/"*.sh
+        print_success "Utility scripts installed (install.sh, upgrade.sh, repair.sh, uninstall.sh)"
+    else
+        print_warning "No util directory found in source"
+    fi
 }
 
 install_sounds() {
@@ -756,6 +773,7 @@ main() {
     create_directories
     setup_sound_symlinks
     install_scripts
+    install_utils
     install_sounds
     install_lib_files
     install_config

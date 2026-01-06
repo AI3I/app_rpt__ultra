@@ -32,7 +32,7 @@ set -euo pipefail
 # Version information
 readonly SCRIPT_VERSION="2.0.1"
 readonly SCRIPT_NAME="upgrade.sh"
-readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # Installation paths
 readonly INSTALL_BASE="/opt/app_rpt"
@@ -476,6 +476,40 @@ install_scripts() {
     done
 
     log_success "Installed $script_count scripts"
+
+    # Install utility scripts (install, upgrade, repair, uninstall)
+    log_info "Installing utility scripts..."
+    local util_count=0
+
+    # Create util directory if it doesn't exist
+    if [[ "$DRY_RUN" == false ]]; then
+        mkdir -p "$INSTALL_BASE/util"
+    fi
+
+    if [[ -d "$REPO_DIR/app_rpt/util" ]]; then
+        for util_script in "$REPO_DIR/app_rpt/util/"*.sh; do
+            local util_name
+            util_name=$(basename "$util_script")
+
+            log_info "Installing $util_name..."
+
+            local temp_util="/tmp/$util_name.new.$$"
+            cp "$util_script" "$temp_util"
+            sed -i "s|%%BASEDIR%%|$INSTALL_BASE|g" "$temp_util"
+
+            if [[ "$DRY_RUN" == false ]]; then
+                cp "$temp_util" "$INSTALL_BASE/util/$util_name"
+                chmod 755 "$INSTALL_BASE/util/$util_name"
+                chown asterisk:asterisk "$INSTALL_BASE/util/$util_name"
+            fi
+
+            rm -f "$temp_util"
+            ((util_count++))
+        done
+        log_success "Installed $util_count utility scripts"
+    else
+        log_info "[DRY RUN] Would install utility scripts"
+    fi
 
     # Install new config.ini
     if [[ "$DRY_RUN" == false ]]; then

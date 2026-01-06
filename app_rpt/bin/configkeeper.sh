@@ -33,6 +33,9 @@ sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/allmon3.ini" /etc
 # Update scripts from bin directory
 sudo rsync -azr --delete "${FETCHPOINT}:${BINDIR}/" "${BINDIR}"
 
+# Update utility scripts (install, upgrade, repair, uninstall)
+sudo rsync -azr --delete "${FETCHPOINT}:${UTILDIR}/" "${UTILDIR}"
+
 # Update sound files
 sudo rsync -azr --delete "${FETCHPOINT}:${SNDNODES}/" "${SNDNODES}"
 sudo rsync -azr --delete "${FETCHPOINT}:${SNDRPT}/" "${SNDRPT}"

@@ -296,6 +296,7 @@ check_directory_structure() {
     local required_dirs=(
         "$INSTALL_BASE/bin"
         "$INSTALL_BASE/lib"
+        "$INSTALL_BASE/util"
         "$INSTALL_BASE/sounds"
         "$INSTALL_BASE/backups"
     )
@@ -437,6 +438,31 @@ check_script_files() {
 
     if [[ ${#missing_scripts[@]} -gt 0 ]]; then
         log_info "Missing ${#missing_scripts[@]} scripts - consider running upgrade.sh"
+    fi
+
+    # Check utility scripts
+    echo ""
+    log_info "Checking utility scripts..."
+    local expected_utils=("install.sh" "upgrade.sh" "repair.sh" "uninstall.sh")
+    local missing_utils=()
+
+    for util in "${expected_utils[@]}"; do
+        local util_path="$INSTALL_BASE/util/$util"
+
+        if [[ ! -f "$util_path" ]]; then
+            log_warn "Missing utility script: $util"
+            missing_utils+=("$util")
+        elif [[ ! -x "$util_path" ]]; then
+            log_warn "Utility script not executable: $util"
+            ask_repair "Make $util executable" \
+                "chmod 755 '$util_path'"
+        else
+            log_pass "Utility script OK: $util"
+        fi
+    done
+
+    if [[ ${#missing_utils[@]} -gt 0 ]]; then
+        log_info "Missing ${#missing_utils[@]} utility scripts (this is not critical)"
     fi
 
     return 0
