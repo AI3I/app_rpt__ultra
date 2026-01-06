@@ -779,6 +779,7 @@ ctkeeper.sh unlinkedct 78
 |968|_male/police.ulaw|POLICE|
 |126|_male/port.ulaw|PORT|
 |780|_male/position.ulaw|POSITION|
+|096|_male/pound.ulaw|POUND|
 |714|_male/power.ulaw|POWER|
 |796|_male/practice.ulaw|PRACTICE|
 |500|_male/prefix_fif.ulaw|FIF-|
