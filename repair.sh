@@ -18,7 +18,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-set -euo pipefail
+set -uo pipefail
 
 # ==============================================================================
 #    repair.sh - System health check and repair tool for app_rpt__ultra
