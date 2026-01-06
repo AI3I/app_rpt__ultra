@@ -704,8 +704,8 @@ main() {
     # Banner
     echo ""
     echo "╔═══════════════════════════════════════╗"
-    echo "║  app_rpt__ultra Upgrade Tool         ║"
-    echo "║  Version $SCRIPT_VERSION                      ║"
+    echo "║  app_rpt__ultra Upgrade Tool          ║"
+    echo "║  Version $SCRIPT_VERSION                        ║"
     echo "╚═══════════════════════════════════════╝"
     echo ""
 
@@ -782,7 +782,7 @@ main() {
 
     # Success!
     echo "╔═══════════════════════════════════════╗"
-    echo "║  ✓ Upgrade Complete!                 ║"
+    echo "║  ✓ Upgrade Complete!                  ║"
     echo "╚═══════════════════════════════════════╝"
     echo ""
     log_success "Upgraded from v$current_version to v$repo_version"

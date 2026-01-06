@@ -912,8 +912,8 @@ main() {
     # Banner
     echo ""
     echo "╔═══════════════════════════════════════╗"
-    echo "║  app_rpt__ultra System Repair Tool   ║"
-    echo "║  Version $SCRIPT_VERSION                      ║"
+    echo "║  app_rpt__ultra System Repair Tool    ║"
+    echo "║  Version $SCRIPT_VERSION                        ║"
     echo "╚═══════════════════════════════════════╝"
     echo ""
 
