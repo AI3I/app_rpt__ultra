@@ -746,7 +746,7 @@ check_sound_files() {
 
     # Check critical system sounds
     local critical_sounds=(
-        "rpt/program_complete"
+        "rpt/programming_complete"
         "rpt/program_error"
         "rpt/empty"
     )
