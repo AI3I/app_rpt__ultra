@@ -619,7 +619,7 @@ validate_installation() {
     source "$CONFIG_FILE"
     local required_vars=(
         "MYNODE" "BASEDIR" "BINDIR" "SOUNDS" "RPTCONF"
-        "landevice" "wlandevice" "vpndevice"
+        "landevice" "vpndevice"
     )
 
     for var in "${required_vars[@]}"; do
@@ -628,6 +628,12 @@ validate_installation() {
             ((errors++))
         fi
     done
+
+    # wlandevice is optional (may be empty on non-Pi systems)
+    if [[ ! -v wlandevice ]]; then
+        log_error "Missing config variable: wlandevice (must be defined, but can be empty)"
+        ((errors++))
+    fi
     set -u
 
     # Check Asterisk config
