@@ -32,7 +32,7 @@ set -euo pipefail
 # Version information
 readonly SCRIPT_VERSION="2.0.1"
 readonly SCRIPT_NAME="upgrade.sh"
-readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Installation paths
 readonly INSTALL_BASE="/opt/app_rpt"
@@ -486,15 +486,15 @@ install_scripts() {
         mkdir -p "$INSTALL_BASE/util"
     fi
 
-    if [[ -d "$REPO_DIR/app_rpt/util" ]]; then
-        for util_script in "$REPO_DIR/app_rpt/util/"*.sh; do
-            local util_name
-            util_name=$(basename "$util_script")
+    # Copy utility scripts from repo root to /opt/app_rpt/util/
+    local util_scripts=("install.sh" "upgrade.sh" "repair.sh" "uninstall.sh")
 
+    for util_name in "${util_scripts[@]}"; do
+        if [[ -f "$REPO_DIR/$util_name" ]]; then
             log_info "Installing $util_name..."
 
             local temp_util="/tmp/$util_name.new.$$"
-            cp "$util_script" "$temp_util"
+            cp "$REPO_DIR/$util_name" "$temp_util"
             sed -i "s|%%BASEDIR%%|$INSTALL_BASE|g" "$temp_util"
 
             if [[ "$DRY_RUN" == false ]]; then
@@ -505,7 +505,12 @@ install_scripts() {
 
             rm -f "$temp_util"
             ((util_count++))
-        done
+        else
+            log_info "Utility script not found: $util_name"
+        fi
+    done
+
+    if [[ $util_count -gt 0 ]]; then
         log_success "Installed $util_count utility scripts"
     else
         log_info "[DRY RUN] Would install utility scripts"

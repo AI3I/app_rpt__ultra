@@ -450,18 +450,23 @@ install_scripts() {
 install_utils() {
     print_step "Installing Utility Scripts"
 
-    if [[ -d "$SOURCE_APP_RPT/util" ]]; then
-        cp -r "$SOURCE_APP_RPT/util/"* "$DEST_DIR/util/"
+    # Copy utility scripts from repo root to /opt/app_rpt/util/
+    local util_scripts=("install.sh" "upgrade.sh" "repair.sh" "uninstall.sh")
 
-        # Replace %%BASEDIR%% placeholder in util scripts
-        find "$DEST_DIR/util" -name "*.sh" -type f -exec \
-            sed -i "s|%%BASEDIR%%|$DEST_DIR|g" {} \;
+    for script in "${util_scripts[@]}"; do
+        if [[ -f "$SCRIPT_DIR/$script" ]]; then
+            cp "$SCRIPT_DIR/$script" "$DEST_DIR/util/"
+        else
+            print_warning "Utility script not found: $script"
+        fi
+    done
 
-        chmod +x "$DEST_DIR/util/"*.sh
-        print_success "Utility scripts installed (install.sh, upgrade.sh, repair.sh, uninstall.sh)"
-    else
-        print_warning "No util directory found in source"
-    fi
+    # Replace %%BASEDIR%% placeholder in util scripts (if any)
+    find "$DEST_DIR/util" -name "*.sh" -type f -exec \
+        sed -i "s|%%BASEDIR%%|$DEST_DIR|g" {} \;
+
+    chmod +x "$DEST_DIR/util/"*.sh
+    print_success "Utility scripts installed (install.sh, upgrade.sh, repair.sh, uninstall.sh)"
 }
 
 install_sounds() {
