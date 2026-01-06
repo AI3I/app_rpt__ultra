@@ -456,6 +456,7 @@
 967 /opt/app_rpt/sounds/_male/please.ulaw
 611 /opt/app_rpt/sounds/_male/plus.ulaw
 674 /opt/app_rpt/sounds/_male/point.ulaw
+096 /opt/app_rpt/sounds/_male/pound.ulaw
 968 /opt/app_rpt/sounds/_male/police.ulaw
 126 /opt/app_rpt/sounds/_male/port.ulaw
 780 /opt/app_rpt/sounds/_male/position.ulaw

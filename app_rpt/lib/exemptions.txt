@@ -1,0 +1,249 @@
+# ==============================================================================
+# exemptions.txt - Files NOT in vocabulary.txt
+# ==============================================================================
+#
+# This file documents sound files that are intentionally NOT cataloged in
+# vocabulary.txt and explains why they are excluded.
+#
+# vocabulary.txt contains ONLY the TMS5220 synthesized vocabulary words used
+# by msgwriter.sh to construct custom messages via DTMF programming.
+#
+# Other sound files serve different purposes and are called directly by
+# Asterisk or app_rpt scripts, not through the vocabulary slot ID system.
+#
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# _male/ directory - Numeric files for Asterisk automatic telemetry
+# ------------------------------------------------------------------------------
+# These files are used by Asterisk's built-in functions (SayNumber, SayDigits,
+# SayOrdinal) to generate automatic telemetry and are NOT used by msgwriter.sh.
+#
+# Numeric digits (0-99): 100 files
+_male/0.ulaw
+_male/00.ulaw
+_male/01.ulaw
+_male/02.ulaw
+_male/03.ulaw
+_male/04.ulaw
+_male/05.ulaw
+_male/06.ulaw
+_male/07.ulaw
+_male/08.ulaw
+_male/09.ulaw
+_male/1.ulaw
+_male/10.ulaw
+_male/11.ulaw
+_male/12.ulaw
+_male/13.ulaw
+_male/14.ulaw
+_male/15.ulaw
+_male/16.ulaw
+_male/17.ulaw
+_male/18.ulaw
+_male/19.ulaw
+_male/20.ulaw
+_male/21.ulaw
+_male/22.ulaw
+_male/23.ulaw
+_male/24.ulaw
+_male/25.ulaw
+_male/26.ulaw
+_male/27.ulaw
+_male/28.ulaw
+_male/29.ulaw
+_male/30.ulaw
+_male/31.ulaw
+_male/32.ulaw
+_male/33.ulaw
+_male/34.ulaw
+_male/35.ulaw
+_male/36.ulaw
+_male/37.ulaw
+_male/38.ulaw
+_male/39.ulaw
+_male/40.ulaw
+_male/41.ulaw
+_male/42.ulaw
+_male/43.ulaw
+_male/44.ulaw
+_male/45.ulaw
+_male/46.ulaw
+_male/47.ulaw
+_male/48.ulaw
+_male/49.ulaw
+_male/50.ulaw
+_male/51.ulaw
+_male/52.ulaw
+_male/53.ulaw
+_male/54.ulaw
+_male/55.ulaw
+_male/56.ulaw
+_male/57.ulaw
+_male/58.ulaw
+_male/59.ulaw
+_male/60.ulaw
+_male/61.ulaw
+_male/62.ulaw
+_male/63.ulaw
+_male/64.ulaw
+_male/65.ulaw
+_male/66.ulaw
+_male/67.ulaw
+_male/68.ulaw
+_male/69.ulaw
+_male/70.ulaw
+_male/71.ulaw
+_male/72.ulaw
+_male/73.ulaw
+_male/74.ulaw
+_male/75.ulaw
+_male/76.ulaw
+_male/77.ulaw
+_male/78.ulaw
+_male/79.ulaw
+_male/80.ulaw
+_male/81.ulaw
+_male/82.ulaw
+_male/83.ulaw
+_male/84.ulaw
+_male/85.ulaw
+_male/86.ulaw
+_male/87.ulaw
+_male/88.ulaw
+_male/89.ulaw
+_male/90.ulaw
+_male/91.ulaw
+_male/92.ulaw
+_male/93.ulaw
+_male/94.ulaw
+_male/95.ulaw
+_male/96.ulaw
+_male/97.ulaw
+_male/98.ulaw
+_male/99.ulaw
+
+# Ordinal numbers (1st-31st): 31 files
+_male/1st.ulaw
+_male/2nd.ulaw
+_male/3rd.ulaw
+_male/4th.ulaw
+_male/5th.ulaw
+_male/6th.ulaw
+_male/7th.ulaw
+_male/8th.ulaw
+_male/9th.ulaw
+_male/10th.ulaw
+_male/11th.ulaw
+_male/12th.ulaw
+_male/13th.ulaw
+_male/14th.ulaw
+_male/15th.ulaw
+_male/16th.ulaw
+_male/17th.ulaw
+_male/18th.ulaw
+_male/19th.ulaw
+_male/20th.ulaw
+_male/21st.ulaw
+_male/22nd.ulaw
+_male/23rd.ulaw
+_male/24th.ulaw
+_male/25th.ulaw
+_male/26th.ulaw
+_male/27th.ulaw
+_male/28th.ulaw
+_male/29th.ulaw
+_male/30th.ulaw
+_male/31st.ulaw
+
+# Large numbers (hundreds, thousands): 19 files
+_male/100.ulaw
+_male/200.ulaw
+_male/300.ulaw
+_male/400.ulaw
+_male/500.ulaw
+_male/600.ulaw
+_male/700.ulaw
+_male/800.ulaw
+_male/900.ulaw
+_male/1000.ulaw
+_male/2000.ulaw
+_male/3000.ulaw
+_male/4000.ulaw
+_male/5000.ulaw
+_male/6000.ulaw
+_male/7000.ulaw
+_male/8000.ulaw
+_male/9000.ulaw
+_male/10000.ulaw
+_male/20000.ulaw
+_male/30000.ulaw
+_male/40000.ulaw
+_male/50000.ulaw
+_male/60000.ulaw
+_male/70000.ulaw
+_male/80000.ulaw
+_male/90000.ulaw
+_male/100000.ulaw
+
+# ------------------------------------------------------------------------------
+# _female/ directory - Numeric word forms for Asterisk
+# ------------------------------------------------------------------------------
+# These files are also used by Asterisk's SayNumber/SayDigits functions and
+# provide an alternate voice option for automatic telemetry.
+#
+# Word-form numbers: 25 files
+_female/zero.ulaw
+_female/one.ulaw
+_female/two.ulaw
+_female/three.ulaw
+_female/four.ulaw
+_female/five.ulaw
+_female/six.ulaw
+_female/seven.ulaw
+_female/eight.ulaw
+_female/nine.ulaw
+_female/ten.ulaw
+_female/eleven.ulaw
+_female/twelve.ulaw
+_female/thirteen.ulaw
+_female/fourteen.ulaw
+_female/fifteen.ulaw
+_female/sixteen.ulaw
+_female/seventeen.ulaw
+_female/eighteen.ulaw
+_female/nineteen.ulaw
+_female/twenty.ulaw
+_female/thirty.ulaw
+_female/forty.ulaw
+_female/fifty.ulaw
+
+# Special purpose file (not assigned to vocabulary slot)
+_female/pause.ulaw
+
+# ------------------------------------------------------------------------------
+# Other directories NOT in vocabulary.txt
+# ------------------------------------------------------------------------------
+# The following directories contain sound files that are referenced directly
+# by path in scripts and configurations, not via vocabulary slot IDs:
+#
+# custom/       - Custom messages (bulletin boards, repeaterisms, mailboxes)
+# digits/       - Asterisk digit sounds (alternate recordings)
+# letters/      - Phonetic alphabet and letter sounds
+# ids/          - Station identifiers (initial, pending, anxious, special)
+# rpt/          - System messages and telemetry
+# tails/        - Tail messages
+# wx/           - Weather telemetry (temperature, wind, pressure, etc.)
+#
+# These directories contain 342 additional sound files that are excluded from
+# vocabulary.txt by design.
+#
+# ==============================================================================
+# SUMMARY
+# ==============================================================================
+# Total sound files in repository: 1245
+# Files in vocabulary.txt: 684
+# Files in this exemptions list: 195
+# Files in other directories: 366
+# Total accounted for: 1245
+# ==============================================================================
