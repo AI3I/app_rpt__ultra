@@ -1,0 +1,26 @@
+[Unit]
+Description=app_rpt__ultra Kerchunk Detection Daemon
+Documentation=https://github.com/AI3I/app_rpt__ultra
+After=asterisk.service
+Requires=asterisk.service
+
+[Service]
+Type=simple
+User=asterisk
+Group=asterisk
+ExecStart=/opt/app_rpt/bin/kerchunkd.sh
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/app_rpt.log
+StandardError=append:/var/log/app_rpt.log
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+LimitNOFILE=1024
+LimitNPROC=512
+
+[Install]
+WantedBy=multi-user.target

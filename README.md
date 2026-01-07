@@ -9,6 +9,7 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 - A vocabulary of 877 words and sound effects with dozens of pre-defined phrases[^1];
 - Weather alerting system, powered by NOAA NWS alerts;
 - Reporting weather conditions, powered by Weather Underground[^2];
+- Kerchunk detection and deterrence with polite automated reminders;
 - Full integration with Asterisk AllStarLink app_rpt without any code modification!
 # Installation
 ## System Requirements
@@ -320,6 +321,64 @@ This script maintains configuration synchronization between hub and child nodes 
 |FETCHLOCAL|0 or 1 (_boolean_)|Whether this node pulls from a hub system.<br />_**0**_: standalone or hub node<br />_**1**_: child node (pulls from FETCHPOINT)|
 |FETCHPOINT|_hostname_|The hub system hostname/IP to pull configuration from.<br />Only used when FETCHLOCAL=1.|
 |AUTOUPGRADE|0 or 1 (_boolean_)|Whether to automatically upgrade child nodes when hub version changes.<br />_**0**_: manual upgrades only (default)<br />_**1**_: automatic upgrades via configkeeper.sh<br />**NOTE:** Only applies to child nodes (FETCHLOCAL=1).|
+### kerchunkd.sh
+#### SYSTEMD SERVICE: continuous daemon
+This daemon monitors for consecutive short transmissions (kerchunks) and plays a polite reminder message to encourage proper radio etiquette. The daemon runs continuously and responds within seconds of detecting kerchunks, providing immediate behavioral feedback.
+
+**How It Works:**
+1. Monitors `rpt stats` every 5 seconds for kerchunk count changes
+2. Tracks consecutive kerchunks (resets when normal transmission occurs)
+3. Plays "Please identify" after threshold is reached (default: 3 consecutive)
+4. Rate limits warnings to prevent harassment (default: once per 5 minutes)
+5. Auto-resets counter after warning or normal transmission
+
+**Configuration Variables:**
+|Variables|Values|Description & Behaviors (config.ini)|
+|-|-|-|
+|KERCHUNK_ENABLE|0 or 1 (_boolean_)|Enable kerchunk monitoring and warnings.<br />_**0**_: disabled (default)<br />_**1**_: enabled|
+|KERCHUNK_THRESHOLD|_integer_|Number of consecutive kerchunks before playing warning.<br />Default: _**3**_|
+|KERCHUNK_WAITLIMIT|_integer_|Seconds between warning messages (rate limiting).<br />Default: _**30**_ seconds|
+
+**Default Message:**
+- Uses TMS5220 vocabulary: "Please identify"
+- Files automatically concatenated: `please.ulaw` + `identify.ulaw`
+- Creates: `/opt/app_rpt/sounds/custom/kerchunk_reminder.ulaw`
+
+**Custom Message (Optional):**
+You can record a custom message and save it as:
+```
+/opt/app_rpt/sounds/custom/kerchunk_reminder.ulaw
+```
+The daemon automatically uses the custom file if it exists.
+
+**Service Management:**
+```bash
+# Check status
+sudo systemctl status kerchunkd.service
+
+# Start/stop/restart
+sudo systemctl start kerchunkd.service
+sudo systemctl stop kerchunkd.service
+sudo systemctl restart kerchunkd.service
+
+# Enable/disable auto-start on boot
+sudo systemctl enable kerchunkd.service
+sudo systemctl disable kerchunkd.service
+
+# View logs
+sudo journalctl -u kerchunkd.service -f
+tail -f /var/log/app_rpt.log | grep kerchunk
+```
+
+**Testing:**
+1. Set `KERCHUNK_ENABLE=1` in config.ini
+2. Restart daemon: `sudo systemctl restart kerchunkd.service`
+3. Make 3 short transmissions (< 1 second each)
+4. Wait 5-10 seconds
+5. Listen for "Please identify"
+6. Adjust `KERCHUNK_WAITLIMIT` as desired (default: 30 seconds)
+
+**Note:** The daemon requires `asterisk.service` to be running and uses the same kerchunk statistics that app_rpt internally tracks.
 ### datadumper.sh
 #### CRONTAB: midnight daily
 This purges old recordings after they have aged by the defined period in the script.
