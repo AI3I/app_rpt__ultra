@@ -29,31 +29,31 @@ elif [[ "$SEVEREWEATHER" == "2" ]]; then
 elif [[ "$ENABLETAIL" == "1" ]]; then
     if [[ "$ROTATETMSG" == "0" ]]; then
         if [[ "$ENABLETEMP" == "1" ]] && [[ "$ENABLETIME" == "1" ]]; then
-            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tail_message_${TAILMSG}.ulaw")" "$SOUNDS/tail_message.ulaw"
+            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tails/tail_message_${TAILMSG}.ulaw")" "$SOUNDS/tail_message.ulaw"
             exit 0
         elif [[ "$ENABLETEMP" == "1" ]]; then
-            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tail_message_${TAILMSG}.ulaw")" "$SOUNDS/tail_message.ulaw"
+            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tails/tail_message_${TAILMSG}.ulaw")" "$SOUNDS/tail_message.ulaw"
             exit 0
         elif [[ "$ENABLETIME" == "1" ]]; then
-            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/tail_message_${TAILMSG}.ulaw")" "$SOUNDS/tail_message.ulaw"
+            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/tails/tail_message_${TAILMSG}.ulaw")" "$SOUNDS/tail_message.ulaw"
             exit 0
         else
-            ln -sf "$SOUNDS/tail_message_${TAILMSG}.ulaw" "$SOUNDS/tail_message.ulaw"
+            ln -sf "$SOUNDS/tails/tail_message_${TAILMSG}.ulaw" "$SOUNDS/tail_message.ulaw"
             exit 0
         fi
     elif [[ "$ROTATETMSG" == "1" ]]; then
         tailchurn=$(shuf -i1-9 -n1) # Randomize Tail Messages 1 through 9
         if [[ "$ENABLETEMP" == "1" ]] && [[ "$ENABLETIME" == "1" ]]; then
-            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tail_message_${tailchurn}.ulaw")" "$SOUNDS/tail_message.ulaw"
+            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tails/tail_message_${tailchurn}.ulaw")" "$SOUNDS/tail_message.ulaw"
             exit 0
         elif [[ "$ENABLETEMP" == "1" ]]; then
-            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tail_message_${tailchurn}.ulaw")" "$SOUNDS/tail_message.ulaw"
+            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tails/tail_message_${tailchurn}.ulaw")" "$SOUNDS/tail_message.ulaw"
             exit 0
         elif [[ "$ENABLETIME" == "1" ]]; then
-            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/tail_message_${tailchurn}.ulaw")" "$SOUNDS/tail_message.ulaw"
+            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/tails/tail_message_${tailchurn}.ulaw")" "$SOUNDS/tail_message.ulaw"
             exit 0
         else
-            ln -sf "$SOUNDS/tail_message_${tailchurn}.ulaw" "$SOUNDS/tail_message.ulaw"
+            ln -sf "$SOUNDS/tails/tail_message_${tailchurn}.ulaw" "$SOUNDS/tail_message.ulaw"
             exit 0
         fi
     else
