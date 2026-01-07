@@ -409,7 +409,15 @@ migrate_config() {
 
     # Create new config from template
     local temp_config="/tmp/config.ini.new.$$"
-    cp "$REPO_DIR/app_rpt/config.ini" "$temp_config"
+    # Use config.ini.example as template (config.ini no longer in repo as of v2.0.5)
+    if [[ -f "$REPO_DIR/app_rpt/config.ini.example" ]]; then
+        cp "$REPO_DIR/app_rpt/config.ini.example" "$temp_config"
+    elif [[ -f "$REPO_DIR/app_rpt/config.ini" ]]; then
+        cp "$REPO_DIR/app_rpt/config.ini" "$temp_config"
+    else
+        log_error "Could not find config.ini or config.ini.example in repository"
+        return 3
+    fi
 
     # Replace placeholders with user values
     sed -i "s/MYNODE=%MYNODE%/MYNODE=$user_mynode/g" "$temp_config"
