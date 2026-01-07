@@ -415,14 +415,15 @@ msgreader.sh 10
 #### BY INVOCATION ONLY
 This script can write messages into slots using the vocabulary and character tables listed below.
 > [!NOTE]
-> 1. Slot _**00** is special_ and is for the Forced CW ID, which overwrites the values in the _**idtalkover**_ parameter.
-> 2. Slots **01** through **50** are customizable through the message writer, while slots **51** through **99** are pre-programmed and cannot be overwritten by this tool.
-> 3. Character `D` delimits the slot from the message, and `*` delimits each character or vocabulary word.
+> 1. Slot _**00** is special_ (v2.0.5+) and triggers CW ID playback using rpt.conf's idtalkover settings. Cannot be written with msgwriter.sh.
+> 2. Slots **01** through **50** are customizable through the message writer
+> 3. Slots **51** through **99** are pre-programmed and cannot be overwritten by this tool
+> 4. Character `D` delimits the slot from the message, and `*` delimits each character or vocabulary word
 
 #### EXAMPLES
-* We want to write CW ID into slot 00 with "MYC4LL":
+* We want to write a voice message into slot 01 with "MYC4LL":
 ```
-msgwriter.sh 00D61*93*23*04*53*53
+msgwriter.sh 01D061*093*023*004*053*053
 ```
 * We want to write a voice message into slot 04 for the Anxious ID that reads back "_M Y C 4 L L REPEATER_":
 ```
@@ -1250,7 +1251,7 @@ ctkeeper.sh unlinkedct 78
 ### Message Banks
 |Slot|Path|Description|Contents|
 |-|-|-|-|
-|00|_Forced CW ID_|Forced CW ID|_empty_|
+|00|rpt/cw_id|CW ID Trigger|Triggers CW ID playback (v2.0.5+)|
 |01|ids/initial_id_1|Initial ID #1|_empty_|
 |02|ids/initial_id_2|Initial ID #2|_empty_|
 |03|ids/initial_id_3|Initial ID #3|_empty_|
@@ -1301,25 +1302,25 @@ ctkeeper.sh unlinkedct 78
 |48|custom/mailbox_8|Mailbox #8|_empty_|
 |49|custom/mailbox_9|Mailbox #9|_empty_|
 |50|rpt/litz_alert|Long Tone Zero (LiTZ) Alert|_empty_|
-|51|tails/weather_alert|Weather Alert|"WEATHER ALERT"|
-|52|tails/severe_weather_alert|Severe Weather Alert|"SEVERE WEATHER ALERT"|
-|53|rpt/net_in_one_minute|Impending Net (1 minute)|"NET IN ONE MINUTE"|
-|54|rpt/net_in_five_minutes|Impending Net (5 minutes)|"NET IN FIVE MINUTES"|
-|55|rpt/net_in_ten_minutes|Impending Net (10 minutes)|"NET IN TEN MINUTES"|
-|56|rpt/empty|_Not Used_|"EMPTY"|
-|57|rpt/empty|_Not Used_|"EMPTY"|
-|58|rpt/empty|_Not Used_|"EMPTY"|
-|59|rpt/empty|_Not Used_|"EMPTY"|
-|60|rpt/empty|_Not Used_|"EMPTY"|
-|61|rpt/empty|_Not Used_|"EMPTY"|
-|62|rpt/empty|_Not Used_|"EMPTY"|
-|63|rpt/empty|_Not Used_|"EMPTY"|
-|64|rpt/empty|_Not Used_|"EMPTY"|
-|65|rpt/empty|_Not Used_|"EMPTY"|
-|66|rpt/empty|_Not Used_|"EMPTY"|
-|67|rpt/empty|_Not Used_|"EMPTY"|
-|68|rpt/empty|_Not Used_|"EMPTY"|
-|69|rpt/empty|_Not Used_|"EMPTY"|
+|51|custom/available_51|Available for Custom Messages|_empty_|
+|52|custom/available_52|Available for Custom Messages|_empty_|
+|53|custom/available_53|Available for Custom Messages|_empty_|
+|54|custom/available_54|Available for Custom Messages|_empty_|
+|55|custom/available_55|Available for Custom Messages|_empty_|
+|56|custom/available_56|Available for Custom Messages|_empty_|
+|57|custom/available_57|Available for Custom Messages|_empty_|
+|58|custom/available_58|Available for Custom Messages|_empty_|
+|59|custom/available_59|Available for Custom Messages|_empty_|
+|60|weather/wx_severe_alert|Severe Weather Alert|"SEVERE WEATHER ALERT"|
+|61|weather/wx_alert|Weather Alert|"WEATHER ALERT"|
+|62|weather/space_geomag_minor|Space Weather: Geomag Minor|_auto-generated_|
+|63|weather/space_geomag_moderate|Space Weather: Geomag Moderate|_auto-generated_|
+|64|weather/space_geomag_strong|Space Weather: Geomag Strong|_auto-generated_|
+|65|weather/space_radio_minor|Space Weather: Radio Minor|_auto-generated_|
+|66|weather/space_radio_moderate|Space Weather: Radio Moderate|_auto-generated_|
+|67|weather/space_radio_strong|Space Weather: Radio Strong|_auto-generated_|
+|68|weather/space_solar_minor|Space Weather: Solar Minor|_auto-generated_|
+|69|weather/space_solar_moderate|Space Weather: Solar Moderate|_auto-generated_|
 |70|wx/temp|Weather: Temperature|_temperature_|
 |71|wx/wind|Weather: Wind Conditions|_wind conditions_|
 |72|wx/pressure|Weather: Barometric Pressure|_barometric pressure_|
@@ -1329,7 +1330,7 @@ ctkeeper.sh unlinkedct 78
 |76|wx/dewpt|Weather: Dew Point|_dew point_|
 |77|wx/preciprate|Weather: Precipitation Rate|_precipitation rate_|
 |78|wx/preciptotal|Weather: Precipitation Total|_precipitation total_|
-|79|rpt/empty|_Not Used_|"EMPTY"|
+|79|wx/uv_warning|UV Index Warning|_auto-generated_|
 |80|rpt/empty|_Not Used_|"EMPTY"|
 |81|custom/rptrism01|Repeaterism #1|Short transmissions|
 |82|custom/rptrism02|Repeaterism #2|Think before transmitting|
@@ -1346,10 +1347,10 @@ ctkeeper.sh unlinkedct 78
 |93|custom/rptrism13|Repeaterism #13|State your purpose|
 |94|custom/rptrism14|Repeaterism #14|When testing, say so, and be brief|
 |95|custom/rptrism15|Repeaterism #15|Identify your station|
-|96|rpt/empty|_Not Used_|"EMPTY"|
-|97|rpt/empty|_Not Used_|"EMPTY"|
-|98|rpt/empty|_Not Used_|"EMPTY"|
-|99|rpt/empty|_Not Used_|"EMPTY"|
+|96|rpt/net_in_one_minute|Net Countdown: 1 Minute|"NET IN ONE MINUTE"|
+|97|rpt/net_in_five_minutes|Net Countdown: 5 Minutes|"NET IN FIVE MINUTES"|
+|98|rpt/net_in_ten_minutes|Net Countdown: 10 Minutes|"NET IN TEN MINUTES"|
+|99|rpt/net_in_fifteen_minutes|Net Countdown: 15 Minutes|"NET IN FIFTEEN MINUTES"|
 # Footnotes
 [^1]: These are high fidelity recordings from a Texas Instruments TMS5220 speech synthesizer, sourced from an Advanced Computer Controls (ACC) RC-850 controller, version 3.8 (late serial number).  Recordings were sourced using audio-in to a PC with Audacity; these are captured in μ-law companding algorithm 8-bit PCM format.
 [^2]: Weather reporting requires account registration and use of an API key from [Weather Underground](https://www.weatherunderground.com/).

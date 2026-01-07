@@ -53,7 +53,7 @@
 - **Status:** Feature postponed or abandoned
 - **User feedback:** "Let's just scrap this"
 
-### ✅ Space Weather Monitoring (ADDED)
+### ✅ Space Weather Monitoring
 - **File:** `app_rpt/bin/weatherkeeper.sh`
 - **What:** Monitors NOAA SWPC for geomagnetic storms, radio blackouts, solar radiation
 - **API:** https://services.swpc.noaa.gov/products/noaa-scales.json
@@ -61,7 +61,20 @@
   - Geomagnetic (slots 62-64): "light/moderate/severe geo storm alert/warning" (uses G+O for "geo")
   - Radio (slots 65-67): "light/moderate/severe radio condition alert/warning"
   - Solar (slots 68-69): "low/high S storm alert/warning"
-- **Status:** Committed, ready to test
+- **Status:** Deployed to all systems
+
+### ✅ Web-based Message Builder
+- **File:** `web/msgbuilder.php` (on repeater.ai3i.net only)
+- **What:** Single-file PHP application for building TMS5220 messages via web interface
+- **Features:**
+  - Voice type filtering (Male/Female/Sound FX)
+  - Click-to-build message interface
+  - Display names for vocabulary (ALL CAPS auto-generated, customizable via vocabulary.txt third column)
+  - Emoji-categorized slot labels
+  - Real-time message preview
+  - Direct save to .ulaw and .txt files
+- **Status:** Deployed to repeater.ai3i.net at /var/www/html/msgbuilder.php
+- **Note:** NOT included in GitHub repo (local deployment only)
 
 ### 🔮 Future Features for v2.0.5
 User said: "we'll add more to this version later"
@@ -77,25 +90,41 @@ User said: "we'll add more to this version later"
 new file:   .gitignore
 new file:   MIGRATION_v2.0.5.md
 new file:   SLOTS.md
-modified:   app_rpt/bin/msgreader.sh
-modified:   app_rpt/bin/weatherkeeper.sh
+new file:   WIP_v2.0.5.md
+new file:   app_rpt/sounds/rpt/net_in_fifteen_minutes.ulaw
+modified:   VERSION (still shows 2.0.4, needs update to 2.0.5 on release)
+modified:   app_rpt/bin/msgreader.sh (slot 00 CW ID)
+modified:   app_rpt/bin/weatherkeeper.sh (space weather monitoring)
+modified:   app_rpt/bin/statekeeper.sh
+modified:   app_rpt/bin/kerchunkd.sh
+modified:   app_rpt/bin/weatheralert.sh
 renamed:    app_rpt/config.ini -> app_rpt/config.ini.example
-modified:   app_rpt/lib/messagetable.txt
-deleted:    asterisk/extensions_custom.conf
-deleted:    asterisk/rpt.conf
-modified:   install.sh
-modified:   upgrade.sh
+modified:   app_rpt/lib/messagetable.txt (slot reorganization)
+deleted:    asterisk/extensions_custom.conf (security)
+deleted:    asterisk/rpt.conf (security)
+modified:   install.sh (added fzf, dialog dependencies)
+modified:   upgrade.sh (fixed config.ini.example handling)
 ```
 
 ## Untracked Files
 - `CONFIGURATION.md` - Not added yet
-- `asterisk/` directory - Likely local configs, should stay untracked
+- `asterisk/` directory - Local configs (rpt.conf, extensions_custom.conf), should stay untracked per .gitignore
+- `web/` directory - Local web tools (msgbuilder.php), not for GitHub
+
+## Backup Strategy
+- **Hub backups:** `/opt/app_rpt/backups/<node>` on repeater.ai3i.net and repeater.k3qy.net
+- **Upgrade backups:** Created automatically by upgrade.sh with timestamps
+- **rpt.conf backups:** Created before macro updates with timestamps
 
 ## Testing Status
-- **node504381:** Has common.sh fixed (%%BASEDIR%% replaced)
-- **Slot 00:** NOT tested yet
-- **Slot reorganization:** NOT tested yet
-- **Security changes:** Applied
+- **Deployment:** ✅ Completed across all AI3I and K3QY systems
+  - AI3I: repeater.ai3i.net + nodes 504381-504388
+  - K3QY: repeater.k3qy.net + node 508261
+- **Slot 00 CW ID:** Ready to test on all nodes
+- **Slot reorganization:** Deployed, ready to test
+- **Space weather monitoring:** Deployed via weatherkeeper.sh
+- **Net countdown macros:** Updated in rpt.conf on all nodes (96-99)
+- **Security changes:** Applied to all systems
 
 ## Important Notes
 
