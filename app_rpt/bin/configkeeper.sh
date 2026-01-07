@@ -80,4 +80,4 @@ sudo asterisk -rx "module reload"
 # Reload configuration changes for allmon3
 sudo systemctl reload allmon3
 
-###VERSION=2.0.3
+###VERSION=2.0.4

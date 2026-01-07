@@ -129,6 +129,25 @@ preciptotal_right="${preciptotal#*.}"
 uv="${uv%%.*}"
 
 # ==============================================================================
+#    UV Index Warning Logic (8+ = dangerous)
+# ==============================================================================
+
+if [[ $uv -ge 11 ]]; then
+    # UV 11+ = EXTREME: "severe U V warning"
+    build_audio "$SNDWX/uv_warning.ulaw" \
+        "$SNDMALE/severe.ulaw" "$SNDMALE/u.ulaw" "$SNDMALE/v.ulaw" "$SNDMALE/warning.ulaw"
+    log "UV index $uv (EXTREME) - severe U V warning generated"
+elif [[ $uv -ge 8 ]]; then
+    # UV 8-10 = VERY HIGH: "high U V warning"
+    build_audio "$SNDWX/uv_warning.ulaw" \
+        "$SNDMALE/high.ulaw" "$SNDMALE/u.ulaw" "$SNDMALE/v.ulaw" "$SNDMALE/warning.ulaw"
+    log "UV index $uv (VERY HIGH) - high U V warning generated"
+else
+    # UV < 8: Remove any existing warning file
+    rm -f "$SNDWX/uv_warning.ulaw" 2>/dev/null
+fi
+
+# ==============================================================================
 #    Build Audio Files
 # ==============================================================================
 
@@ -249,4 +268,4 @@ build_audio "$SNDWX/wind.ulaw" \
 
 log "Weather data updated successfully"
 
-###VERSION=2.0.3
+###VERSION=2.0.4

@@ -21,6 +21,25 @@
 source "%%BASEDIR%%/bin/common.sh"
 sourcefile="$CONFIG_FILE"
 
+# State history logging
+STATE_HISTORY_LOG="/var/log/state_history.log"
+LAST_STATE_FILE="/tmp/app_rpt_last_state"
+
+# Get previous state
+PREVIOUS_STATE=$(cat "$LAST_STATE_FILE" 2>/dev/null || echo "unknown")
+
+# Function to log state transitions
+log_state_change() {
+    local new_state="$1"
+    local trigger="${2:-manual}"  # manual, scheduled, nws_alert, etc.
+
+    # Format: Timestamp, Previous_State, New_State, Trigger, Node
+    echo "$(date '+%Y-%m-%d %H:%M:%S'), ${PREVIOUS_STATE}, ${new_state}, ${trigger}, ${MYNODE}" >> "$STATE_HISTORY_LOG"
+
+    # Update last state file
+    echo "$new_state" > "$LAST_STATE_FILE"
+}
+
 # Validate input argument
 readonly VALID_MODES="default standard litzalert severeweather weatheralert tactical stealth daytime nighttime net clock"
 if [[ -z "${1:-}" ]]; then
@@ -60,6 +79,7 @@ default) # Reset to Default Operations
     sudo asterisk -rx "rpt cmd $MYNODE cop 15 $MYNODE" # Set Scheduler to ENABLED
     sleep 15
     sudo asterisk -rx "module reload"
+    log_state_change "tactical" "manual"
     ;;
 standard) # Standard Operations
     sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
@@ -111,6 +131,7 @@ weatheralert) # Weather Alert
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" "$RPTCONF"
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" "$RPTCONF"
     sudo asterisk -rx "module reload"
+    log_state_change "weatheralert" "manual"
     ;;
 tactical) # Tactical Operations
     sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"
@@ -130,6 +151,7 @@ tactical) # Tactical Operations
     sudo asterisk -rx "rpt cmd $MYNODE cop 16 $MYNODE" # Set Scheduler to DISABLED
     sleep 15
     sudo asterisk -rx "module reload"
+    log_state_change "default" "manual"
     ;;
 stealth) # Stealth Operations
     sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"
@@ -153,6 +175,7 @@ stealth) # Stealth Operations
     sudo asterisk -rx "rpt cmd $MYNODE cop 34 $MYNODE" # Set Local Telemetry to DISABLED
     sleep 15
     sudo asterisk -rx "module reload"
+    log_state_change "stealth" "manual"
     ;;
 daytime) # Daytime Operations
     sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
@@ -169,6 +192,7 @@ daytime) # Daytime Operations
     sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSDAY"
     sleep 15
     sudo asterisk -rx "module reload"
+    log_state_change "daytime" "manual"
     ;;
 nighttime) # Nighttime Operations
     sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
@@ -185,6 +209,7 @@ nighttime) # Nighttime Operations
     sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSNGT"
     sleep 15
     sudo asterisk -rx "module reload"
+    log_state_change "nighttime" "manual"
     ;;
 net) # Net
     sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=4/g" "$sourcefile"
@@ -214,4 +239,4 @@ clock) # Grandfather Clock
     ;;
 esac
 
-###VERSION=2.0.3
+###VERSION=2.0.4

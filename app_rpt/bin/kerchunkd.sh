@@ -1,5 +1,5 @@
 #!/bin/bash
-###VERSION=2.0.3
+###VERSION=2.0.4
 #
 #    app_rpt__ultra :: the ultimate controller experience for app_rpt
 #    Copyright (C) 2025   John D. Lewis (AI3I)
@@ -124,6 +124,23 @@ write_state() {
     echo "${LAST_TXTIME}" > "${LAST_TXTIME_FILE}"
 }
 
+log_kerchunk_stats() {
+    local duration="$1"
+    local consecutive="$2"
+    local warning_played="$3"
+    local transmission_type="$4"  # "kerchunk" or "normal"
+
+    # Log file location
+    local stats_log="/var/log/kerchunk_stats.log"
+
+    # Get current system state
+    local current_state
+    current_state=$(grep "^Selected system state" < <(asterisk -rx "rpt stats ${MYNODE}" 2>/dev/null) | awk -F: '{print $2}' | tr -d ' ' || echo "unknown")
+
+    # Format: Timestamp, Node, Duration, Consecutive, Warning_Played, Type, State
+    echo "$(date '+%Y-%m-%d %H:%M:%S'), ${MYNODE}, ${duration}s, ${consecutive}, ${warning_played}, ${transmission_type}, state_${current_state}" >> "$stats_log"
+}
+
 play_kerchunk_warning() {
     log "Playing kerchunk reminder message (consecutive: ${CONSECUTIVE})"
 
@@ -197,13 +214,19 @@ main_loop() {
                     # Check rate limiting
                     if check_rate_limit; then
                         play_kerchunk_warning
+                        log_kerchunk_stats "$avg_duration_s" "$CONSECUTIVE" "yes" "kerchunk"
                         LAST_WARNING=$(date +%s)
                         CONSECUTIVE=0  # Reset after warning
+                    else
+                        log_kerchunk_stats "$avg_duration_s" "$CONSECUTIVE" "no" "kerchunk"
                     fi
+                else
+                    log_kerchunk_stats "$avg_duration_s" "$CONSECUTIVE" "no" "kerchunk"
                 fi
             else
                 # Normal transmission - reset consecutive counter
                 log "Normal transmission detected (duration: ${avg_duration_s}s, consecutive reset)"
+                log_kerchunk_stats "$avg_duration_s" "0" "no" "normal"
                 CONSECUTIVE=0
             fi
         fi
