@@ -148,6 +148,115 @@ else
 fi
 
 # ==============================================================================
+#    Space Weather Monitoring (NOAA SWPC)
+# ==============================================================================
+
+SWPC_OUTPUT="/tmp/noaa-space-weather.json"
+
+# Fetch current space weather conditions from NOAA SWPC
+if ! curl -s -k --fail --max-time 30 \
+    "https://services.swpc.noaa.gov/products/noaa-scales.json" \
+    -o "$SWPC_OUTPUT" 2>/dev/null; then
+    log_error "Failed to fetch space weather data from NOAA SWPC"
+else
+    # Parse the NOAA scales (G=Geomagnetic, S=Solar Radiation, R=Radio Blackout)
+    # The API returns current and predicted scales as integers 0-5
+
+    # Extract current conditions from the most recent observation
+    kp_scale=$(jq -r '.["-1"].G.Scale // "0"' < "$SWPC_OUTPUT" 2>/dev/null)
+    solar_scale=$(jq -r '.["-1"].S.Scale // "0"' < "$SWPC_OUTPUT" 2>/dev/null)
+    radio_scale=$(jq -r '.["-1"].R.Scale // "0"' < "$SWPC_OUTPUT" 2>/dev/null)
+
+    # Default to 0 if parsing fails
+    kp_scale="${kp_scale:-0}"
+    solar_scale="${solar_scale:-0}"
+    radio_scale="${radio_scale:-0}"
+
+    # ==============================================================================
+    #    Geomagnetic Storm Warnings (Kp Index → G Scale)
+    # ==============================================================================
+    # G1 = Kp5 (Minor), G2 = Kp6 (Moderate), G3 = Kp7 (Strong), G4 = Kp8, G5 = Kp9
+    # Using "G-O" (sounds like "geo") to indicate geomagnetic
+
+    if [[ $kp_scale -ge 3 ]]; then
+        # G3+ = Severe geo-storm
+        build_audio "$SOUNDS/weather/space_geomag_strong.ulaw" \
+            "$SNDMALE/severe.ulaw" "$SNDMALE/g.ulaw" "$SNDMALE/o.ulaw" "$SNDMALE/storm.ulaw" "$SNDMALE/warning.ulaw"
+        log "Geomagnetic storm G$kp_scale (SEVERE) - geo-storm warning generated"
+        rm -f "$SOUNDS/weather/space_geomag_minor.ulaw" "$SOUNDS/weather/space_geomag_moderate.ulaw" 2>/dev/null
+    elif [[ $kp_scale -ge 2 ]]; then
+        # G2 = Moderate geo-storm
+        build_audio "$SOUNDS/weather/space_geomag_moderate.ulaw" \
+            "$SNDMALE/moderate.ulaw" "$SNDMALE/g.ulaw" "$SNDMALE/o.ulaw" "$SNDMALE/storm.ulaw" "$SNDMALE/alert.ulaw"
+        log "Geomagnetic storm G$kp_scale (MODERATE) - geo-storm alert generated"
+        rm -f "$SOUNDS/weather/space_geomag_minor.ulaw" "$SOUNDS/weather/space_geomag_strong.ulaw" 2>/dev/null
+    elif [[ $kp_scale -ge 1 ]]; then
+        # G1 = Light geo-storm
+        build_audio "$SOUNDS/weather/space_geomag_minor.ulaw" \
+            "$SNDMALE/light.ulaw" "$SNDMALE/g.ulaw" "$SNDMALE/o.ulaw" "$SNDMALE/storm.ulaw" "$SNDMALE/alert.ulaw"
+        log "Geomagnetic storm G$kp_scale (MINOR) - geo-storm alert generated"
+        rm -f "$SOUNDS/weather/space_geomag_moderate.ulaw" "$SOUNDS/weather/space_geomag_strong.ulaw" 2>/dev/null
+    else
+        # No geomagnetic storm
+        rm -f "$SOUNDS/weather/space_geomag_minor.ulaw" "$SOUNDS/weather/space_geomag_moderate.ulaw" "$SOUNDS/weather/space_geomag_strong.ulaw" 2>/dev/null
+    fi
+
+    # ==============================================================================
+    #    Radio Blackout Warnings (R Scale)
+    # ==============================================================================
+    # R1 = Minor, R2 = Moderate, R3 = Strong, R4 = Severe, R5 = Extreme
+    # Using simplified vocabulary: "radio condition alert/warning"
+
+    if [[ $radio_scale -ge 3 ]]; then
+        # R3+ = Severe radio conditions
+        build_audio "$SOUNDS/weather/space_radio_strong.ulaw" \
+            "$SNDMALE/severe.ulaw" "$SNDMALE/radio.ulaw" "$SNDMALE/condition.ulaw" "$SNDMALE/warning.ulaw"
+        log "Radio blackout R$radio_scale (SEVERE) - warning generated"
+        rm -f "$SOUNDS/weather/space_radio_minor.ulaw" "$SOUNDS/weather/space_radio_moderate.ulaw" 2>/dev/null
+    elif [[ $radio_scale -ge 2 ]]; then
+        # R2 = Moderate radio conditions
+        build_audio "$SOUNDS/weather/space_radio_moderate.ulaw" \
+            "$SNDMALE/moderate.ulaw" "$SNDMALE/radio.ulaw" "$SNDMALE/condition.ulaw" "$SNDMALE/alert.ulaw"
+        log "Radio blackout R$radio_scale (MODERATE) - alert generated"
+        rm -f "$SOUNDS/weather/space_radio_minor.ulaw" "$SOUNDS/weather/space_radio_strong.ulaw" 2>/dev/null
+    elif [[ $radio_scale -ge 1 ]]; then
+        # R1 = Light radio conditions
+        build_audio "$SOUNDS/weather/space_radio_minor.ulaw" \
+            "$SNDMALE/light.ulaw" "$SNDMALE/radio.ulaw" "$SNDMALE/condition.ulaw" "$SNDMALE/alert.ulaw"
+        log "Radio blackout R$radio_scale (MINOR) - alert generated"
+        rm -f "$SOUNDS/weather/space_radio_moderate.ulaw" "$SOUNDS/weather/space_radio_strong.ulaw" 2>/dev/null
+    else
+        # No radio blackout
+        rm -f "$SOUNDS/weather/space_radio_minor.ulaw" "$SOUNDS/weather/space_radio_moderate.ulaw" "$SOUNDS/weather/space_radio_strong.ulaw" 2>/dev/null
+    fi
+
+    # ==============================================================================
+    #    Solar Radiation Storm Warnings (S Scale)
+    # ==============================================================================
+    # S1 = Minor, S2 = Moderate, S3 = Strong, S4 = Severe, S5 = Extreme
+    # Using "S storm" to distinguish from regular weather
+
+    if [[ $solar_scale -ge 2 ]]; then
+        # S2+ = High S-storm
+        build_audio "$SOUNDS/weather/space_solar_moderate.ulaw" \
+            "$SNDMALE/high.ulaw" "$SNDMALE/s.ulaw" "$SNDMALE/storm.ulaw" "$SNDMALE/warning.ulaw"
+        log "Solar radiation S$solar_scale (HIGH) - S-storm warning generated"
+        rm -f "$SOUNDS/weather/space_solar_minor.ulaw" 2>/dev/null
+    elif [[ $solar_scale -ge 1 ]]; then
+        # S1 = Low S-storm
+        build_audio "$SOUNDS/weather/space_solar_minor.ulaw" \
+            "$SNDMALE/low.ulaw" "$SNDMALE/s.ulaw" "$SNDMALE/storm.ulaw" "$SNDMALE/alert.ulaw"
+        log "Solar radiation S$solar_scale (LOW) - S-storm alert generated"
+        rm -f "$SOUNDS/weather/space_solar_moderate.ulaw" 2>/dev/null
+    else
+        # No solar radiation storm
+        rm -f "$SOUNDS/weather/space_solar_minor.ulaw" "$SOUNDS/weather/space_solar_moderate.ulaw" 2>/dev/null
+    fi
+
+    log "Space weather data updated: G$kp_scale, S$solar_scale, R$radio_scale"
+fi
+
+# ==============================================================================
 #    Build Audio Files
 # ==============================================================================
 
@@ -268,4 +377,4 @@ build_audio "$SNDWX/wind.ulaw" \
 
 log "Weather data updated successfully"
 
-###VERSION=2.0.4
+###VERSION=2.0.5
