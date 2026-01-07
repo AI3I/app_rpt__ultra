@@ -415,15 +415,14 @@ msgreader.sh 10
 #### BY INVOCATION ONLY
 This script can write messages into slots using the vocabulary and character tables listed below.
 > [!NOTE]
-> 1. Slot _**00** is special_ (v2.0.5+) and triggers CW ID playback using rpt.conf's idtalkover settings. Cannot be written with msgwriter.sh.
-> 2. Slots **01** through **50** are customizable through the message writer
-> 3. Slots **51** through **99** are pre-programmed and cannot be overwritten by this tool
-> 4. Character `D` delimits the slot from the message, and `*` delimits each character or vocabulary word
+> 1. Slot _**00** is special_ and is for the CW ID, which writes to the _**idtalkover**_ parameter in rpt.conf.
+> 2. Slots **01** through **50** are customizable through the message writer, while slots **51** through **99** are pre-programmed and cannot be overwritten by this tool.
+> 3. Character `D` delimits the slot from the message, and `*` delimits each character or vocabulary word.
 
 #### EXAMPLES
-* We want to write a voice message into slot 01 with "MYC4LL":
+* We want to write CW ID into slot 00 with "MYC4LL":
 ```
-msgwriter.sh 01D061*093*023*004*053*053
+msgwriter.sh 00D61*93*23*04*53*53
 ```
 * We want to write a voice message into slot 04 for the Anxious ID that reads back "_M Y C 4 L L REPEATER_":
 ```
@@ -1251,7 +1250,7 @@ ctkeeper.sh unlinkedct 78
 ### Message Banks
 |Slot|Path|Description|Contents|
 |-|-|-|-|
-|00|rpt/cw_id|CW ID Trigger|Triggers CW ID playback (v2.0.5+)|
+|00|rpt/cw_id|CW ID (writes to rpt.conf)|Writes to idtalkover in rpt.conf; msgreader plays via `rpt playback \|m`|
 |01|ids/initial_id_1|Initial ID #1|_empty_|
 |02|ids/initial_id_2|Initial ID #2|_empty_|
 |03|ids/initial_id_3|Initial ID #3|_empty_|
