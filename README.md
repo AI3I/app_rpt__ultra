@@ -335,8 +335,9 @@ This daemon monitors for consecutive short transmissions (kerchunks) and plays a
 **Configuration Variables:**
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|KERCHUNK_ENABLE|0 or 1 (_boolean_)|Enable kerchunk monitoring and warnings.<br />_**0**_: disabled (default)<br />_**1**_: enabled|
+|KERCHUNK_ENABLE|0 or 1 (_boolean_)|Enable kerchunk monitoring and warnings.<br />_**0**_: disabled<br />_**1**_: enabled (default)<br />**Note:** Auto-disabled by statekeeper during net, stealth, and tactical modes|
 |KERCHUNK_THRESHOLD|_integer_|Number of consecutive kerchunks before playing warning.<br />Default: _**3**_|
+|KERCHUNK_DURATION|_decimal_|Maximum transmission duration (seconds) to be considered a kerchunk.<br />Default: _**1.5**_ seconds|
 |KERCHUNK_WAITLIMIT|_integer_|Seconds between warning messages (rate limiting).<br />Default: _**30**_ seconds|
 
 **Default Message:**

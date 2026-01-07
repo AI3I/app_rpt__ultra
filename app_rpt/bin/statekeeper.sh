@@ -32,6 +32,7 @@ default) # Reset to Default Operations
     sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
     sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
+    sed -i "s/^KERCHUNK_ENABLE=.*$/KERCHUNK_ENABLE=1/g" "$sourcefile"
     sed -i "s/^ENABLETEMP=0/ENABLETEMP=1/g" "$sourcefile"
     sed -i "s/^ENABLETIME=0/ENABLETIME=1/g" "$sourcefile"
     sed -i.bkp "s/^;idrecording=.*$/idrecording=voice_id/g" "$RPTCONF"
@@ -115,6 +116,7 @@ tactical) # Tactical Operations
     sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"
     sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=4/g" "$sourcefile"
+    sed -i "s/^KERCHUNK_ENABLE=.*$/KERCHUNK_ENABLE=0/g" "$sourcefile"
     sed -i.bkp "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEX/g" "$RPTCONF"
     sed -i "s/^unlinkedct=.*$/unlinkedct=$CTTAC/g" "$RPTCONF"
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTTAC/g" "$RPTCONF"
@@ -133,6 +135,7 @@ stealth) # Stealth Operations
     sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"
     sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=4/g" "$sourcefile"
+    sed -i "s/^KERCHUNK_ENABLE=.*$/KERCHUNK_ENABLE=0/g" "$sourcefile"
     sed -i.bkp "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEX/g" "$RPTCONF"
     sed -i "s/^idrecording=/;idrecording=/g" "$RPTCONF"
     sed -i "s/^tailmessagetime=/;tailmessagetime=/g" "$RPTCONF"
@@ -186,6 +189,7 @@ nighttime) # Nighttime Operations
 net) # Net
     sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=4/g" "$sourcefile"
     sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
+    sed -i "s/^KERCHUNK_ENABLE=.*$/KERCHUNK_ENABLE=0/g" "$sourcefile"
     sed -i.bkp "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEX/g" "$RPTCONF"
     sed -i "s/^unlinkedct=.*$/unlinkedct=$CTNET/g" "$RPTCONF"
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTNET/g" "$RPTCONF"
@@ -210,4 +214,4 @@ clock) # Grandfather Clock
     ;;
 esac
 
-###VERSION=2.0.2
+###VERSION=2.0.3

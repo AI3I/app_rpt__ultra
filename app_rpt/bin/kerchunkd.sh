@@ -1,5 +1,5 @@
 #!/bin/bash
-###VERSION=2.0.2
+###VERSION=2.0.3
 #
 #    app_rpt__ultra :: the ultimate controller experience for app_rpt
 #    Copyright (C) 2025   John D. Lewis (AI3I)
@@ -23,7 +23,6 @@
 # immediately after the transmission ends (no cron delay).
 #
 # USAGE: Start via systemd service or run in background
-#
 
 set -euo pipefail
 
@@ -36,8 +35,8 @@ source "${SCRIPT_DIR}/common.sh"
 #    Configuration
 # ==============================================================================
 
-# Poll interval in seconds (how often to check for new kerchunks)
-POLL_INTERVAL="${POLL_INTERVAL:-5}"
+# Poll interval in seconds (how often to check for new transmissions)
+POLL_INTERVAL="${POLL_INTERVAL:-1}"
 
 # Kerchunk detection threshold
 KERCHUNK_THRESHOLD="${KERCHUNK_THRESHOLD:-3}"
@@ -45,102 +44,84 @@ KERCHUNK_THRESHOLD="${KERCHUNK_THRESHOLD:-3}"
 # Rate limiting (seconds between warning messages)
 KERCHUNK_WAITLIMIT="${KERCHUNK_WAITLIMIT:-30}"
 
+# Kerchunk duration threshold (seconds) - transmissions shorter than this are kerchunks
+KERCHUNK_DURATION="${KERCHUNK_DURATION:-1.5}"
+
 # PID file
 PID_FILE="/tmp/kerchunkd.pid"
 
 # State file locations
 STATE_DIR="/tmp/app_rpt_kerchunk"
-LAST_COUNT_FILE="${STATE_DIR}/last_count"
 CONSECUTIVE_FILE="${STATE_DIR}/consecutive"
 LAST_WARNING_FILE="${STATE_DIR}/last_warning"
 LAST_KEYUPS_FILE="${STATE_DIR}/last_keyups"
-
-# ==============================================================================
-#    Daemon Management
-# ==============================================================================
-
-cleanup() {
-    log "Kerchunk daemon shutting down"
-    rm -f "${PID_FILE}"
-    exit 0
-}
-
-trap cleanup SIGTERM SIGINT
-
-check_if_running() {
-    if [[ -f "${PID_FILE}" ]]; then
-        local pid
-        pid=$(cat "${PID_FILE}")
-        if kill -0 "$pid" 2>/dev/null; then
-            echo "Kerchunk daemon already running (PID: $pid)"
-            exit 1
-        else
-            # Stale PID file
-            rm -f "${PID_FILE}"
-        fi
-    fi
-}
-
-write_pid() {
-    echo $$ > "${PID_FILE}"
-}
+LAST_TXTIME_FILE="${STATE_DIR}/last_txtime"
 
 # ==============================================================================
 #    Functions
 # ==============================================================================
 
-get_kerchunk_count() {
-    # Get current kerchunk count from app_rpt stats
-    local kerchunks
-    kerchunks=$(asterisk -rx "rpt stats ${MYNODE}" 2>/dev/null | \
-                grep "Kerchunks since system initialization" | \
-                awk -F: '{print $2}' | \
-                tr -d ' ')
+# Convert TX time string (HH:MM:SS:mmm) to total milliseconds
+txtime_to_ms() {
+    local txtime="$1"
 
-    if [[ -z "$kerchunks" ]] || [[ ! "$kerchunks" =~ ^[0-9]+$ ]]; then
+    # Parse HH:MM:SS:mmm format
+    if [[ $txtime =~ ^([0-9]+):([0-9]+):([0-9]+):([0-9]+)$ ]]; then
+        local hours="${BASH_REMATCH[1]}"
+        local minutes="${BASH_REMATCH[2]}"
+        local seconds="${BASH_REMATCH[3]}"
+        local ms="${BASH_REMATCH[4]}"
+
+        # Convert to total milliseconds
+        local total_ms=$(( (hours * 3600 + minutes * 60 + seconds) * 1000 + ms ))
+        echo "$total_ms"
+    else
         echo "0"
-        return
     fi
-
-    echo "$kerchunks"
 }
 
-get_keyup_count() {
-    # Get current normal keyup count
+get_stats() {
+    # Get current keyups and TX time from rpt stats
+    local stats
+    stats=$(asterisk -rx "rpt stats ${MYNODE}" 2>/dev/null)
+
+    # Extract keyups
     local keyups
-    keyups=$(asterisk -rx "rpt stats ${MYNODE}" 2>/dev/null | \
-            grep "Keyups since system initialization" | \
-            awk -F: '{print $2}' | \
-            tr -d ' ')
+    keyups=$(echo "$stats" | grep "Keyups since system initialization" | awk -F: '{print $2}' | tr -d ' ')
+    [[ -z "$keyups" ]] || [[ ! "$keyups" =~ ^[0-9]+$ ]] && keyups="0"
 
-    if [[ -z "$keyups" ]] || [[ ! "$keyups" =~ ^[0-9]+$ ]]; then
-        echo "0"
-        return
-    fi
+    # Extract TX time
+    local txtime
+    txtime=$(echo "$stats" | grep "TX time since system initialization" | awk -F: '{print $2":"$3":"$4":"$5}' | tr -d ' ')
+    [[ -z "$txtime" ]] && txtime="00:00:00:000"
 
-    echo "$keyups"
+    # Convert TX time to milliseconds
+    local txtime_ms
+    txtime_ms=$(txtime_to_ms "$txtime")
+
+    echo "${keyups}:${txtime_ms}"
 }
 
 initialize_state() {
     mkdir -p "${STATE_DIR}"
-    [[ ! -f "${LAST_COUNT_FILE}" ]] && echo "0" > "${LAST_COUNT_FILE}"
     [[ ! -f "${CONSECUTIVE_FILE}" ]] && echo "0" > "${CONSECUTIVE_FILE}"
     [[ ! -f "${LAST_WARNING_FILE}" ]] && echo "0" > "${LAST_WARNING_FILE}"
     [[ ! -f "${LAST_KEYUPS_FILE}" ]] && echo "0" > "${LAST_KEYUPS_FILE}"
+    [[ ! -f "${LAST_TXTIME_FILE}" ]] && echo "0" > "${LAST_TXTIME_FILE}"
 }
 
 read_state() {
-    LAST_COUNT=$(cat "${LAST_COUNT_FILE}" 2>/dev/null || echo "0")
     CONSECUTIVE=$(cat "${CONSECUTIVE_FILE}" 2>/dev/null || echo "0")
     LAST_WARNING=$(cat "${LAST_WARNING_FILE}" 2>/dev/null || echo "0")
     LAST_KEYUPS=$(cat "${LAST_KEYUPS_FILE}" 2>/dev/null || echo "0")
+    LAST_TXTIME=$(cat "${LAST_TXTIME_FILE}" 2>/dev/null || echo "0")
 }
 
 write_state() {
-    echo "${LAST_COUNT}" > "${LAST_COUNT_FILE}"
     echo "${CONSECUTIVE}" > "${CONSECUTIVE_FILE}"
     echo "${LAST_WARNING}" > "${LAST_WARNING_FILE}"
     echo "${LAST_KEYUPS}" > "${LAST_KEYUPS_FILE}"
+    echo "${LAST_TXTIME}" > "${LAST_TXTIME_FILE}"
 }
 
 play_kerchunk_warning() {
@@ -151,8 +132,9 @@ play_kerchunk_warning() {
         asterisk -rx "rpt localplay ${MYNODE} ${SOUNDS}/custom/kerchunk_reminder" &>/dev/null
     else
         # Use default TMS5220 message: "Please identify"
-        # Play both words back-to-back without delay
-        asterisk -rx "rpt localplay ${MYNODE} ${SOUNDS}/_male/please,${SOUNDS}/_male/identify" &>/dev/null
+        asterisk -rx "rpt localplay ${MYNODE} ${SOUNDS}/_male/please" &>/dev/null
+        sleep 0.2
+        asterisk -rx "rpt localplay ${MYNODE} ${SOUNDS}/_male/identify" &>/dev/null
     fi
 }
 
@@ -173,7 +155,7 @@ check_rate_limit() {
 # ==============================================================================
 
 main_loop() {
-    log "Kerchunk daemon started (poll interval: ${POLL_INTERVAL}s, threshold: ${KERCHUNK_THRESHOLD})"
+    log "Kerchunk daemon started (poll: ${POLL_INTERVAL}s, threshold: ${KERCHUNK_THRESHOLD}, duration: <${KERCHUNK_DURATION}s)"
 
     # Initialize state
     initialize_state
@@ -182,55 +164,53 @@ main_loop() {
         # Read current state
         read_state
 
-        # Get current counts
-        CURRENT_COUNT=$(get_kerchunk_count)
-        CURRENT_KEYUPS=$(get_keyup_count)
+        # Get current stats (keyups:txtime_ms)
+        local stats
+        stats=$(get_stats)
+        local current_keyups
+        current_keyups=$(echo "$stats" | cut -d: -f1)
+        local current_txtime
+        current_txtime=$(echo "$stats" | cut -d: -f2)
 
-        # Check if kerchunk count increased
-        if [[ $CURRENT_COUNT -gt $LAST_COUNT ]]; then
-            # Kerchunk detected
-            local new_kerchunks=$((CURRENT_COUNT - LAST_COUNT))
-            CONSECUTIVE=$((CONSECUTIVE + new_kerchunks))
+        # Check if keyups increased
+        if [[ $current_keyups -gt $LAST_KEYUPS ]]; then
+            # New transmission(s) detected
+            local new_keyups=$((current_keyups - LAST_KEYUPS))
+            local txtime_delta_ms=$((current_txtime - LAST_TXTIME))
 
-            log "Kerchunk detected (count: ${CURRENT_COUNT}, consecutive: ${CONSECUTIVE})"
+            # Calculate average duration per transmission in this poll cycle
+            local avg_duration_ms=$((txtime_delta_ms / new_keyups))
+            local avg_duration_s=$(awk "BEGIN {printf \"%.1f\", $avg_duration_ms/1000.0}")
 
-            # Check if we've reached the threshold
-            if [[ $CONSECUTIVE -ge $KERCHUNK_THRESHOLD ]]; then
-                log "Kerchunk threshold reached (${CONSECUTIVE} >= ${KERCHUNK_THRESHOLD})"
+            # Convert KERCHUNK_DURATION to milliseconds for comparison
+            local kerchunk_threshold_ms=$(awk "BEGIN {printf \"%.0f\", $KERCHUNK_DURATION*1000}")
 
-                # Check rate limiting
-                if check_rate_limit; then
-                    # Wait a moment for the transmission to fully end
-                    sleep 2
+            if [[ $avg_duration_ms -lt $kerchunk_threshold_ms ]]; then
+                # Kerchunk detected
+                CONSECUTIVE=$((CONSECUTIVE + new_keyups))
+                log "Kerchunk detected (duration: ${avg_duration_s}s < ${KERCHUNK_DURATION}s, consecutive: ${CONSECUTIVE})"
 
-                    play_kerchunk_warning
-                    LAST_WARNING=$(date +%s)
-                    CONSECUTIVE=0  # Reset after warning
-                else
-                    log "Skipping warning due to rate limit"
+                # Check if we've reached the threshold
+                if [[ $CONSECUTIVE -ge $KERCHUNK_THRESHOLD ]]; then
+                    log "Kerchunk threshold reached (${CONSECUTIVE} >= ${KERCHUNK_THRESHOLD})"
+
+                    # Check rate limiting
+                    if check_rate_limit; then
+                        play_kerchunk_warning
+                        LAST_WARNING=$(date +%s)
+                        CONSECUTIVE=0  # Reset after warning
+                    fi
                 fi
-            fi
-        fi
-
-        # Check if normal keyup occurred (reset consecutive on normal transmission)
-        if [[ $CURRENT_KEYUPS -gt $LAST_KEYUPS ]]; then
-            local keyup_delta=$((CURRENT_KEYUPS - LAST_KEYUPS))
-            local kerchunk_delta=$((CURRENT_COUNT - LAST_COUNT))
-
-            # If more keyups than kerchunks, at least one was a normal transmission
-            if [[ $keyup_delta -gt $kerchunk_delta ]]; then
-                if [[ $CONSECUTIVE -gt 0 ]]; then
-                    log "Normal transmission detected, resetting consecutive count"
-                fi
+            else
+                # Normal transmission - reset consecutive counter
+                log "Normal transmission detected (duration: ${avg_duration_s}s, consecutive reset)"
                 CONSECUTIVE=0
             fi
         fi
 
-        # Update last counts
-        LAST_COUNT=$CURRENT_COUNT
-        LAST_KEYUPS=$CURRENT_KEYUPS
-
-        # Write state
+        # Update state
+        LAST_KEYUPS=$current_keyups
+        LAST_TXTIME=$current_txtime
         write_state
 
         # Sleep before next poll
@@ -239,20 +219,29 @@ main_loop() {
 }
 
 # ==============================================================================
-#    Entry Point
+#    Daemon Startup
 # ==============================================================================
 
-# Check if feature is enabled
-if [[ "${KERCHUNK_ENABLE:-0}" != "1" ]]; then
-    echo "Kerchunk monitoring is disabled (KERCHUNK_ENABLE=0 in config.ini)"
-    exit 0
+# Check if already running
+if [[ -f "$PID_FILE" ]]; then
+    OLD_PID=$(cat "$PID_FILE")
+    if kill -0 "$OLD_PID" 2>/dev/null; then
+        log "Kerchunk daemon already running (PID: $OLD_PID)"
+        exit 1
+    fi
 fi
 
-# Check if already running
-check_if_running
-
 # Write PID file
-write_pid
+echo $$ > "$PID_FILE"
+
+# Cleanup on exit
+trap 'rm -f "$PID_FILE"; log "Kerchunk daemon stopped"' EXIT
+
+# Check if kerchunk monitoring is enabled
+if [[ "${KERCHUNK_ENABLE:-0}" != "1" ]]; then
+    log "Kerchunk monitoring disabled (KERCHUNK_ENABLE=0)"
+    exit 0
+fi
 
 # Start main loop
 main_loop

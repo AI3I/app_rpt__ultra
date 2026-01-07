@@ -43,4 +43,4 @@ sleep 6
 asterisk -rx "rpt localplay $MYNODE rpt/flow_rate_is"
 /opt/app_rpt/bin/speaktext.sh $rate
 
-###VERSION=2.0.2
+###VERSION=2.0.3
