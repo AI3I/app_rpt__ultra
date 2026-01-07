@@ -27,6 +27,12 @@ if [[ -z "$1" ]]; then
     exit 1
 fi
 
+# Special handling for slot 00: Play CW ID using rpt.conf parameters
+if [[ "$1" == "00" ]]; then
+    asterisk -rx "rpt playback $MYNODE |m"
+    exit 0
+fi
+
 # Use grep -F for fixed string matching to avoid regex injection
 msgid=$(grep -F "$1 " "$MSGTBL" | head -1 | cut -d' ' -f2)
 
@@ -37,4 +43,4 @@ else
     exit 1
 fi
 
-###VERSION=2.0.4
+###VERSION=2.0.5

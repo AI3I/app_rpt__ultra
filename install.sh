@@ -347,6 +347,7 @@ install_dependencies() {
     print_step "Installing Dependencies"
 
     if command -v apt-get &>/dev/null; then
+        # Check and install jq
         if ! command -v jq &>/dev/null; then
             print_info "Installing jq..."
             apt-get update -qq
@@ -355,9 +356,34 @@ install_dependencies() {
         else
             print_success "jq already installed"
         fi
+
+        # Check and install dialog
+        if ! command -v dialog &>/dev/null; then
+            print_info "Installing dialog..."
+            apt-get install -y -qq dialog
+            print_success "dialog installed"
+        else
+            print_success "dialog already installed"
+        fi
+
+        # Check and install fzf (for msgbuilder.sh)
+        if ! command -v fzf &>/dev/null; then
+            print_info "Installing fzf..."
+            apt-get install -y -qq fzf
+            print_success "fzf installed"
+        else
+            print_success "fzf already installed"
+        fi
     else
+        # Non-Debian systems
         if ! command -v jq &>/dev/null; then
             print_warning "Please install 'jq' manually for your distribution"
+        fi
+        if ! command -v dialog &>/dev/null; then
+            print_warning "Please install 'dialog' manually for your distribution"
+        fi
+        if ! command -v fzf &>/dev/null; then
+            print_warning "Please install 'fzf' manually for your distribution"
         fi
     fi
 }

@@ -157,9 +157,9 @@ NWSFILE=/opt/app_rpt/lib/nwsalerts.out
 # 0: deactivated; 1: severe weather alert; 2: weather alert; 3: all is normal
 SEVEREWEATHER=3
 # Where to find the severe weather alert message (relative path)
-SVWXALERT=tails/severe_weather_alert
+SVWXALERT=weather/wx_severe_alert
 # Where to find the routine weather alert message (relative path)
-RTWXALERT=tails/weather_alert
+RTWXALERT=weather/wx_alert
 
 # ==============================================================================
 #    Global Variables
@@ -197,4 +197,4 @@ UTILDIR=/opt/app_rpt/util
 BACKUPDIR=/opt/app_rpt/backups
 RECORDDIR=/opt/asterisk
 
-###VERSION=2.0.4
+###VERSION=2.0.5

@@ -154,7 +154,7 @@ check_prerequisites() {
 
     # Check required commands
     local missing_cmds=()
-    for cmd in jq rsync awk sed grep; do
+    for cmd in jq rsync awk sed grep dialog fzf; do
         if ! command -v "$cmd" &>/dev/null; then
             missing_cmds+=("$cmd")
         fi
@@ -162,6 +162,7 @@ check_prerequisites() {
 
     if [[ ${#missing_cmds[@]} -gt 0 ]]; then
         log_error "Missing required commands: ${missing_cmds[*]}"
+        log_error "Install with: sudo apt install ${missing_cmds[*]}"
         exit 1
     fi
 

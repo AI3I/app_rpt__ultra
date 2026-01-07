@@ -1,0 +1,58 @@
+# app_rpt__ultra - System-Specific Configuration Files
+#
+# These files contain node-specific settings, DTMF codes, and network
+# configuration that should NOT be shared in the repository.
+# Template versions (.example files) are provided instead.
+
+# User-specific Asterisk configurations
+asterisk/rpt.conf
+asterisk/extensions_custom.conf
+asterisk/extensions.conf
+asterisk/iax.conf
+asterisk/modules.conf
+
+# User-specific app_rpt configurations
+app_rpt/config.ini
+
+# AllMon3 configurations (contains node numbers, DTMF codes, etc.)
+# Note: AllMon3 is typically installed in /etc/allmon3/ not in this repo
+/etc/allmon3/
+
+# Backup files
+*.bkp
+*.backup
+*~
+*.swp
+*.swo
+
+# Log files
+*.log
+app_rpt/logs/
+/var/log/
+
+# Runtime/temporary files
+*.pyc
+__pycache__/
+.DS_Store
+Thumbs.db
+
+# User data
+app_rpt/sounds/ids/*.ulaw
+app_rpt/sounds/tails/*.ulaw
+app_rpt/sounds/custom/*.ulaw
+app_rpt/sounds/weather/*.ulaw
+
+# Keep the directory structure but ignore user content
+!app_rpt/sounds/ids/.gitkeep
+!app_rpt/sounds/tails/.gitkeep
+!app_rpt/sounds/custom/.gitkeep
+!app_rpt/sounds/weather/.gitkeep
+
+# Development/testing
+/tmp/
+test_*.sh
+debug_*.sh
+
+# Deployment-specific
+upgrade_backup_*/
+backups/
