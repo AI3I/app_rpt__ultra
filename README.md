@@ -9,7 +9,9 @@ All of the frameworks were written in Bash (Bourne again shell) using scripts th
 - A vocabulary of 877 words and sound effects with dozens of pre-defined phrases[^1];
 - Weather alerting system, powered by NOAA NWS alerts;
 - Reporting weather conditions, powered by Weather Underground[^2];
-- Kerchunk detection and deterrence with polite automated reminders;
+- Space weather monitoring with NOAA SWPC integration (geomagnetic storms, radio blackouts, solar radiation);
+- Intelligent kerchunk detection with passive monitoring (statistics) and active deterrence (polite reminders);
+- Comprehensive statistics logging for transmission pattern analysis;
 - Full integration with Asterisk AllStarLink app_rpt without any code modification!
 # Installation
 ## System Requirements
@@ -323,22 +325,28 @@ This script maintains configuration synchronization between hub and child nodes 
 |AUTOUPGRADE|0 or 1 (_boolean_)|Whether to automatically upgrade child nodes when hub version changes.<br />_**0**_: manual upgrades only (default)<br />_**1**_: automatic upgrades via configkeeper.sh<br />**NOTE:** Only applies to child nodes (FETCHLOCAL=1).|
 ### kerchunkd.sh
 #### SYSTEMD SERVICE: continuous daemon
-This daemon monitors for consecutive short transmissions (kerchunks) and plays a polite reminder message to encourage proper radio etiquette. The daemon runs continuously and responds within seconds of detecting kerchunks, providing immediate behavioral feedback.
+This daemon monitors for consecutive short transmissions (kerchunks) with intelligent detection and optional polite reminders. The daemon runs continuously and responds within seconds of detecting kerchunk patterns, providing immediate behavioral feedback when in active mode, or detailed statistics logging in passive mode.
 
 **How It Works:**
-1. Monitors `rpt stats` every 5 seconds for kerchunk count changes
-2. Tracks consecutive kerchunks (resets when normal transmission occurs)
-3. Plays "Please identify" after threshold is reached (default: 3 consecutive)
-4. Rate limits warnings to prevent harassment (default: once per 5 minutes)
-5. Auto-resets counter after warning or normal transmission
+1. Monitors `rpt stats` every 1 second for transmission duration changes
+2. Uses three-tier detection logic based on min/max duration range:
+   - **< MIN_DURATION**: Ignored (noise/blips, not counted)
+   - **MIN to MAX_DURATION**: Counted as kerchunk
+   - **> MAX_DURATION**: Normal transmission (resets counter)
+3. Tracks consecutive kerchunks with smart reset on normal transmissions
+4. **Passive mode** (default): Logs statistics to `/var/log/kerchunk_stats.log`
+5. **Active mode**: Plays "Please identify" after threshold + logs statistics
+6. Rate limits warnings to prevent harassment (default: 30 seconds between warnings)
 
 **Configuration Variables:**
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
-|KERCHUNK_ENABLE|0 or 1 (_boolean_)|Enable kerchunk monitoring and warnings.<br />_**0**_: disabled<br />_**1**_: enabled (default)<br />**Note:** Auto-disabled by statekeeper during net, stealth, and tactical modes|
-|KERCHUNK_THRESHOLD|_integer_|Number of consecutive kerchunks before playing warning.<br />Default: _**3**_|
-|KERCHUNK_DURATION|_decimal_|Maximum transmission duration (seconds) to be considered a kerchunk.<br />Default: _**1.5**_ seconds|
-|KERCHUNK_WAITLIMIT|_integer_|Seconds between warning messages (rate limiting).<br />Default: _**30**_ seconds|
+|KERCHUNK_ENABLE|0 or 1 (_boolean_)|Enable kerchunk monitoring.<br />_**0**_: disabled<br />_**1**_: enabled (default)<br />**Note:** Auto-disabled by statekeeper during net, stealth, and tactical modes|
+|KERCHUNK_MODE|passive or active|Detection mode.<br />_**passive**_: log only (default)<br />_**active**_: log + play warning message|
+|KERCHUNK_THRESHOLD|_integer_|Number of consecutive kerchunks before triggering (logging or warning).<br />Default: _**3**_|
+|KERCHUNK_MIN_DURATION|_decimal_|Minimum transmission duration (seconds) to count as kerchunk.<br />Transmissions shorter than this are ignored (noise/blips).<br />Default: _**0.2**_ seconds|
+|KERCHUNK_MAX_DURATION|_decimal_|Maximum transmission duration (seconds) to count as kerchunk.<br />Transmissions longer than this reset the counter (normal transmission).<br />Default: _**1.5**_ seconds|
+|KERCHUNK_WAITLIMIT|_integer_|Seconds between warning messages (rate limiting, active mode only).<br />Default: _**30**_ seconds|
 
 **Default Message:**
 - Uses TMS5220 vocabulary: "Please identify"
@@ -371,15 +379,41 @@ sudo journalctl -u kerchunkd.service -f
 tail -f /var/log/app_rpt.log | grep kerchunk
 ```
 
-**Testing:**
-1. Set `KERCHUNK_ENABLE=1` in config.ini
-2. Restart daemon: `sudo systemctl restart kerchunkd.service`
-3. Make 3 short transmissions (< 1 second each)
-4. Wait 5-10 seconds
-5. Listen for "Please identify"
-6. Adjust `KERCHUNK_WAITLIMIT` as desired (default: 30 seconds)
+**Statistics Logging:**
+The daemon logs all transmissions to `/var/log/kerchunk_stats.log` in CSV format:
+```
+Timestamp, Node, Duration, Consecutive_Count, Warning_Played, Type, State
+2026-01-07 20:00:00, 504381, 0.6s, 1, no, kerchunk, state_0
+2026-01-07 20:00:10, 504381, 0.7s, 2, no, kerchunk, state_0
+2026-01-07 20:00:20, 504381, 0.8s, 3, no-passive, kerchunk, state_0
+2026-01-07 20:00:30, 504381, 5.2s, 0, no, normal, state_0
+```
 
-**Note:** The daemon requires `asterisk.service` to be running and uses the same kerchunk statistics that app_rpt internally tracks.
+This provides valuable data for analyzing transmission patterns and tuning detection parameters.
+
+**Testing Passive Mode (default):**
+1. Set `KERCHUNK_ENABLE=1` and `KERCHUNK_MODE=passive` in config.ini
+2. Restart daemon: `sudo systemctl restart kerchunkd.service`
+3. Make 3 short transmissions (0.5-1.0 seconds each)
+4. Check logs: `tail -f /var/log/kerchunk_stats.log`
+5. Look for consecutive count reaching threshold
+6. No audio warning will play - passive mode logs only
+
+**Testing Active Mode:**
+1. Set `KERCHUNK_MODE=active` in config.ini
+2. Restart daemon: `sudo systemctl restart kerchunkd.service`
+3. Make 3 short transmissions (0.5-1.0 seconds each)
+4. Wait 2-3 seconds after last transmission
+5. Listen for "Please identify" warning
+6. Check logs to verify both audio and statistics
+
+**Tuning Detection:**
+- Increase `KERCHUNK_MAX_DURATION` if legitimate short transmissions are flagged
+- Decrease `KERCHUNK_MIN_DURATION` if very short kerchunks are missed
+- Adjust `KERCHUNK_THRESHOLD` based on desired sensitivity
+- Review `/var/log/kerchunk_stats.log` to analyze actual transmission patterns
+
+**Note:** The daemon requires `asterisk.service` to be running and uses app_rpt's internal statistics for transmission timing.
 ### datadumper.sh
 #### CRONTAB: midnight daily
 This purges old recordings after they have aged by the defined period in the script.
