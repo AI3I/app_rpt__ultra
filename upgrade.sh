@@ -30,7 +30,7 @@ set -euo pipefail
 #
 
 # Version information
-readonly SCRIPT_VERSION="2.0.1"
+readonly SCRIPT_VERSION="2.0.5"
 readonly SCRIPT_NAME="upgrade.sh"
 readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
