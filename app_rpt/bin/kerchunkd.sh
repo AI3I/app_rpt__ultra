@@ -39,7 +39,7 @@ source "${SCRIPT_DIR}/common.sh"
 POLL_INTERVAL="${POLL_INTERVAL:-1}"
 
 # Kerchunk detection mode (passive=log only, active=log+play warning)
-KERCHUNK_MODE="${KERCHUNK_MODE:-active}"
+KERCHUNK_MODE="${KERCHUNK_MODE:-passive}"
 
 # Kerchunk detection threshold
 KERCHUNK_THRESHOLD="${KERCHUNK_THRESHOLD:-3}"

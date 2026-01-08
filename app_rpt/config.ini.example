@@ -37,7 +37,7 @@ vpndevice=tun0
 # 0: disabled;  1: enabled (plays reminder after consecutive kerchunks)
 KERCHUNK_ENABLE=1
 # Kerchunk detection mode: passive (log only) or active (log + play warning)
-KERCHUNK_MODE=active        # passive: log only; active: log + play "please identify"
+KERCHUNK_MODE=passive       # passive: log only; active: log + play "please identify"
 # Number of consecutive kerchunks before playing warning message (active mode only)
 KERCHUNK_THRESHOLD=3
 # Kerchunk duration range (seconds)
