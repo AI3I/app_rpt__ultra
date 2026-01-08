@@ -206,10 +206,10 @@ tail -f /var/log/app_rpt.log | grep kerchunk
 The daemon logs all transmissions to `/var/log/kerchunk_stats.log` in CSV format:
 ```
 Timestamp, Node, Duration, Consecutive_Count, Warning_Played, Type, State
-2026-01-07 20:00:00, 504381, 0.6s, 1, no, kerchunk, state_0
-2026-01-07 20:00:10, 504381, 0.7s, 2, no, kerchunk, state_0
-2026-01-07 20:00:20, 504381, 0.8s, 3, no-passive, kerchunk, state_0
-2026-01-07 20:00:30, 504381, 5.2s, 0, no, normal, state_0
+2026-01-07 20:00:00, 1999, 0.6s, 1, no, kerchunk, state_0
+2026-01-07 20:00:10, 1999, 0.7s, 2, no, kerchunk, state_0
+2026-01-07 20:00:20, 1999, 0.8s, 3, no-passive, kerchunk, state_0
+2026-01-07 20:00:30, 1999, 5.2s, 0, no, normal, state_0
 ```
 
 This provides valuable data for analyzing transmission patterns and tuning detection parameters.

@@ -367,17 +367,17 @@ The hub/child architecture allows you to manage multiple repeater sites from a c
 **Hub Node Setup (`config.ini`):**
 ```ini
 # Hub node at headquarters with good internet
-MYNODE=504381
+MYNODE=1999
 FETCHLOCAL=0              # This is the hub (fetch from internet)
 WUAPIKEY=abc123...        # Weather Underground API key
-WUSTATION=KPAPITTS123     # Local weather station
+WUSTATION=KSTEXAS123     # Local weather station
 NWSZONE=PAZ073            # NOAA alert zone
 ```
 
 **Child Node Setup (`config.ini`):**
 ```ini
 # Remote site on mountain top
-MYNODE=504382
+MYNODE=2000
 FETCHLOCAL=1                     # This is a child (fetch from hub)
 FETCHPOINT=hub.example.com       # Hub hostname or IP
 AUTOUPGRADE=1                    # Auto-upgrade when hub version changes
@@ -451,7 +451,7 @@ ssh child1.example.com "tail -50 /var/log/app_rpt.log | grep upgrade"
 **Updating a custom tail message network-wide:**
 ```bash
 # 1. On hub, record new message to slot 05
-asterisk -rx "rpt localplay 504381 /opt/app_rpt/sounds/tails/tail_message_5"
+asterisk -rx "rpt localplay 1999 /opt/app_rpt/sounds/tails/tail_message_5"
 
 # 2. Optionally sync tails/ directory (if you enable it in configkeeper.sh)
 # Default: tails/ are NOT synced (site-specific)

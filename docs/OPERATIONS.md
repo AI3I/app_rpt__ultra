@@ -60,7 +60,7 @@ Common slots:
 *C902#    # Switch to daytime mode
 
 # Or via command line (remote management):
-ssh ai3i@repeater.example.com "sudo -u asterisk /opt/app_rpt/bin/statekeeper.sh daytime"
+ssh user@repeater.example.com "sudo -u asterisk /opt/app_rpt/bin/statekeeper.sh daytime"
 ```
 
 **What happens automatically:**
@@ -266,13 +266,13 @@ These user-facing utilities aren't in cron but are available for manual invocati
 **Example: Remote fan control**
 ```bash
 # Check temperature
-TEMP=$(asterisk -rx "rpt stats 504381" | grep -i temperature | awk '{print $NF}')
+TEMP=$(asterisk -rx "rpt stats 1999" | grep -i temperature | awk '{print $NF}')
 
 # If over 80°F, turn on fan via GPIO
 if [[ ${TEMP%%.*} -gt 80 ]]; then
     /opt/app_rpt/bin/gpio.sh 17 on
     # Play pre-recorded message (create with msgwriter.sh)
-    asterisk -rx "rpt localplay 504381 /opt/app_rpt/sounds/custom/fan_on"
+    asterisk -rx "rpt localplay 1999 /opt/app_rpt/sounds/custom/fan_on"
 fi
 ```
 
@@ -391,7 +391,7 @@ sudo -u asterisk /opt/app_rpt/bin/statekeeper.sh default
 ```ini
 FETCHLOCAL=0           # Hub fetches from Weather Underground
 WUAPIKEY=your_key      # Your Weather Underground API key
-WUSTATION=KPAPITTS1    # Local weather station
+WUSTATION=KSTEXAS123    # Local weather station
 ```
 
 **Child node configuration (`config.ini`):**
@@ -463,8 +463,8 @@ UPTIME_DAYS=$(awk '{print int($1/86400)}' /proc/uptime)
 
 2. **Upload to repeater:**
    ```bash
-   scp my_custom_ct.ulaw ai3i@repeater.example.com:/tmp/
-   ssh ai3i@repeater.example.com "sudo mv /tmp/my_custom_ct.ulaw /opt/app_rpt/sounds/custom/ct99.ulaw"
+   scp my_custom_ct.ulaw user@repeater.example.com:/tmp/
+   ssh user@repeater.example.com "sudo mv /tmp/my_custom_ct.ulaw /opt/app_rpt/sounds/custom/ct99.ulaw"
    ```
 
 3. **Configure in config.ini:**
@@ -484,15 +484,15 @@ UPTIME_DAYS=$(awk '{print int($1/86400)}' /proc/uptime)
 **Method 1: Via DTMF (easiest)**
 ```
 *88011#    # Record to slot 11 (tail_message_1)
-# Speak: "Welcome to the AI3I repeater system"
+# Speak: "Welcome to the W1XYZ repeater system"
 #        # Hang up
 ```
 
 **Method 2: Via command line**
 ```bash
 # Record from phone, upload .ulaw file
-scp my_tail.ulaw ai3i@repeater.example.com:/tmp/
-ssh ai3i@repeater.example.com "sudo mv /tmp/my_tail.ulaw /opt/app_rpt/sounds/tails/tail_message_1.ulaw"
+scp my_tail.ulaw user@repeater.example.com:/tmp/
+ssh user@repeater.example.com "sudo mv /tmp/my_tail.ulaw /opt/app_rpt/sounds/tails/tail_message_1.ulaw"
 ```
 
 **Enable rotation:**
@@ -536,10 +536,10 @@ while true; do
 
     if [[ "$STATUS" == "HIGH" ]]; then
         # Panic button pressed!
-        asterisk -rx "rpt localplay 504381 /opt/app_rpt/sounds/custom/emergency_broadcast"
+        asterisk -rx "rpt localplay 1999 /opt/app_rpt/sounds/custom/emergency_broadcast"
 
         # Send two-tone page
-        asterisk -rx "rpt localplay 504381 |it330,569,3000"
+        asterisk -rx "rpt localplay 1999 |it330,569,3000"
 
         # Switch to tactical mode
         /opt/app_rpt/bin/statekeeper.sh tactical
@@ -610,7 +610,7 @@ grep ^KERCHUNK /opt/app_rpt/config.ini
 grep "^9000=" /etc/asterisk/rpt.conf
 
 # Test from Asterisk CLI
-asterisk -rx "rpt fun 504381 *C900"
+asterisk -rx "rpt fun 1999 *C900"
 
 # Check function vs. macro syntax
 # Functions: single action
