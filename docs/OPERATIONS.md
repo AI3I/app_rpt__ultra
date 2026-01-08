@@ -4,6 +4,9 @@ Now that you understand the architecture, let's explore how to actually **use** 
 
 ## Common DTMF Commands
 
+> [!IMPORTANT]
+> **DTMF Command Disclaimer**: All DTMF sequences shown in this documentation are **examples only** and vary by installation and user configuration. Your actual function/macro numbers in `/etc/asterisk/rpt.conf` may be different. Always verify your specific configuration before using DTMF commands.
+
 Here are the most frequently used commands you'll want to memorize or program into macros:
 
 ### System State Control
@@ -198,34 +201,33 @@ These user-facing utilities aren't in cron but are available for manual invocati
 **Use case**: You're on the road, need to SSH into your repeater, but don't remember the IP. Key *9001# and listen!
 
 ### speaktext.sh
-**Purpose**: Convert arbitrary text to TMS5220 speech
+**Purpose**: Spell out text character-by-character using phonetic alphabet
 
 **Usage:**
 ```bash
-/opt/app_rpt/bin/speaktext.sh "text to speak" [output_file]
+/opt/app_rpt/bin/speaktext.sh "text" [File]
 
 # Examples:
-/opt/app_rpt/bin/speaktext.sh "repeater offline for maintenance"
-# Plays immediately
+/opt/app_rpt/bin/speaktext.sh "w3xyz"
+# Spells: "W 3 X Y Z" and plays immediately
 
-/opt/app_rpt/bin/speaktext.sh "testing testing one two three" /opt/app_rpt/sounds/custom/test.ulaw
-# Generates file only (no playback)
+/opt/app_rpt/bin/speaktext.sh "192.168.1.1" File
+# Spells: "1 9 2 POINT 1 6 8 POINT 1 POINT 1"
+# Generates /tmp/speakfile.ulaw without playing
 ```
 
 **How it works:**
-1. Parses text word-by-word
-2. Looks up each word in vocabulary.txt (877 words)
-3. Concatenates matching .ulaw files
-4. Falls back to spelling unknown words letter-by-letter
+1. Converts text to lowercase
+2. Processes character-by-character:
+   - Letters (A-Z): Uses `letters/` directory
+   - Digits (0-9): Uses `digits/` directory
+   - Special chars: `. + - = @ # *` (says "point", "plus", "minus", etc.)
+3. Concatenates character audio into `/tmp/speakfile.ulaw`
+4. Plays via `rpt localplay` (unless "File" argument given)
 
-**Use case**: Quick custom announcements without recording audio
+**Use case**: Spelling out callsigns, IP addresses, serial numbers, or short identifiers
 
-**Limitations**:
-- Only works with TMS5220 vocabulary (877 words)
-- Unknown words spelled out (sounds robotic)
-- Numbers must be written out ("one two three" not "123")
-
-**Better for custom messages**: Record your voice with msgwriter.sh
+**Note**: This script spells character-by-character, it does NOT speak full words. For word-based speech, use the TMS5220 vocabulary files directly (see TABLES.md) or record custom messages with `msgwriter.sh`.
 
 ### gpio.sh
 **Purpose**: Control GPIO pins for external hardware (relays, indicators, sensors)
@@ -269,7 +271,8 @@ TEMP=$(asterisk -rx "rpt stats 504381" | grep -i temperature | awk '{print $NF}'
 # If over 80°F, turn on fan via GPIO
 if [[ ${TEMP%%.*} -gt 80 ]]; then
     /opt/app_rpt/bin/gpio.sh 17 on
-    /opt/app_rpt/bin/speaktext.sh "cooling fan activated"
+    # Play pre-recorded message (create with msgwriter.sh)
+    asterisk -rx "rpt localplay 504381 /opt/app_rpt/sounds/custom/fan_on"
 fi
 ```
 
@@ -434,9 +437,9 @@ asterisk -rx "rpt localplay ${MYNODE} ${SOUNDS}/custom/site_name"
 # Temperature
 asterisk -rx "rpt localplay ${MYNODE} ${SOUNDS}/wx/temp"
 
-# System uptime
+# System uptime (spell out the number)
 UPTIME_DAYS=$(awk '{print int($1/86400)}' /proc/uptime)
-/opt/app_rpt/bin/speaktext.sh "uptime ${UPTIME_DAYS} days"
+/opt/app_rpt/bin/speaktext.sh "${UPTIME_DAYS}"  # Spells digits: "3 5" for 35 days
 ```
 
 **DTMF integration (rpt.conf):**
