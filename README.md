@@ -308,13 +308,85 @@ This monitors NOAA National Weather Service alerts, if configured for your NWS z
 |SVWXALERT|tails/severe_weather_alert|Relative file path of tail message to be played for severe weather alert.|
 ### weatherkeeper.sh
 #### CRONTAB: every 15 minutes
-This polls Weather Underground[^2] to poll for weather station data in your region.  Several conditions, such as temperature, humdity, wind speed and direction, et al., are generated which can be called by invocation.
+This comprehensive weather monitoring script provides local weather conditions via Weather Underground[^2] and space weather monitoring via NOAA Space Weather Prediction Center (SWPC). All weather data is automatically synthesized into TMS5220 audio messages and made available through message slots.
+
+**Features:**
+- **Local Weather Conditions**: Temperature, humidity, wind, pressure, precipitation, UV index
+- **Space Weather Monitoring**: Geomagnetic storms, radio blackouts, solar radiation
+- **UV Index Warnings**: Automated alerts for dangerous UV levels (8+)
+- **TMS5220 Audio Synthesis**: All conditions converted to voice announcements
+- **Message Slot Integration**: Weather data available via slots 60-79
+
+**Configuration Variables:**
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
 |FETCHLOCAL|0 or 1 (_boolean_)|Whether to pull data from a local system (i.e. hub system that collates your weather data).<br />The default is _**0**_.|
 |WUAPIKEY|_empty_|Should be populated with your Weather Underground API key.[^2]|
 |WUSTATION|_empty_|ID of a Weather Underground station that provides you with local weather data.[^2]|
 |WUOUTPUT|/opt/app_rpt/lib/wunderground.out|Explicit file path where raw JSON data is kept for parsing by **jq**.|
+
+**Local Weather Conditions (Weather Underground):**
+The script fetches and synthesizes the following conditions into message slots 70-79:
+- **Temperature** (slot 70): Current temperature with heat index or wind chill
+- **Wind** (slot 71): Speed and direction
+- **Pressure** (slot 72): Barometric pressure
+- **Humidity** (slot 73): Relative humidity percentage
+- **Wind Chill** (slot 74): Apparent temperature (cold weather)
+- **Heat Index** (slot 75): Apparent temperature (hot weather)
+- **Dew Point** (slot 76): Dew point temperature
+- **Precipitation Rate** (slot 77): Current rainfall rate
+- **Precipitation Total** (slot 78): Total rainfall accumulation
+- **UV Index** (slot 79): Current UV index with warnings for dangerous levels
+
+**Space Weather Monitoring (NOAA SWPC):**
+Fetches real-time data from NOAA Space Weather Prediction Center and generates TMS5220 warnings for slots 62-69:
+
+**Geomagnetic Storms (G Scale)** - Slots 62-64:
+- **G1 (Minor)** - slot 62: "light geo storm alert"
+  - Minor power grid fluctuations, aurora visible at high latitudes
+- **G2 (Moderate)** - slot 63: "moderate geo storm alert"
+  - Voltage alarms on power systems, aurora visible at mid-latitudes
+- **G3+ (Strong/Severe)** - slot 64: "severe geo storm warning"
+  - Widespread power system issues, aurora visible at low latitudes
+
+**Radio Blackouts (R Scale)** - Slots 65-67:
+- **R1 (Minor)** - slot 65: "light radio condition alert"
+  - Weak degradation of HF radio on sunlit side
+- **R2 (Moderate)** - slot 66: "moderate radio condition alert"
+  - Limited HF radio blackouts, loss of contact for tens of minutes
+- **R3+ (Strong/Severe)** - slot 67: "severe radio condition warning"
+  - Wide area HF blackouts, loss of radio contact for about an hour
+
+**Solar Radiation Storms (S Scale)** - Slots 68-69:
+- **S1 (Minor)** - slot 68: "low S storm alert"
+  - Minor impacts on polar HF propagation
+- **S2+ (Moderate/Strong)** - slot 69: "high S storm warning"
+  - Effects on HF propagation, radiation hazard to astronauts
+
+**UV Index Warnings (slot 79):**
+Automated warnings for dangerous UV exposure levels:
+- **UV 8-10 (Very High)**: "high U V warning"
+- **UV 11+ (Extreme)**: "severe U V warning"
+- **UV < 8**: No warning file generated
+
+**TMS5220 Audio Innovation:**
+- Uses creative word concatenation: "G" + "O" = "geo" (for geomagnetic)
+- Uses letter "S" for solar radiation to distinguish from regular storms
+- Uses "U V" (spelled out) for UV index warnings
+- All vocabulary verified to exist in TMS5220 library
+
+**Data Sources:**
+- Local Weather: `https://api.weather.com/v2/pws/observations/current`
+- Space Weather: `https://services.swpc.noaa.gov/products/noaa-scales.json`
+
+**Logging:**
+All weather updates logged to `/var/log/app_rpt.log`:
+```
+Weather data updated successfully
+Space weather data updated: G0, S0, R0
+UV index 6 (MODERATE) - no warning needed
+Geomagnetic storm G2 (MODERATE) - geo-storm alert generated
+```
 ### configkeeper.sh
 #### CRONTAB: every 5 minutes (child nodes only)
 This script maintains configuration synchronization between hub and child nodes in a distributed architecture.  It syncs scripts, configs, sounds, and can automatically upgrade child nodes when the hub version changes.
