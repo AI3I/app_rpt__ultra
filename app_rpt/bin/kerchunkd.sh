@@ -76,8 +76,8 @@ txtime_to_ms() {
         local seconds="${BASH_REMATCH[3]}"
         local ms="${BASH_REMATCH[4]}"
 
-        # Convert to total milliseconds
-        local total_ms=$(( (hours * 3600 + minutes * 60 + seconds) * 1000 + ms ))
+        # Convert to total milliseconds (force base-10 to handle leading zeros)
+        local total_ms=$(( (10#$hours * 3600 + 10#$minutes * 60 + 10#$seconds) * 1000 + 10#$ms ))
         echo "$total_ms"
     else
         echo "0"
