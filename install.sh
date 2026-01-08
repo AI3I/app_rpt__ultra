@@ -443,7 +443,7 @@ create_directories() {
     print_step "Creating Directory Structure"
 
     mkdir -p "$DEST_DIR"/{bin,lib,util,sounds,backups}
-    mkdir -p "$DEST_DIR"/sounds/{ids,rpt,tails,wx,letters,digits,custom}
+    mkdir -p "$DEST_DIR"/sounds/{ids,rpt,tails,wx,weather,letters,digits,custom}
     mkdir -p "$DEST_DIR"/sounds/{_male,_female,_sndfx}
     mkdir -p /opt/asterisk
     mkdir -p /etc/asterisk/custom

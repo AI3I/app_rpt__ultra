@@ -58,8 +58,8 @@
 57 custom/available_57
 58 custom/available_58
 59 custom/available_59
-60 weather/wx_severe_alert
-61 weather/wx_alert
+60 tails/severe_weather_alert
+61 tails/weather_alert
 62 weather/space_geomag_minor
 63 weather/space_geomag_moderate
 64 weather/space_geomag_strong

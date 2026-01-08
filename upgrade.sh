@@ -452,6 +452,23 @@ migrate_config() {
 }
 
 # ==============================================================================
+#    Directory Structure
+# ==============================================================================
+
+ensure_directories() {
+    log_info "Ensuring all required directories exist..."
+
+    if [[ "$DRY_RUN" == false ]]; then
+        # Ensure all sound subdirectories exist (add weather/ for v2.0.5+)
+        mkdir -p "$INSTALL_BASE"/sounds/{ids,rpt,tails,wx,weather,letters,digits,custom}
+        mkdir -p "$INSTALL_BASE"/sounds/{_male,_female,_sndfx}
+        log_success "Directory structure verified"
+    else
+        log_info "[DRY RUN] Would ensure directory structure"
+    fi
+}
+
+# ==============================================================================
 #    Script Installation
 # ==============================================================================
 
@@ -886,7 +903,10 @@ main() {
     fi
     echo ""
 
-    # Step 3: Install scripts
+    # Step 3: Ensure directory structure
+    ensure_directories
+
+    # Step 4: Install scripts
     install_scripts "$new_config"
     if [[ $? -ne 0 ]]; then
         log_error "Script installation failed"
