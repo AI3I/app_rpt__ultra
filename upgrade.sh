@@ -468,6 +468,47 @@ ensure_directories() {
     fi
 }
 
+update_lib_files() {
+    log_info "Updating library files..."
+
+    # Files that should be updated from repo (system-managed)
+    local update_files=(
+        "messagetable.txt"
+        "vocabulary.txt"
+        "characters.txt"
+    )
+
+    # Files that should be preserved (user-managed)
+    local preserve_files=(
+        "autodialers.txt"
+        "mailboxes.txt"
+        "emergency_autodialers.txt"
+        "exemptions.txt"
+    )
+
+    if [[ "$DRY_RUN" == false ]]; then
+        # Update system-managed files
+        for file in "${update_files[@]}"; do
+            if [[ -f "$REPO_DIR/app_rpt/lib/$file" ]]; then
+                cp "$REPO_DIR/app_rpt/lib/$file" "$INSTALL_BASE/lib/$file"
+                chmod 644 "$INSTALL_BASE/lib/$file"
+                chown asterisk:asterisk "$INSTALL_BASE/lib/$file"
+                log_info "Updated $file"
+            fi
+        done
+
+        # Create empty output files if they don't exist
+        touch "$INSTALL_BASE/lib/nwsalerts.out"
+        touch "$INSTALL_BASE/lib/wunderground.out"
+        chmod 644 "$INSTALL_BASE/lib"/*.out
+        chown asterisk:asterisk "$INSTALL_BASE/lib"/*.out
+
+        log_success "Library files updated"
+    else
+        log_info "[DRY RUN] Would update library files"
+    fi
+}
+
 # ==============================================================================
 #    Script Installation
 # ==============================================================================
@@ -905,6 +946,9 @@ main() {
 
     # Step 3: Ensure directory structure
     ensure_directories
+
+    # Step 3.5: Update library files
+    update_lib_files
 
     # Step 4: Install scripts
     install_scripts "$new_config"
