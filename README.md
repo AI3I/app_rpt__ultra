@@ -63,6 +63,346 @@ After installation completes:
 1. Review `/etc/asterisk/rpt.conf` and verify **duplex** and **rxchannel** settings match your configuration (usbradio.conf or simpleusb.conf)
 2. The **idrecording=voice_id** parameter should remain unchanged; it is managed by _idkeeper.sh_
 3. Restart Asterisk: `sudo systemctl restart asterisk`
+
+# System Architecture
+
+## Understanding the Installation
+
+While `install.sh` makes setup easy, understanding what happens under the hood helps with troubleshooting and customization. Here's the technical breakdown:
+
+### Directory Structure
+
+**What install.sh creates:**
+```
+/opt/app_rpt/              # Main installation directory
+├── bin/                   # Executable scripts (24 scripts)
+├── lib/                   # Data tables and lookup files
+│   ├── messagetable.txt   # Slot-to-file mappings (100 slots)
+│   ├── vocabulary.txt     # 877-word TMS5220 dictionary
+│   ├── characters.txt     # CW character mappings
+│   └── *.out              # Runtime data (weather, alerts)
+├── sounds/                # Audio files (symlinked to /var/lib/asterisk/sounds)
+│   ├── _male/             # TMS5220 male voice (877 words)
+│   ├── _female/           # TMS5220 female voice (877 words)
+│   ├── _sndfx/            # Sound effects library
+│   ├── ids/               # Voice IDs (initial, pending, anxious, special)
+│   ├── tails/             # Tail messages (9 slots + weather alerts)
+│   ├── wx/                # Weather telemetry (temp, wind, etc.)
+│   ├── weather/           # Space weather alerts (G/S/R scales)
+│   └── custom/            # User recordings and courtesy tones
+├── backups/               # Automatic backups from upgrade.sh
+└── config.ini             # Master configuration (NOT in git)
+
+/etc/asterisk/rpt.conf     # Asterisk app_rpt config (NOT in git)
+/usr/src/app_rpt__ultra/   # Git repository (source code)
+```
+
+**Why this structure?**
+- `/opt/app_rpt/`: FHS-compliant location for add-on application packages
+- Symlinks to `/var/lib/asterisk/sounds/`: Asterisk can find audio files without path changes
+- Separation of code (`/usr/src`) from runtime (`/opt/app_rpt`): Clean upgrades via git pull
+
+### User Account Configuration
+
+**What install.sh does for the asterisk user:**
+```bash
+# 1. Adds asterisk to dialout group (serial port access for radio interfaces)
+usermod -aG dialout asterisk
+
+# 2. Enables shell access (needed for cron jobs to run bash scripts)
+chsh -s /bin/bash asterisk
+
+# 3. Sets up home directory
+mkdir -p /home/asterisk
+chown asterisk:asterisk /home/asterisk
+
+# 4. Configures SSH for remote management (optional)
+# Allows scripts to SSH to child nodes for distributed architectures
+```
+
+**Why this matters:**
+- `dialout` group: Required for USB/serial radio interfaces (SimpleUSB, USBRadio)
+- `/bin/bash` shell: Cron jobs run scripts with full bash features (arrays, functions, etc.)
+- Home directory: Cron needs a place to write temporary files and logs
+
+### Cron Job Integration
+
+**What install.sh installs:**
+```bash
+# Asterisk user crontab (crontab -u asterisk -l)
+0 0 * * *      /opt/app_rpt/bin/datekeeper.sh      # Daily: Generate date announcements
+0 0 * * *      /opt/app_rpt/bin/datadumper.sh      # Daily: Purge old recordings
+*/15 * * * *   /opt/app_rpt/bin/weatherkeeper.sh   # Every 15min: Weather & space weather
+* * * * *      /opt/app_rpt/bin/timekeeper.sh      # Every minute: Current time
+* * * * *      /opt/app_rpt/bin/idkeeper.sh        # Every minute: Manage ID rotation
+* * * * *      /opt/app_rpt/bin/tailkeeper.sh      # Every minute: Manage tail messages
+* * * * *      /opt/app_rpt/bin/weatheralert.sh    # Every minute: NOAA alert monitoring
+```
+
+**How cron scripts work:**
+1. Each script sources `/opt/app_rpt/bin/common.sh` for shared functions
+2. Reads configuration from `/opt/app_rpt/config.ini`
+3. Checks current system state via `asterisk -rx "rpt stats"`
+4. Generates audio files in `/opt/app_rpt/sounds/`
+5. Updates `/etc/asterisk/rpt.conf` parameters via sed
+6. Logs activity to `/var/log/app_rpt.log`
+
+**Example: How idkeeper.sh works every minute:**
+```bash
+# 1. Source config
+source /opt/app_rpt/config.ini  # Gets ROTATEIIDS, INITIALID, etc.
+
+# 2. Check if rotation enabled
+if [[ $ROTATEIIDS == 1 ]]; then
+    # 3. Get next ID number (1, 2, or 3)
+    NEXT_ID=$((CURRENT_ID % 3 + 1))
+
+    # 4. Update rpt.conf parameter
+    sed -i "s/^idrecording=.*/idrecording=ids\/initial_id_${NEXT_ID}/" /etc/asterisk/rpt.conf
+
+    # 5. Reload Asterisk config
+    asterisk -rx "rpt reload"
+fi
+```
+
+### Systemd Service (kerchunkd)
+
+**Unlike cron-based scripts, kerchunkd.sh runs as a continuous daemon:**
+
+```ini
+# /etc/systemd/system/kerchunkd.service
+[Unit]
+Description=app_rpt__ultra Kerchunk Detection Daemon
+After=asterisk.service
+Requires=asterisk.service
+
+[Service]
+Type=simple
+User=asterisk
+Group=asterisk
+ExecStart=/opt/app_rpt/bin/kerchunkd.sh
+Restart=on-failure
+StandardOutput=append:/var/log/app_rpt.log
+StandardError=append:/var/log/app_rpt.log
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**How it integrates:**
+1. Polls `asterisk -rx "rpt stats"` every 1 second (vs. cron's 1 minute)
+2. Tracks transmission durations in real-time
+3. Logs to `/var/log/kerchunk_stats.log` (CSV format)
+4. Plays audio warnings via `asterisk -rx "rpt localplay"` (active mode)
+5. Survives Asterisk restarts (systemd auto-restarts it)
+
+### Asterisk Integration
+
+**How scripts communicate with Asterisk:**
+
+```bash
+# Query repeater statistics
+asterisk -rx "rpt stats 1999"
+# Returns: keyup count, TX time, system state, temperature, etc.
+
+# Play audio file immediately (localplay)
+asterisk -rx "rpt localplay 1999 /opt/app_rpt/sounds/wx/temp"
+# Plays without waiting for tail/ID
+
+# Schedule audio in message queue (playback)
+asterisk -rx "rpt playback 1999 /opt/app_rpt/sounds/tails/tail_message_5"
+# Waits for polite moment (after ID, during hang time)
+
+# Reload configuration
+asterisk -rx "rpt reload"
+# Re-reads rpt.conf without restarting Asterisk
+```
+
+**Message Slot System:**
+- **messagetable.txt** maps slot numbers (00-99) to file paths
+- Scripts like `msgreader.sh` and `msgwriter.sh` read this table
+- DTMF macros reference slots: `*8300#` plays slot 00 (CW ID)
+- Allows dynamic content: scripts regenerate files, slots stay the same
+
+**Example flow for playing temperature:**
+1. weatherkeeper.sh fetches data from Weather Underground API
+2. Builds audio: `"currently 72 degrees"` from TMS5220 vocabulary
+3. Writes to: `/opt/app_rpt/sounds/wx/temp.ulaw`
+4. messagetable.txt maps slot 70 → `wx/temp`
+5. tailkeeper.sh enables slot 70 in rotation
+6. Asterisk plays during tail message after transmission
+
+### Sound File Management
+
+**Symlink strategy:**
+```bash
+# install.sh creates symlinks in Asterisk's sound directory
+ln -sf /opt/app_rpt/sounds /var/lib/asterisk/sounds/app_rpt_ultra
+
+# Why?
+# - Asterisk searches /var/lib/asterisk/sounds/ by default
+# - Scripts write to /opt/app_rpt/sounds/ (clean separation)
+# - Symlink makes both paths work
+# - No need to modify Asterisk configuration
+```
+
+**TMS5220 vocabulary system:**
+- 877 individual word files in `_male/` and `_female/`
+- Scripts concatenate words to form phrases:
+  ```bash
+  # Build "currently 72 degrees"
+  cat _male/currently.ulaw \
+      _male/7.ulaw _male/2.ulaw \
+      _male/degrees.ulaw > wx/temp.ulaw
+  ```
+- Result: Natural-sounding speech without external TTS engines
+
+### Configuration Management
+
+**config.ini variables cascade through the system:**
+
+```ini
+# config.ini
+MYNODE=1999                    # Your node number
+KERCHUNK_ENABLE=1              # Enable kerchunk detection
+KERCHUNK_MODE=passive          # Log only (no audio warnings)
+SEVEREWEATHER=3                # Weather alert state (0-3)
+ROTATEIIDS=1                   # Rotate initial IDs
+```
+
+**How scripts use config.ini:**
+```bash
+#!/bin/bash
+# Every script starts with:
+source /opt/app_rpt/config.ini
+
+# Then uses variables:
+if [[ $KERCHUNK_ENABLE == 1 ]]; then
+    # Run kerchunk detection logic
+fi
+
+if [[ $SEVEREWEATHER == 1 ]]; then
+    # Switch to severe weather mode
+    /opt/app_rpt/bin/statekeeper.sh severeweather
+fi
+```
+
+**Why not /etc/?**
+- `/etc/asterisk/rpt.conf`: Asterisk native configuration (complex, AST-specific)
+- `/opt/app_rpt/config.ini`: Simple key=value format for bash scripts
+- Separation of concerns: Asterisk config vs. script behavior
+
+### What Happens During Upgrade
+
+**upgrade.sh technical steps:**
+
+1. **Version Check:**
+   ```bash
+   CURRENT_VER=$(grep "^###VERSION=" /opt/app_rpt/bin/common.sh | cut -d= -f2)
+   NEW_VER=$(grep "^###VERSION=" app_rpt/bin/common.sh | cut -d= -f2)
+   ```
+
+2. **Backup:**
+   ```bash
+   BACKUP="/opt/app_rpt/backups/upgrade_backup_$(date +%Y%m%d_%H%M%S)"
+   cp -a /opt/app_rpt/bin "$BACKUP/bin"
+   cp /opt/app_rpt/config.ini "$BACKUP/config.ini"
+   cp /etc/asterisk/rpt.conf "$BACKUP/rpt.conf.bkp"
+   ```
+
+3. **Config Migration:**
+   ```bash
+   # Extract current values
+   OLD_NODE=$(grep "^MYNODE=" /opt/app_rpt/config.ini | cut -d= -f2)
+   OLD_APIKEY=$(grep "^WUAPIKEY=" /opt/app_rpt/config.ini | cut -d= -f2)
+
+   # Install new config template
+   cp app_rpt/config.ini.example /opt/app_rpt/config.ini
+
+   # Restore user values
+   sed -i "s/^MYNODE=.*/MYNODE=$OLD_NODE/" /opt/app_rpt/config.ini
+   sed -i "s/^WUAPIKEY=.*/WUAPIKEY=$OLD_APIKEY/" /opt/app_rpt/config.ini
+   ```
+
+4. **Script Installation:**
+   ```bash
+   # Copy all 24 scripts with version updates
+   cp -a app_rpt/bin/*.sh /opt/app_rpt/bin/
+   chmod 755 /opt/app_rpt/bin/*.sh
+   chown -R asterisk:asterisk /opt/app_rpt/
+   ```
+
+5. **Validation:**
+   ```bash
+   # Check critical files exist
+   test -f /opt/app_rpt/bin/common.sh || exit 1
+   test -f /opt/app_rpt/config.ini || exit 1
+
+   # Verify version updated
+   grep "^###VERSION=$NEW_VER" /opt/app_rpt/bin/common.sh || exit 1
+   ```
+
+**Rollback on failure:**
+```bash
+if [[ $? -ne 0 ]]; then
+    echo "Upgrade failed! Rolling back..."
+    cp -a "$BACKUP/bin/"* /opt/app_rpt/bin/
+    cp "$BACKUP/config.ini" /opt/app_rpt/config.ini
+    exit 1
+fi
+```
+
+### Distributed Architecture (Hub/Child)
+
+**For multi-node deployments:**
+
+```bash
+# Hub node (FETCHLOCAL=0)
+# - Runs weatherkeeper.sh to fetch weather data
+# - Stores in /opt/app_rpt/lib/wunderground.out
+# - Child nodes pull this file via rsync/scp
+
+# Child node (FETCHLOCAL=1, FETCHPOINT=hub.example.com)
+# - configkeeper.sh runs every 5 minutes
+# - Pulls config.ini, scripts, sounds from hub
+# - Optionally auto-upgrades when hub version changes (AUTOUPGRADE=1)
+```
+
+**How configkeeper.sh works:**
+```bash
+# 1. Check if child node
+if [[ $FETCHLOCAL == 1 ]]; then
+    # 2. Sync files from hub
+    rsync -avz $FETCHPOINT:/opt/app_rpt/lib/ /opt/app_rpt/lib/
+    rsync -avz $FETCHPOINT:/opt/app_rpt/sounds/wx/ /opt/app_rpt/sounds/wx/
+
+    # 3. Check hub version
+    HUB_VER=$(ssh $FETCHPOINT "grep VERSION /opt/app_rpt/bin/common.sh")
+    LOCAL_VER=$(grep VERSION /opt/app_rpt/bin/common.sh)
+
+    # 4. Auto-upgrade if enabled and versions differ
+    if [[ $AUTOUPGRADE == 1 ]] && [[ "$HUB_VER" != "$LOCAL_VER" ]]; then
+        cd /usr/src/app_rpt__ultra && git pull && ./upgrade.sh --auto-yes
+    fi
+fi
+```
+
+**Benefits:**
+- Weather API: Hub makes one request, all children use cached data
+- Consistency: All nodes run same version, same audio files
+- Centralized management: Update hub, children auto-update
+
+## Key Takeaways
+
+Understanding this architecture helps you:
+- **Troubleshoot**: Know which script handles what function
+- **Customize**: Edit scripts knowing how they interact
+- **Extend**: Add new scripts following the same patterns
+- **Debug**: Check logs, cron output, systemd status
+- **Optimize**: Tune timing, disable unused features
+
+The magic is in the integration—bash scripts, Asterisk CLI, systemd services, and cron jobs working together to create a sophisticated repeater controller from simple, readable components.
+
 # System Maintenance
 ## Upgrading Your Installation
 ### upgrade.sh
