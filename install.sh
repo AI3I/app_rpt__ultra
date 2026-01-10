@@ -78,12 +78,13 @@ print_banner() {
     echo -e "${BLUE}"
     cat << 'EOF'
 ================================================================================
-                           _                _           _ _
-   __ _ _ __  _ __    _ __| |_     _   _| | |_ _ __ __ _
-  / _` | '_ \| '_ \  | '__| '_ \ | | | | | __| '__/ _` |
- | (_| | |_) | |_) | | |  | |_) || |_| | | |_| | | (_| |
-  \__,_| .__/| .__/  |_|  | .__/  \__,_|_|\__|_|  \__,_|
-       |_|   |_|          |_|
+
+                                 _                  _ _             
+  __ _ _ __  _ __     _ __ _ __ | |_          _   _| | |_ _ __ __ _ 
+ / _` | '_ \| '_ \   | '__| '_ \| __|        | | | | | __| '__/ _` |
+| (_| | |_) | |_) |  | |  | |_) | |_         | |_| | | |_| | | (_| |
+ \__,_| .__/| .__/___|_|  | .__/ \__|____ ____\__,_|_|\__|_|  \__,_|
+      |_|   |_| |_____|   |_|      |_____|_____|                    
 
     The Ultimate Controller Experience for Asterisk AllStarLink
 ================================================================================
@@ -200,9 +201,10 @@ detect_network_interfaces() {
         fi
     fi
 
-    # Detect VPN interface (first tun/tap interface, or default)
+    # Detect VPN interface (first tun/tap interface, empty if none found)
     VPN_DEVICE=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^tun|^tap' | head -1)
-    VPN_DEVICE="${VPN_DEVICE:-tun0}"
+    # Don't default to tun0 if no VPN interface exists
+    VPN_DEVICE="${VPN_DEVICE:-}"
 }
 
 # ------------------------------------------------------------------------------
