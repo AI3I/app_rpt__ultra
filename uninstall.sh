@@ -111,11 +111,11 @@ remove_crontab() {
     log_info "Removing crontab entries for asterisk user..."
 
     if crontab -u asterisk -l &>/dev/null; then
-        # Remove app_rpt__ultra entries from crontab
+        # Remove all app_rpt__ultra entries and comments from crontab
         local temp_cron
         temp_cron=$(mktemp)
 
-        crontab -u asterisk -l 2>/dev/null | grep -v "/opt/app_rpt/bin/" > "$temp_cron" || true
+        crontab -u asterisk -l 2>/dev/null | grep -v "app_rpt__ultra" | grep -v "/opt/app_rpt/bin/" > "$temp_cron" || true
 
         if [[ -s "$temp_cron" ]]; then
             crontab -u asterisk "$temp_cron"
