@@ -183,13 +183,13 @@ detect_network_interfaces() {
     # Detect LAN interface (first non-loopback, non-wireless, non-virtual interface)
     LAN_DEVICE=$(ip -o link show | awk -F': ' '{print $2}' | grep -v '^lo$' | \
         grep -v '^wlan' | grep -v '^wl' | grep -v '^tun' | grep -v '^tap' | \
-        grep -v '^docker' | grep -v '^br-' | grep -v '^veth' | head -1)
+        grep -v '^docker' | grep -v '^br-' | grep -v '^veth' | head -1 || true)
     LAN_DEVICE="${LAN_DEVICE:-eth0}"
 
     # Detect WLAN interface (platform-aware)
-    WLAN_DEVICE=$(iw dev 2>/dev/null | awk '/Interface/{print $2}' | head -1)
+    WLAN_DEVICE=$(iw dev 2>/dev/null | awk '/Interface/{print $2}' | head -1 || true)
     if [[ -z "$WLAN_DEVICE" ]]; then
-        WLAN_DEVICE=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^wlan|^wl' | head -1)
+        WLAN_DEVICE=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^wlan|^wl' | head -1 || true)
     fi
 
     # Only default to wlan0 on Pi platform (which always has wireless)
@@ -202,7 +202,7 @@ detect_network_interfaces() {
     fi
 
     # Detect VPN interface (first tun/tap interface, empty if none found)
-    VPN_DEVICE=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^tun|^tap' | head -1)
+    VPN_DEVICE=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^tun|^tap' | head -1 || true)
     # Don't default to tun0 if no VPN interface exists
     VPN_DEVICE="${VPN_DEVICE:-}"
 }
@@ -329,7 +329,7 @@ confirm_configuration() {
     echo "  Node number:            $NODE_NUMBER"
     echo "  Callsign:               $CALLSIGN"
     echo "  NWS Zone:               ${NWS_ZONE:-<not configured>}"
-    echo "  Weather Underground:    ${WU_APIKEY:+configured}${WU_APIKEY:-<not configured>}"
+    echo "  Weather Underground:    $([[ -n "$WU_APIKEY" ]] && echo "configured" || echo "<not configured>")"
     echo "  Network interfaces:     LAN=$LAN_DEVICE, WLAN=$WLAN_DEVICE, VPN=$VPN_DEVICE"
     echo ""
 
@@ -349,6 +349,18 @@ install_dependencies() {
     print_step "Installing Dependencies"
 
     if command -v apt-get &>/dev/null; then
+        # Check and install cron
+        if ! command -v crontab &>/dev/null; then
+            print_info "Installing cron..."
+            apt-get update -qq
+            apt-get install -y -qq cron
+            systemctl enable cron 2>/dev/null || true
+            systemctl start cron 2>/dev/null || true
+            print_success "cron installed and started"
+        else
+            print_success "cron already installed"
+        fi
+
         # Check and install jq
         if ! command -v jq &>/dev/null; then
             print_info "Installing jq..."
@@ -378,6 +390,9 @@ install_dependencies() {
         fi
     else
         # Non-Debian systems
+        if ! command -v crontab &>/dev/null; then
+            print_warning "Please install 'cron' manually for your distribution"
+        fi
         if ! command -v jq &>/dev/null; then
             print_warning "Please install 'jq' manually for your distribution"
         fi
@@ -549,13 +564,14 @@ install_config() {
     print_step "Installing Configuration"
 
     local config_file="$DEST_DIR/config.ini"
+    local config_example="$SOURCE_APP_RPT/config.ini.example"
 
     if [[ -f "$config_file" ]]; then
         print_warning "config.ini exists, backing up..."
         cp "$config_file" "${config_file}.bkp.$(date +%Y%m%d%H%M%S)"
     fi
 
-    cp "$SOURCE_APP_RPT/config.ini" "$config_file"
+    cp "$config_example" "$config_file"
 
     # Update paths
     sed -i "s|/opt/app_rpt|$DEST_DIR|g" "$config_file"
@@ -759,7 +775,7 @@ print_summary() {
     echo ""
     echo -e "${GREEN}================================================================================"
     echo "                        Installation Complete!"
-    echo "================================================================================${NC}"
+    echo -e "================================================================================${NC}"
     echo ""
     echo "  Installation directory: $DEST_DIR"
     echo "  Node number:            $NODE_NUMBER"
@@ -769,18 +785,18 @@ print_summary() {
     echo -e "${YELLOW}Next steps:${NC}"
     echo ""
     echo "  1. Review and customize your configuration:"
-    echo "     ${CYAN}$DEST_DIR/config.ini${NC}"
+    echo -e "     ${CYAN}$DEST_DIR/config.ini${NC}"
     echo ""
     if [[ -f "/etc/asterisk/rpt.conf.app_rpt_ultra" ]]; then
         echo "  2. Review the rpt.conf template and merge with your existing config:"
-        echo "     ${CYAN}/etc/asterisk/rpt.conf.app_rpt_ultra${NC}"
+        echo -e "     ${CYAN}/etc/asterisk/rpt.conf.app_rpt_ultra${NC}"
         echo ""
     fi
-    echo "  3. Restart Asterisk to apply changes:"
-    echo "     ${CYAN}sudo systemctl restart asterisk${NC}"
+    echo "  $(if [[ -f "/etc/asterisk/rpt.conf.app_rpt_ultra" ]]; then echo "3"; else echo "2"; fi). Restart Asterisk to apply changes:"
+    echo -e "     ${CYAN}sudo systemctl restart asterisk${NC}"
     echo ""
-    echo "  4. Test your voice ID:"
-    echo "     ${CYAN}sudo asterisk -rx \"rpt localplay $NODE_NUMBER voice_id\"${NC}"
+    echo "  $(if [[ -f "/etc/asterisk/rpt.conf.app_rpt_ultra" ]]; then echo "4"; else echo "3"; fi). Test your voice ID:"
+    echo -e "     ${CYAN}sudo asterisk -rx \"rpt localplay $NODE_NUMBER voice_id\"${NC}"
     echo ""
     echo -e "${BLUE}Documentation:${NC} See README.md for detailed operation instructions"
     echo ""
