@@ -689,8 +689,8 @@ install_crontab() {
     # Get existing crontab
     crontab -u "$OWNER_USER" -l > "$crontab_file" 2>/dev/null || true
 
-    # Check if already installed
-    if grep -q "app_rpt__ultra" "$crontab_file" 2>/dev/null; then
+    # Check if actual cron jobs (not just comments) already installed
+    if grep -q "$DEST_DIR/bin/" "$crontab_file" 2>/dev/null; then
         print_warning "Crontab entries already exist"
         rm -f "$crontab_file"
         return
