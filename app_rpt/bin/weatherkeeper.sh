@@ -377,4 +377,4 @@ build_audio "$SNDWX/wind.ulaw" \
 
 log "Weather data updated successfully"
 
-###VERSION=2.0.5
+###VERSION=2.0.6

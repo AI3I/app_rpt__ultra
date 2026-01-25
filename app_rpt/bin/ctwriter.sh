@@ -85,4 +85,4 @@ else
     exit 1
 fi
 
-###VERSION=2.0.5
+###VERSION=2.0.6

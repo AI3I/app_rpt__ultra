@@ -200,4 +200,4 @@ UTILDIR=/opt/app_rpt/util
 BACKUPDIR=/opt/app_rpt/backups
 RECORDDIR=/opt/asterisk
 
-###VERSION=2.0.5
+###VERSION=2.0.6
