@@ -485,7 +485,9 @@ if [[ "$SEVEREWEATHER" == "3" ]]; then
 
         # Try to build and play custom message, fall back to generic if not possible
         if ! build_weather_message "$event"; then
-            asterisk -rx "rpt localplay $MYNODE rpt/severe_weather_alert" &>/dev/null
+            # Create fallback message for tail
+            cat "${SOUNDS}/_male/severe.ulaw" "${SOUNDS}/_male/weather.ulaw" "${SOUNDS}/_male/alert.ulaw" > /tmp/weather_alert_message.ulaw
+            asterisk -rx "rpt localplay $MYNODE /tmp/weather_alert_message" &>/dev/null
         fi
 
         # Copy the built message to tail message location for tailkeeper
@@ -522,7 +524,9 @@ elif [[ "$SEVEREWEATHER" == "2" ]]; then
         "$STATEKEEPER" severeweather
 
         if ! build_weather_message "$event"; then
-            asterisk -rx "rpt localplay $MYNODE rpt/severe_weather_alert" &>/dev/null
+            # Create fallback message for tail
+            cat "${SOUNDS}/_male/severe.ulaw" "${SOUNDS}/_male/weather.ulaw" "${SOUNDS}/_male/alert.ulaw" > /tmp/weather_alert_message.ulaw
+            asterisk -rx "rpt localplay $MYNODE /tmp/weather_alert_message" &>/dev/null
         fi
 
         # Copy the built message to tail message location for tailkeeper
@@ -538,6 +542,9 @@ elif [[ "$SEVEREWEATHER" == "2" ]]; then
         sleep 5
         "$STATEKEEPER" standard
 
+        # Clean up stale weather alert files
+        rm -f "${SOUNDS}/${RTWXALERT}.ulaw" "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
+
         log "NWS Alert cleared"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), weatheralert, standard, nws_clear, ${MYNODE}" >> /var/log/state_history.log
         exit 0
@@ -551,6 +558,12 @@ elif [[ "$SEVEREWEATHER" == "1" ]]; then
         sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
         "$STATEKEEPER" weatheralert
 
+        # Build new tail message for downgraded alert level
+        if ! build_weather_message "$event"; then
+            cat "${SOUNDS}/_male/weather.ulaw" "${SOUNDS}/_male/alert.ulaw" > /tmp/weather_alert_message.ulaw
+        fi
+        cp -f /tmp/weather_alert_message.ulaw "${SOUNDS}/${RTWXALERT}.ulaw" 2>/dev/null || true
+
         log "NWS Alert downgraded: $event"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), severeweather, weatheralert, nws_downgrade:$event, ${MYNODE}" >> /var/log/state_history.log
         exit 0
@@ -561,6 +574,9 @@ elif [[ "$SEVEREWEATHER" == "1" ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/cancel_weather_alert"
         sleep 5
         "$STATEKEEPER" standard
+
+        # Clean up stale weather alert files
+        rm -f "${SOUNDS}/${RTWXALERT}.ulaw" "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
 
         log "NWS Alert cleared"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), severeweather, standard, nws_clear, ${MYNODE}" >> /var/log/state_history.log
