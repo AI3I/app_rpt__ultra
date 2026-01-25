@@ -22,8 +22,13 @@ source "%%BASEDIR%%/bin/common.sh"
 
 case "$1" in
 lan)
+    if [[ -z "${landevice:-}" ]]; then
+        log_error "landevice not configured"
+        asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+        exit 1
+    fi
     asterisk -rx "rpt localplay $MYNODE rpt/lan_ip_address"
-    ip=$(ip addr show "$landevice" | awk '/inet / {print $2}' | awk 'BEGIN { FS = "/"}  {print $1}')
+    ip=$(ip addr show "$landevice" 2>/dev/null | awk '/inet / {print $2}' | awk 'BEGIN { FS = "/"}  {print $1}')
     sleep 3
     if [[ -z "$ip" ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/empty"
@@ -34,8 +39,13 @@ lan)
     fi
     ;;
 wlan)
+    if [[ -z "${wlandevice:-}" ]]; then
+        log_error "wlandevice not configured"
+        asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+        exit 1
+    fi
     asterisk -rx "rpt localplay $MYNODE rpt/wlan_ip_address"
-    ip=$(ip addr show "$wlandevice" | awk '/inet / {print $2}' | awk 'BEGIN { FS = "/"}  {print $1}')
+    ip=$(ip addr show "$wlandevice" 2>/dev/null | awk '/inet / {print $2}' | awk 'BEGIN { FS = "/"}  {print $1}')
     sleep 3
     if [[ -z "$ip" ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/empty"
@@ -46,8 +56,13 @@ wlan)
     fi
     ;;
 vpn)
+    if [[ -z "${vpndevice:-}" ]]; then
+        log_error "vpndevice not configured"
+        asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+        exit 1
+    fi
     asterisk -rx "rpt localplay $MYNODE rpt/vpn_ip_address"
-    ip=$(ip addr show "$vpndevice" | awk '/inet / {print $2}' | awk 'BEGIN { FS = "/"}  {print $1}')
+    ip=$(ip addr show "$vpndevice" 2>/dev/null | awk '/inet / {print $2}' | awk 'BEGIN { FS = "/"}  {print $1}')
     sleep 3
     if [[ -z "$ip" ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/empty"

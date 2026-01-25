@@ -20,6 +20,12 @@
 
 source "%%BASEDIR%%/bin/common.sh"
 
+# Check for required dependency
+if ! command -v jq &>/dev/null; then
+    log_error "jq is required but not installed (apt install jq)"
+    exit 1
+fi
+
 # ==============================================================================
 #    Helper Functions
 # ==============================================================================
