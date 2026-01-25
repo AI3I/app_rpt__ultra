@@ -488,6 +488,9 @@ if [[ "$SEVEREWEATHER" == "3" ]]; then
             asterisk -rx "rpt localplay $MYNODE rpt/severe_weather_alert" &>/dev/null
         fi
 
+        # Copy the built message to tail message location for tailkeeper
+        cp -f /tmp/weather_alert_message.ulaw "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
+
         # Log the state change with event type
         log "NWS Alert: $event (severity=$severity)"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), standard, severeweather, nws_alert:$event, ${MYNODE}" >> /var/log/state_history.log
@@ -502,6 +505,9 @@ if [[ "$SEVEREWEATHER" == "3" ]]; then
             cat "${SOUNDS}/_male/weather.ulaw" "${SOUNDS}/_male/alert.ulaw" > /tmp/weather_alert_message.ulaw
             asterisk -rx "rpt localplay $MYNODE /tmp/weather_alert_message" &>/dev/null
         fi
+
+        # Copy the built message to tail message location for tailkeeper
+        cp -f /tmp/weather_alert_message.ulaw "${SOUNDS}/${RTWXALERT}.ulaw" 2>/dev/null || true
 
         log "NWS Alert: $event"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), standard, weatheralert, nws_alert:$event, ${MYNODE}" >> /var/log/state_history.log
@@ -518,6 +524,9 @@ elif [[ "$SEVEREWEATHER" == "2" ]]; then
         if ! build_weather_message "$event"; then
             asterisk -rx "rpt localplay $MYNODE rpt/severe_weather_alert" &>/dev/null
         fi
+
+        # Copy the built message to tail message location for tailkeeper
+        cp -f /tmp/weather_alert_message.ulaw "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
 
         log "NWS Alert upgraded: $event (severity=$severity)"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), weatheralert, severeweather, nws_alert:$event, ${MYNODE}" >> /var/log/state_history.log
