@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 #    PURPOSE:  Ability to generate messages from CLI or DTMF dynamically without having to directly edit files.
 #
@@ -39,7 +40,7 @@ voicemsg=/tmp/voicemsg
 if [[ "$idstring" == "00" ]]; then
     : > "$cwmsg"
     for i in $rewrite; do
-        grep "^${i} " "$CWCHARS" | cut -d' ' -f2 | tr -d '\n' >> "$cwmsg"
+        grep "^${i} " "$CWCHARS" 2>/dev/null | cut -d' ' -f2 | tr -d '\n' >> "$cwmsg" || true
     done
     cwid=$(cat "$cwmsg")
     sed -i "s/^idtalkover=.*$/idtalkover=|i$cwid/g" "$RPTCONF"
@@ -47,13 +48,13 @@ if [[ "$idstring" == "00" ]]; then
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_w_i_d"
     exit 0
 else
-    msgid=$(grep "^${idstring} " "$MSGTBL" | head -1 | cut -d' ' -f2)
+    msgid=$(grep "^${idstring} " "$MSGTBL" 2>/dev/null | head -1 | cut -d' ' -f2 || true)
     if [[ -z "$msgid" ]]; then
         die_with_error "Invalid message slot: $idstring"
     fi
     : > "$voicemsg"
     for i in $rewrite; do
-        grep "^${i} " "$VOCAB" | cut -d' ' -f2 >> "$voicemsg"
+        grep "^${i} " "$VOCAB" 2>/dev/null | cut -d' ' -f2 >> "$voicemsg" || true
     done
     # Read file paths from voicemsg and concatenate them safely
     xargs cat < "$voicemsg" > "${SOUNDS}/${msgid}.ulaw"

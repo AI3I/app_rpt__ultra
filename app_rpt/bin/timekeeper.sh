@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 # ==============================================================================
 #    Helper Function
@@ -36,14 +37,20 @@ build_time_audio() {
     mins=$(date +%M)
 
     if [[ -n "$extra" ]]; then
-        cat "$SNDFEMALE/${greeting}.ulaw" "$SNDFEMALE/pause.ulaw" \
+        if ! cat "$SNDFEMALE/${greeting}.ulaw" "$SNDFEMALE/pause.ulaw" \
             "$SNDFEMALE/the_time_is.ulaw" "$SNDFEMALE/${hour}.ulaw" \
             "$SNDFEMALE/${mins}.ulaw" "$SNDFEMALE/${ampm}.ulaw" \
-            "$SNDFEMALE/pause.ulaw" "$extra" > "$SNDRPT/current_time.ulaw"
+            "$SNDFEMALE/pause.ulaw" "$extra" > "$SNDRPT/current_time.ulaw" 2>/dev/null; then
+            log_error "Failed to build time audio - missing sound files"
+            return 1
+        fi
     else
-        cat "$SNDFEMALE/${greeting}.ulaw" "$SNDFEMALE/pause.ulaw" \
+        if ! cat "$SNDFEMALE/${greeting}.ulaw" "$SNDFEMALE/pause.ulaw" \
             "$SNDFEMALE/the_time_is.ulaw" "$SNDFEMALE/${hour}.ulaw" \
-            "$SNDFEMALE/${mins}.ulaw" "$SNDFEMALE/${ampm}.ulaw" > "$SNDRPT/current_time.ulaw"
+            "$SNDFEMALE/${mins}.ulaw" "$SNDFEMALE/${ampm}.ulaw" > "$SNDRPT/current_time.ulaw" 2>/dev/null; then
+            log_error "Failed to build time audio - missing sound files"
+            return 1
+        fi
     fi
 }
 

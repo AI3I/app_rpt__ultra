@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 idstate=$(sudo asterisk -rx "rpt xnode $MYNODE" | grep ^ider_state | cut -d'=' -f2 | cut -b1 || true)
 

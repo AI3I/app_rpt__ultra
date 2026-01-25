@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 sourcefile="$CONFIG_FILE"
 
 # ==============================================================================

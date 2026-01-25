@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 #    PURPOSE:  Ability to generate courtesy tones from CLI or DTMF dynamically without having to directly edit file.
 #
@@ -63,7 +64,11 @@ if [[ "$type" == "C" ]]; then
     exit 0
 elif [[ "$type" == "B" ]]; then
     rewrite=$(echo "$1" | cut -dB -f2)
-    mychar=$(grep "^${rewrite} " "$CWCHARS" | cut -d' ' -f2)
+    mychar=$(grep "^${rewrite} " "$CWCHARS" 2>/dev/null | cut -d' ' -f2 || true)
+    if [[ -z "$mychar" ]]; then
+        asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+        exit 1
+    fi
     sed -i "s/^${tone}=.*$/${tone}=|m${mychar}/g" "$RPTCONF"
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_t"
     sleep 3
@@ -71,7 +76,7 @@ elif [[ "$type" == "B" ]]; then
     exit 0
 elif [[ "$type" == "A" ]]; then
     rewrite=$(echo "$1" | cut -s -dA -f2)
-    myword=$(grep "^${rewrite} " "$VOCAB" | cut -d' ' -f2)
+    myword=$(grep "^${rewrite} " "$VOCAB" 2>/dev/null | cut -d' ' -f2 || true)
     if [[ -n "$myword" && -f "${SOUNDS}/${myword}" ]]; then
         cp "${SOUNDS}/${myword}" "${SNDCST}/ct${ct}.ulaw"
     fi

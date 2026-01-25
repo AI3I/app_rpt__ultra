@@ -19,15 +19,17 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 # Use configured wireless device (defaults to wlan0 if not set)
 wlan_dev="${wlandevice:-wlan0}"
 
-frequency=$(iwconfig "$wlan_dev" | tr -d ' ' | grep Frequency | cut -d':' -f3 | cut -d'A' -f1)
-level=$(iwconfig "$wlan_dev" | tr -d ' ' | grep Signallevel | cut -d'=' -f3 | cut -d'/' -f1)
-power=$(iwconfig "$wlan_dev" | tr -d ' ' | grep Tx-Power | cut -d'=' -f3)
-quality=$(iwconfig "$wlan_dev" | tr -d ' ' | grep LinkQuality | cut -d'=' -f2 | cut -d'/' -f1)
-rate=$(iwconfig "$wlan_dev" | tr -d '\n' | tr -s ' ' | cut -d' ' -f13,14 | cut -d'=' -f2 | cut -d'/' -f1 | tr -d ' ')
+# Get wireless stats with fallback to "0" if unavailable
+frequency=$(iwconfig "$wlan_dev" 2>/dev/null | tr -d ' ' | grep Frequency | cut -d':' -f3 | cut -d'A' -f1 || echo "0")
+level=$(iwconfig "$wlan_dev" 2>/dev/null | tr -d ' ' | grep Signallevel | cut -d'=' -f3 | cut -d'/' -f1 || echo "0")
+power=$(iwconfig "$wlan_dev" 2>/dev/null | tr -d ' ' | grep Tx-Power | cut -d'=' -f3 || echo "0")
+quality=$(iwconfig "$wlan_dev" 2>/dev/null | tr -d ' ' | grep LinkQuality | cut -d'=' -f2 | cut -d'/' -f1 || echo "0")
+rate=$(iwconfig "$wlan_dev" 2>/dev/null | tr -d '\n' | tr -s ' ' | cut -d' ' -f13,14 | cut -d'=' -f2 | cut -d'/' -f1 | tr -d ' ' || echo "0")
 
 asterisk -rx "rpt localplay $MYNODE rpt/link_condition_is"
 "$BINDIR/speaktext.sh" "$quality"

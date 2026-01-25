@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 dow=$(date +%A | tr '[:upper:]' '[:lower:]')
 month=$(date +%B | tr '[:upper:]' '[:lower:]')
@@ -26,7 +27,7 @@ day=$(date +%-e | tr -d ' ')
 year=$(date +%y)
 
 # Today is <day of week>, <month> <day>, <year>
-cat "${SNDMALE}/today.ulaw" \
+if ! cat "${SNDMALE}/today.ulaw" \
     "${SNDMALE}/is.ulaw" \
     "${SNDMALE}/${dow}.ulaw" \
     "${SNDMALE}/${month}.ulaw" \
@@ -34,6 +35,9 @@ cat "${SNDMALE}/today.ulaw" \
     "${SNDFX}/pause.ulaw" \
     "${SNDMALE}/2000.ulaw" \
     "${SNDMALE}/${year}.ulaw" \
-    > "${SNDRPT}/current_date.ulaw"
+    > "${SNDRPT}/current_date.ulaw" 2>/dev/null; then
+    log_error "Failed to build current_date.ulaw - missing sound files"
+    exit 1
+fi
 
 ###VERSION=2.0.6

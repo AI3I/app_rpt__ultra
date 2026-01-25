@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 # Check for required dependency
 if ! command -v jq &>/dev/null; then

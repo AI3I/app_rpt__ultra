@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 #    PURPOSE:  Allow changing courtesy tones from table of courtesy tones
 #    defined in rpt.conf (template: 00-99) and announce change locally.

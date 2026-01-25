@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 #    PURPOSE:  Read messages from table (as defined in messagetable.txt).
 
@@ -34,7 +35,7 @@ if [[ "$1" == "00" ]]; then
 fi
 
 # Use grep -F for fixed string matching to avoid regex injection
-msgid=$(grep -F "$1 " "$MSGTBL" | head -1 | cut -d' ' -f2)
+msgid=$(grep -F "$1 " "$MSGTBL" 2>/dev/null | head -1 | cut -d' ' -f2 || true)
 
 if [[ -n "$msgid" ]]; then
     asterisk -rx "rpt localplay $MYNODE $msgid"

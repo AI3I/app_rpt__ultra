@@ -21,6 +21,7 @@
 #    This script adapted from works provided Ramon Gonzalez, KP4TR (2014)
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 # Use unique temp file to avoid race conditions and symlink attacks
 speakfile="/tmp/speakfile.$$"
@@ -44,21 +45,21 @@ function speak {
         character=$(echo "$speaktext" | cut -c"$counter")
 
         if [[ $character =~ ^[A-Za-z_]+$ ]]; then
-            cat "${SOUNDS}/letters/${character}.ulaw" >> "${speakfile}.ulaw"
+            cat "${SOUNDS}/letters/${character}.ulaw" >> "${speakfile}.ulaw" 2>/dev/null || true
         fi
 
         if [[ $character =~ ^-?[0-9]+$ ]]; then
-            cat "${SOUNDS}/digits/${character}.ulaw" >> "${speakfile}.ulaw"
+            cat "${SOUNDS}/digits/${character}.ulaw" >> "${speakfile}.ulaw" 2>/dev/null || true
         fi
 
         case "$character" in
-            '.') cat "${SOUNDS}/_male/point.ulaw" >> "${speakfile}.ulaw" ;;
-            '+') cat "${SOUNDS}/_male/plus.ulaw" >> "${speakfile}.ulaw" ;;
-            '-') cat "${SOUNDS}/_male/minus.ulaw" >> "${speakfile}.ulaw" ;;
-            '=') cat "${SOUNDS}/_male/equal.ulaw" >> "${speakfile}.ulaw" ;;
-            '@') cat "${SOUNDS}/_male/at.ulaw" >> "${speakfile}.ulaw" ;;
-            '#') cat "${SOUNDS}/_male/pound.ulaw" >> "${speakfile}.ulaw" ;;
-            '*') cat "${SOUNDS}/_male/star.ulaw" >> "${speakfile}.ulaw" ;;
+            '.') cat "${SOUNDS}/_male/point.ulaw" >> "${speakfile}.ulaw" 2>/dev/null || true ;;
+            '+') cat "${SOUNDS}/_male/plus.ulaw" >> "${speakfile}.ulaw" 2>/dev/null || true ;;
+            '-') cat "${SOUNDS}/_male/minus.ulaw" >> "${speakfile}.ulaw" 2>/dev/null || true ;;
+            '=') cat "${SOUNDS}/_male/equal.ulaw" >> "${speakfile}.ulaw" 2>/dev/null || true ;;
+            '@') cat "${SOUNDS}/_male/at.ulaw" >> "${speakfile}.ulaw" 2>/dev/null || true ;;
+            '#') cat "${SOUNDS}/_male/pound.ulaw" >> "${speakfile}.ulaw" 2>/dev/null || true ;;
+            '*') cat "${SOUNDS}/_male/star.ulaw" >> "${speakfile}.ulaw" 2>/dev/null || true ;;
             *) ;;
         esac
     done

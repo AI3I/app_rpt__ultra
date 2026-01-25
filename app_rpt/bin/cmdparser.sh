@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 #    USAGE:  Accept single digit commands from CLI or DTMF with
 #    prepended 0 or otherwise proceed with double digits as entered

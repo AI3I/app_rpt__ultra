@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 # Validate retention period is set
 if [[ -z "${RETENTION:-}" ]]; then

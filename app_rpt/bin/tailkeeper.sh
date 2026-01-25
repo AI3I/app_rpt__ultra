@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 if [[ "$SEVEREWEATHER" == "1" ]]; then
     ln -sf "$SOUNDS/${SVWXALERT}.ulaw" "$SOUNDS/tail_message.ulaw"

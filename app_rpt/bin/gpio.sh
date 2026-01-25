@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 # Validate arguments
 if [[ -z "${1:-}" ]] || [[ -z "${2:-}" ]]; then

@@ -19,6 +19,7 @@
 #
 
 source "%%BASEDIR%%/bin/common.sh"
+set -euo pipefail
 
 # Auto-upgrade detection for child nodes
 # Only runs on child nodes (FETCHLOCAL=1) when AUTOUPGRADE=1
