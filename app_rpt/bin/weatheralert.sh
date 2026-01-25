@@ -29,9 +29,9 @@ sourcefile="$CONFIG_FILE"
 curl -s -k "https://api.weather.gov/alerts/active.atom?zone=${NWSZONE}" -o "$NWSFILE"
 
 # Parse the file for message contents
-message=$(grep '<cap:msgType>Alert</cap:msgType>' "$NWSFILE" 2>/dev/null | cut -d'>' -f2 | cut -d'<' -f1 | uniq || true)
+# Note: msgType can be Alert (new) or Update (continuation) - we need both
+message=$(grep -E '<cap:msgType>(Alert|Update)</cap:msgType>' "$NWSFILE" 2>/dev/null | cut -d'>' -f2 | cut -d'<' -f1 | uniq || true)
 severity=$(grep '<cap:severity>Severe</cap:severity>' "$NWSFILE" 2>/dev/null | cut -d'>' -f2 | cut -d'<' -f1 | uniq || true)
-urgency=$(grep '<cap:urgency>Immediate</cap:urgency>' "$NWSFILE" 2>/dev/null | cut -d'>' -f2 | cut -d'<' -f1 | uniq || true)
 
 # Extract ALL event types and intelligently select based on severity hierarchy
 # Prioritized by: 1) Catastrophic potential, 2) Speed of onset, 3) Life-threatening nature
@@ -478,7 +478,7 @@ build_weather_message() {
 # ==============================================================================
 
 if [[ "$SEVEREWEATHER" == "3" ]]; then
-    if [[ "$severity" == "Severe" ]] && [[ "$urgency" == "Immediate" ]]; then
+    if [[ "$severity" == "Severe" ]]; then
         sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=1/g" "$sourcefile"
         sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
         "$STATEKEEPER" severeweather
@@ -489,10 +489,10 @@ if [[ "$SEVEREWEATHER" == "3" ]]; then
         fi
 
         # Log the state change with event type
-        log "NWS Alert: $event (severity=$severity, urgency=$urgency)"
+        log "NWS Alert: $event (severity=$severity)"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), standard, severeweather, nws_alert:$event, ${MYNODE}" >> /var/log/state_history.log
         exit 0
-    elif [[ "$message" == "Alert" ]]; then
+    elif [[ -n "$message" ]]; then
         sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" "$sourcefile"
         sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
         "$STATEKEEPER" weatheralert
@@ -510,7 +510,7 @@ if [[ "$SEVEREWEATHER" == "3" ]]; then
         exit 0
     fi
 elif [[ "$SEVEREWEATHER" == "2" ]]; then
-    if [[ "$severity" == "Severe" ]] && [[ "$urgency" == "Immediate" ]]; then
+    if [[ "$severity" == "Severe" ]]; then
         sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=1/g" "$sourcefile"
         sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
         "$STATEKEEPER" severeweather
@@ -519,7 +519,7 @@ elif [[ "$SEVEREWEATHER" == "2" ]]; then
             asterisk -rx "rpt localplay $MYNODE rpt/severe_weather_alert" &>/dev/null
         fi
 
-        log "NWS Alert upgraded: $event (severity=$severity, urgency=$urgency)"
+        log "NWS Alert upgraded: $event (severity=$severity)"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), weatheralert, severeweather, nws_alert:$event, ${MYNODE}" >> /var/log/state_history.log
         exit 0
     elif [[ -z "$message" ]] && [[ -z "$severity" ]]; then
@@ -536,7 +536,7 @@ elif [[ "$SEVEREWEATHER" == "2" ]]; then
         exit 0
     fi
 elif [[ "$SEVEREWEATHER" == "1" ]]; then
-    if [[ "$message" == "Alert" ]] && [[ -z "$severity" ]]; then
+    if [[ -n "$message" ]] && [[ -z "$severity" ]]; then
         sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"
         sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" "$sourcefile"
         sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
