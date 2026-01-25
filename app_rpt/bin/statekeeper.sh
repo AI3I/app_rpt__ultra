@@ -48,13 +48,13 @@ fi
 
 case "$1" in
 default) # Reset to Default Operations
-    sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
+    sed -i "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
     sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
     sed -i "s/^KERCHUNK_ENABLE=.*$/KERCHUNK_ENABLE=1/g" "$sourcefile"
     sed -i "s/^ENABLETEMP=0/ENABLETEMP=1/g" "$sourcefile"
     sed -i "s/^ENABLETIME=0/ENABLETIME=1/g" "$sourcefile"
-    sed -i.bkp "s/^;idrecording=.*$/idrecording=voice_id/g" "$RPTCONF"
+    sed -i "s/^;idrecording=.*$/idrecording=voice_id/g" "$RPTCONF"
     sed -i "s/^idrecording=.*$/idrecording=voice_id/g" "$RPTCONF"
     sed -i "s/^;tailmessagetime=/tailmessagetime=$TMTIMEL/g" "$RPTCONF"
     sed -i "s/^;tailmessagelist=/tailmessagelist=none/g" "$RPTCONF"
@@ -82,8 +82,8 @@ default) # Reset to Default Operations
     log_state_change "tactical" "manual"
     ;;
 standard) # Standard Operations
-    sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
-    sed -i.bkp "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEL/g" "$RPTCONF"
+    sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
+    sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEL/g" "$RPTCONF"
     sed -i "s/^unlinkedct=.*$/unlinkedct=$CTUNL/g" "$RPTCONF"
     sed -i "s/^remotect=.*$/remotect=$CTRMT/g" "$RPTCONF"
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTUNK/g" "$RPTCONF"
@@ -105,7 +105,7 @@ litzalert) # Long Tone Zero (LiTZ) Alert
     sudo asterisk -rx "rpt localplay $MYNODE rpt/litz_alert"
     ;;
 severeweather) # Severe Weather Alert
-    sed -i.bkp "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMES/g" "$RPTCONF"
+    sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMES/g" "$RPTCONF"
     sed -i "s/^unlinkedct=.*$/unlinkedct=$CTSWX/g" "$RPTCONF"
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTSWX/g" "$RPTCONF"
     sed -i "s/^remotect=.*$/remotect=$CTSWX/g" "$RPTCONF"
@@ -124,7 +124,7 @@ severeweather) # Severe Weather Alert
     sudo asterisk -rx "rpt localplay $MYNODE rpt/severe_weather_alert"
     ;;
 weatheralert) # Weather Alert
-    sed -i.bkp "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEM/g" "$RPTCONF"
+    sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEM/g" "$RPTCONF"
     sed -i "s/^unlinkedct=.*$/unlinkedct=$CTWXA/g" "$RPTCONF"
     sed -i "s/^remotect=.*$/remotect=$CTWXA/g" "$RPTCONF"
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTWXA/g" "$RPTCONF"
@@ -134,11 +134,11 @@ weatheralert) # Weather Alert
     log_state_change "weatheralert" "manual"
     ;;
 tactical) # Tactical Operations
-    sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"
+    sed -i "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"
     sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=4/g" "$sourcefile"
     sed -i "s/^KERCHUNK_ENABLE=.*$/KERCHUNK_ENABLE=0/g" "$sourcefile"
-    sed -i.bkp "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEX/g" "$RPTCONF"
+    sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEX/g" "$RPTCONF"
     sed -i "s/^unlinkedct=.*$/unlinkedct=$CTTAC/g" "$RPTCONF"
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTTAC/g" "$RPTCONF"
     sed -i "s/^remotect=.*$/remotect=$CTTAC/g" "$RPTCONF"
@@ -154,11 +154,11 @@ tactical) # Tactical Operations
     log_state_change "default" "manual"
     ;;
 stealth) # Stealth Operations
-    sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"
+    sed -i "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"
     sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=4/g" "$sourcefile"
     sed -i "s/^KERCHUNK_ENABLE=.*$/KERCHUNK_ENABLE=0/g" "$sourcefile"
-    sed -i.bkp "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEX/g" "$RPTCONF"
+    sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEX/g" "$RPTCONF"
     sed -i "s/^idrecording=/;idrecording=/g" "$RPTCONF"
     sed -i "s/^tailmessagetime=/;tailmessagetime=/g" "$RPTCONF"
     sed -i "s/^tailmessagelist=/;tailmessagelist=/g" "$RPTCONF"
@@ -178,10 +178,10 @@ stealth) # Stealth Operations
     log_state_change "stealth" "manual"
     ;;
 daytime) # Daytime Operations
-    sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
+    sed -i "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
     sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
-    sed -i.bkp "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEL/g" "$RPTCONF"
+    sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEL/g" "$RPTCONF"
     sed -i "s/^unlinkedct=.*$/unlinkedct=$CTUNL/g" "$RPTCONF"
     sed -i "s/^remotect=.*$/remotect=$CTRMT/g" "$RPTCONF"
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTUNK/g" "$RPTCONF"
@@ -195,10 +195,10 @@ daytime) # Daytime Operations
     log_state_change "daytime" "manual"
     ;;
 nighttime) # Nighttime Operations
-    sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
+    sed -i "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
     sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
-    sed -i.bkp "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEL/g" "$RPTCONF"
+    sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEL/g" "$RPTCONF"
     sed -i "s/^unlinkedct=.*$/unlinkedct=$CTUNL/g" "$RPTCONF"
     sed -i "s/^remotect=.*$/remotect=$CTRMT/g" "$RPTCONF"
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTUNK/g" "$RPTCONF"
@@ -212,10 +212,10 @@ nighttime) # Nighttime Operations
     log_state_change "nighttime" "manual"
     ;;
 net) # Net
-    sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=4/g" "$sourcefile"
+    sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=4/g" "$sourcefile"
     sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
     sed -i "s/^KERCHUNK_ENABLE=.*$/KERCHUNK_ENABLE=0/g" "$sourcefile"
-    sed -i.bkp "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEX/g" "$RPTCONF"
+    sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEX/g" "$RPTCONF"
     sed -i "s/^unlinkedct=.*$/unlinkedct=$CTNET/g" "$RPTCONF"
     sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTNET/g" "$RPTCONF"
     sed -i "s/^remotect=.*$/remotect=$CTNET/g" "$RPTCONF"

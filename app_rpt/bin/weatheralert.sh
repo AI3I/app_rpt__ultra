@@ -479,7 +479,7 @@ build_weather_message() {
 
 if [[ "$SEVEREWEATHER" == "3" ]]; then
     if [[ "$severity" == "Severe" ]]; then
-        sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=1/g" "$sourcefile"
+        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=1/g" "$sourcefile"
         sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
         "$STATEKEEPER" severeweather
 
@@ -498,7 +498,7 @@ if [[ "$SEVEREWEATHER" == "3" ]]; then
         echo "$(date '+%Y-%m-%d %H:%M:%S'), standard, severeweather, nws_alert:$event, ${MYNODE}" >> /var/log/state_history.log
         exit 0
     elif [[ -n "$message" ]]; then
-        sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" "$sourcefile"
+        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" "$sourcefile"
         sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
         "$STATEKEEPER" weatheralert
 
@@ -519,7 +519,7 @@ if [[ "$SEVEREWEATHER" == "3" ]]; then
     fi
 elif [[ "$SEVEREWEATHER" == "2" ]]; then
     if [[ "$severity" == "Severe" ]]; then
-        sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=1/g" "$sourcefile"
+        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=1/g" "$sourcefile"
         sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
         "$STATEKEEPER" severeweather
 
@@ -536,7 +536,7 @@ elif [[ "$SEVEREWEATHER" == "2" ]]; then
         echo "$(date '+%Y-%m-%d %H:%M:%S'), weatheralert, severeweather, nws_alert:$event, ${MYNODE}" >> /var/log/state_history.log
         exit 0
     elif [[ -z "$message" ]] && [[ -z "$severity" ]]; then
-        sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
+        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
         sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
         asterisk -rx "rpt localplay $MYNODE rpt/cancel_weather_alert"
         sleep 5
@@ -553,7 +553,7 @@ elif [[ "$SEVEREWEATHER" == "2" ]]; then
     fi
 elif [[ "$SEVEREWEATHER" == "1" ]]; then
     if [[ -n "$message" ]] && [[ -z "$severity" ]]; then
-        sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"
+        sed -i "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"
         sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" "$sourcefile"
         sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
         "$STATEKEEPER" weatheralert
@@ -568,8 +568,8 @@ elif [[ "$SEVEREWEATHER" == "1" ]]; then
         echo "$(date '+%Y-%m-%d %H:%M:%S'), severeweather, weatheralert, nws_downgrade:$event, ${MYNODE}" >> /var/log/state_history.log
         exit 0
     elif [[ -z "$message" ]] && [[ -z "$severity" ]]; then
-        sed -i.bkp "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
-        sed -i.bkp "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
+        sed -i "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
+        sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
         sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
         asterisk -rx "rpt localplay $MYNODE rpt/cancel_weather_alert"
         sleep 5

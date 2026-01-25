@@ -25,19 +25,19 @@ source "%%BASEDIR%%/bin/common.sh"
 
 case "$1" in
 linkunkeyct)
-    sed -i.bkp "s/^linkunkeyct=ct.*$/linkunkeyct=ct${2}/g" "$RPTCONF"
+    sed -i "s/^linkunkeyct=ct.*$/linkunkeyct=ct${2}/g" "$RPTCONF"
     "${BINDIR}/speaktext.sh" "LUCT${2}"
     sleep 5
     asterisk -rx "module reload"
     ;;
 remotect)
-    sed -i.bkp "s/^remotect=ct.*$/remotect=ct${2}/g" "$RPTCONF"
+    sed -i "s/^remotect=ct.*$/remotect=ct${2}/g" "$RPTCONF"
     "${BINDIR}/speaktext.sh" "RMCT${2}"
     sleep 5
     asterisk -rx "module reload"
     ;;
 unlinkedct)
-    sed -i.bkp "s/^unlinkedct=ct.*$/unlinkedct=ct${2}/g" "$RPTCONF"
+    sed -i "s/^unlinkedct=ct.*$/unlinkedct=ct${2}/g" "$RPTCONF"
     "${BINDIR}/speaktext.sh" "ULCT${2}"
     sleep 5
     asterisk -rx "module reload"

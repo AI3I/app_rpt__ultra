@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ###VERSION=2.0.6
 #
 #    app_rpt__ultra :: the ultimate controller experience for app_rpt
@@ -44,6 +44,7 @@ KERCHUNK_WAITLIMIT="${KERCHUNK_WAITLIMIT:-30}"  # 30 seconds
 
 # State file locations
 STATE_DIR="/tmp/app_rpt_kerchunk"
+LOCK_FILE="${STATE_DIR}/kerchunkkeeper.lock"
 LAST_COUNT_FILE="${STATE_DIR}/last_count"
 CONSECUTIVE_FILE="${STATE_DIR}/consecutive"
 LAST_WARNING_FILE="${STATE_DIR}/last_warning"
@@ -73,10 +74,25 @@ initialize_state() {
     # Create state directory if it doesn't exist
     mkdir -p "${STATE_DIR}"
 
-    # Initialize files if they don't exist
+    # Initialize files if they don't exist (atomic check-and-create)
     [[ ! -f "${LAST_COUNT_FILE}" ]] && echo "0" > "${LAST_COUNT_FILE}"
     [[ ! -f "${CONSECUTIVE_FILE}" ]] && echo "0" > "${CONSECUTIVE_FILE}"
     [[ ! -f "${LAST_WARNING_FILE}" ]] && echo "0" > "${LAST_WARNING_FILE}"
+}
+
+# Acquire exclusive lock to prevent race conditions
+acquire_lock() {
+    # Create lock file directory if needed
+    mkdir -p "${STATE_DIR}"
+
+    # Open lock file on fd 9
+    exec 9>"${LOCK_FILE}"
+
+    # Try to acquire lock (non-blocking)
+    if ! flock -n 9; then
+        log "Another instance is running, exiting"
+        exit 0
+    fi
 }
 
 read_state() {
@@ -137,6 +153,9 @@ main() {
         # Silently exit if disabled
         exit 0
     fi
+
+    # Acquire exclusive lock to prevent race conditions
+    acquire_lock
 
     # Initialize state directory and files
     initialize_state

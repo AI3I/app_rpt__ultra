@@ -42,7 +42,7 @@ if [[ "$idstring" == "00" ]]; then
         grep "^${i} " "$CWCHARS" | cut -d' ' -f2 | tr -d '\n' >> "$cwmsg"
     done
     cwid=$(cat "$cwmsg")
-    sed -i.bkp "s/^idtalkover=.*$/idtalkover=|i$cwid/g" "$RPTCONF"
+    sed -i "s/^idtalkover=.*$/idtalkover=|i$cwid/g" "$RPTCONF"
     : > "$cwmsg"
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_w_i_d"
     exit 0

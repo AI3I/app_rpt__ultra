@@ -56,7 +56,7 @@ fi
 
 if [[ "$type" == "C" ]]; then
     rewrite=$(echo "$1" | cut -dC -f2 | sed "s/D/)(/g" | sed "s/*/,/g")
-    sed -i.bkp "s/^${tone}=.*$/${tone}=|t(${rewrite})/g" "$RPTCONF"
+    sed -i "s/^${tone}=.*$/${tone}=|t(${rewrite})/g" "$RPTCONF"
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_t"
     sleep 3
     asterisk -rx "module reload"
@@ -64,7 +64,7 @@ if [[ "$type" == "C" ]]; then
 elif [[ "$type" == "B" ]]; then
     rewrite=$(echo "$1" | cut -dB -f2)
     mychar=$(grep "^${rewrite} " "$CWCHARS" | cut -d' ' -f2)
-    sed -i.bkp "s/^${tone}=.*$/${tone}=|m${mychar}/g" "$RPTCONF"
+    sed -i "s/^${tone}=.*$/${tone}=|m${mychar}/g" "$RPTCONF"
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_t"
     sleep 3
     asterisk -rx "module reload"
@@ -75,7 +75,7 @@ elif [[ "$type" == "A" ]]; then
     if [[ -n "$myword" && -f "${SOUNDS}/${myword}" ]]; then
         cp "${SOUNDS}/${myword}" "${SNDCST}/ct${ct}.ulaw"
     fi
-    sed -i.bkp "s/^${tone}=.*$/${tone}=custom\/ct${ct}/g" "$RPTCONF"
+    sed -i "s/^${tone}=.*$/${tone}=custom\/ct${ct}/g" "$RPTCONF"
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_t"
     sleep 3
     asterisk -rx "module reload"
