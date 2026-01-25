@@ -51,7 +51,8 @@ build_time_audio() {
 #    Main Logic
 # ==============================================================================
 
-hours=$(date +%k)
+# Strip leading space from single-digit hours (date +%k returns " 5" for 5am)
+hours=$(date +%k | tr -d ' ')
 
 # Determine evening cutoff based on DST
 # perl returns 0 (success) during standard time, 1 during DST

@@ -188,14 +188,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
+        // Security: Validate file path has no directory traversal
+        if (strpos($file, '..') !== false || strpos($file, '/') === 0) {
+            echo json_encode(['success' => false, 'error' => 'Invalid file path']);
+            exit;
+        }
+
         $ulaw_file = "$SOUNDS_DIR/$file.ulaw";
         $txt_file = "$SOUNDS_DIR/$file.txt";
+
+        // Security: Verify resolved paths are within sounds directory
+        $parent_dir = dirname(realpath($SOUNDS_DIR . '/' . dirname($file)) ?: '');
+        if (strpos($parent_dir, realpath($SOUNDS_DIR)) !== 0) {
+            echo json_encode(['success' => false, 'error' => 'Invalid file path']);
+            exit;
+        }
 
         // Build .ulaw file by concatenating vocabulary files
         $ulaw_data = '';
         foreach ($words as $word_path) {
-            if (file_exists($word_path)) {
-                $ulaw_data .= file_get_contents($word_path);
+            // Security: Validate path is within sounds directory and has no traversal
+            $real_path = realpath($word_path);
+            $real_sounds = realpath($SOUNDS_DIR);
+            if ($real_path === false || $real_sounds === false) {
+                continue; // Skip invalid paths
+            }
+            if (strpos($real_path, $real_sounds) !== 0) {
+                continue; // Skip paths outside sounds directory
+            }
+            if (file_exists($real_path)) {
+                $ulaw_data .= file_get_contents($real_path);
             }
         }
 
