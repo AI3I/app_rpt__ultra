@@ -23,11 +23,11 @@ source "%%BASEDIR%%/bin/common.sh"
 # Auto-upgrade detection for child nodes
 # Only runs on child nodes (FETCHLOCAL=1) when AUTOUPGRADE=1
 if [[ "${FETCHLOCAL:-0}" == "1" ]] && [[ "${AUTOUPGRADE:-0}" == "1" ]]; then
-    # Get hub's version
-    hub_version=$(ssh "${FETCHPOINT}" "cat %%BASEDIR%%/VERSION 2>/dev/null" || echo "unknown")
+    # Get hub's version (use $BASEDIR which is set after placeholder replacement)
+    hub_version=$(ssh "${FETCHPOINT}" "cat ${BASEDIR}/VERSION 2>/dev/null" || echo "unknown")
 
     # Get local version
-    local_version=$(cat "%%BASEDIR%%/VERSION" 2>/dev/null || echo "unknown")
+    local_version=$(cat "${BASEDIR}/VERSION" 2>/dev/null || echo "unknown")
 
     # If versions differ, auto-upgrade
     if [[ "$hub_version" != "unknown" ]] && [[ "$local_version" != "unknown" ]] && [[ "$hub_version" != "$local_version" ]]; then
@@ -38,16 +38,16 @@ if [[ "${FETCHLOCAL:-0}" == "1" ]] && [[ "${AUTOUPGRADE:-0}" == "1" ]]; then
         sudo rsync -azr --delete "${FETCHPOINT}:${UTILDIR}/" "${UTILDIR}" 2>&1 || log_error "Failed to sync util directory"
 
         # Run upgrade
-        if [[ -x "%%BASEDIR%%/util/upgrade.sh" ]]; then
+        if [[ -x "${BASEDIR}/util/upgrade.sh" ]]; then
             log "Running upgrade.sh --force --auto-yes"
-            sudo "%%BASEDIR%%/util/upgrade.sh" --force --auto-yes >>/var/log/app_rpt.log 2>&1
+            sudo "${BASEDIR}/util/upgrade.sh" --force --auto-yes >>/var/log/app_rpt.log 2>&1
             if [[ $? -eq 0 ]]; then
                 log "Auto-upgrade completed successfully (v$local_version -> v$hub_version)"
             else
                 log_error "Auto-upgrade failed, check /var/log/app_rpt.log"
             fi
         else
-            log_error "upgrade.sh not found or not executable at %%BASEDIR%%/util/upgrade.sh"
+            log_error "upgrade.sh not found or not executable at ${BASEDIR}/util/upgrade.sh"
         fi
     fi
 fi

@@ -345,9 +345,10 @@ detect_network_interfaces() {
         fi
     fi
 
-    # VPN interface (usually tun0 or wg0)
+    # VPN interface (usually tun0 or wg0, empty if none found)
     vpn_iface=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^(tun|wg)' | head -1)
-    [[ -z "$vpn_iface" ]] && vpn_iface="tun0"
+    # Don't default to tun0 if no VPN interface exists
+    [[ -z "$vpn_iface" ]] && vpn_iface=""
 
     echo "$lan_iface,$wlan_iface,$vpn_iface"
 }

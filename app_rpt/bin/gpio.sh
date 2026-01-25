@@ -20,10 +20,23 @@
 
 source "%%BASEDIR%%/bin/common.sh"
 
+# Validate arguments
+if [[ -z "${1:-}" ]] || [[ -z "${2:-}" ]]; then
+    log_error "Usage: gpio.sh <command> <gpio_number>"
+    exit 1
+fi
+
 if [[ "$2" =~ ^0 ]]; then
     mygpio=$(echo "$2" | cut -c2)
 else
     mygpio=$(echo "$2" | cut -c1,2)
+fi
+
+# Validate GPIO number (0-27 for Raspberry Pi)
+if [[ ! "$mygpio" =~ ^[0-9]+$ ]] || [[ "$mygpio" -lt 0 ]] || [[ "$mygpio" -gt 27 ]]; then
+    log_error "Invalid GPIO number: $mygpio (must be 0-27)"
+    asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+    exit 1
 fi
 
 case "$1" in
@@ -72,8 +85,7 @@ toggle) # Toggle On/Off
 unexport) # Un-Export
     asterisk -rx "rpt localplay $MYNODE rpt/g_p_i_o_set"
     asterisk -rx "rpt localplay $MYNODE digits/$mygpio"
-    gpio unexport "$mygpio"
-    gpio unexport "$mygpio"
+    gpio unexport "$mygpio" 2>/dev/null || true
     exit 0
     ;;
 *) # Error

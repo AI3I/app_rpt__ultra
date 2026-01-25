@@ -18,7 +18,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-set -uo pipefail
+set -euo pipefail
 
 # ==============================================================================
 #    repair.sh - System health check and repair tool for app_rpt__ultra
@@ -607,7 +607,7 @@ check_script_files() {
         # Offer to run upgrade.sh if it exists in common locations
         if [[ -f "$INSTALL_BASE/util/upgrade.sh" ]] && [[ "$AUTO_FIX" == true ]]; then
             log_info "Running upgrade.sh to restore utility scripts..."
-            if sudo -u asterisk "$INSTALL_BASE/util/upgrade.sh" --force; then
+            if sudo "$INSTALL_BASE/util/upgrade.sh" --force; then
                 log_fixed "Utility scripts restored via upgrade.sh"
             else
                 log_fail "Failed to restore utility scripts"
@@ -696,6 +696,21 @@ check_configuration() {
                 fi
             else
                 log_verbose "wlandevice not set (OK for $platform platform)"
+            fi
+            continue
+        fi
+
+        # VPN device is optional (not everyone has a VPN)
+        if [[ "$var" == "vpndevice" ]]; then
+            if [[ -n "${!var:-}" ]]; then
+                log_pass "Network variable set: $var=${!var}"
+                if ip link show "${!var}" &>/dev/null; then
+                    log_verbose "  Interface ${!var} exists"
+                else
+                    log_warn "  Interface ${!var} not found on system"
+                fi
+            else
+                log_verbose "vpndevice not set (OK if no VPN configured)"
             fi
             continue
         fi
@@ -850,13 +865,13 @@ check_cron_jobs() {
         if [[ "$CHECK_ONLY" != true ]] && [[ -d "$INSTALL_BASE/bin" ]]; then
             if ask_repair "Create crontab with standard app_rpt__ultra jobs" \
                 "cat > /tmp/crontab.$$ <<'CRON'
-*/5  * * * * $INSTALL_BASE/bin/idkeeper.sh
-*/15 * * * * $INSTALL_BASE/bin/tailkeeper.sh
-*/30 * * * * $INSTALL_BASE/bin/timekeeper.sh
-*/5  * * * * $INSTALL_BASE/bin/weatheralert.sh
-0    3 * * * $INSTALL_BASE/bin/weatherkeeper.sh
-0    0 * * * $INSTALL_BASE/bin/datekeeper.sh
-*/30 * * * * $INSTALL_BASE/bin/datadumper.sh
+* * * * *      $INSTALL_BASE/bin/idkeeper.sh        >/dev/null 2>&1
+* * * * *      $INSTALL_BASE/bin/tailkeeper.sh      >/dev/null 2>&1
+* * * * *      $INSTALL_BASE/bin/timekeeper.sh      >/dev/null 2>&1
+* * * * *      $INSTALL_BASE/bin/weatheralert.sh    >/dev/null 2>&1
+*/15 * * * *   $INSTALL_BASE/bin/weatherkeeper.sh   >/dev/null 2>&1
+0 0 * * *      $INSTALL_BASE/bin/datekeeper.sh      >/dev/null 2>&1
+0 0 * * *      $INSTALL_BASE/bin/datadumper.sh      >/dev/null 2>&1
 CRON
 crontab -u asterisk /tmp/crontab.$$
 rm -f /tmp/crontab.$$"; then

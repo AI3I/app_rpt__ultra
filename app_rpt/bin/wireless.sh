@@ -20,27 +20,30 @@
 
 source "%%BASEDIR%%/bin/common.sh"
 
-frequency=`iwconfig wlan0 | tr -d ' ' | grep Frequency | cut -d':' -f3 | cut -d'A' -f1`
-level=`iwconfig wlan0 | tr -d ' ' | grep Signallevel | cut -d'=' -f3 | cut -d'/' -f1`
-power=`iwconfig wlan0 | tr -d ' ' | grep Tx-Power | cut -d'=' -f3`
-quality=`iwconfig wlan0 | tr -d ' ' | grep LinkQuality | cut -d'=' -f2 | cut -d'/' -f1`
-rate=`iwconfig wlan0 | tr -d '\n' | tr -s ' ' | cut -d' ' -f13,14 | cut -d'=' -f2 | cut -d'/' -f1 | tr -d ' '`
+# Use configured wireless device (defaults to wlan0 if not set)
+wlan_dev="${wlandevice:-wlan0}"
+
+frequency=$(iwconfig "$wlan_dev" | tr -d ' ' | grep Frequency | cut -d':' -f3 | cut -d'A' -f1)
+level=$(iwconfig "$wlan_dev" | tr -d ' ' | grep Signallevel | cut -d'=' -f3 | cut -d'/' -f1)
+power=$(iwconfig "$wlan_dev" | tr -d ' ' | grep Tx-Power | cut -d'=' -f3)
+quality=$(iwconfig "$wlan_dev" | tr -d ' ' | grep LinkQuality | cut -d'=' -f2 | cut -d'/' -f1)
+rate=$(iwconfig "$wlan_dev" | tr -d '\n' | tr -s ' ' | cut -d' ' -f13,14 | cut -d'=' -f2 | cut -d'/' -f1 | tr -d ' ')
 
 asterisk -rx "rpt localplay $MYNODE rpt/link_condition_is"
-/opt/app_rpt/bin/speaktext.sh $quality
+"$BINDIR/speaktext.sh" "$quality"
 sleep 4
 asterisk -rx "rpt localplay $MYNODE rpt/out_of_70"
 sleep 3
 asterisk -rx "rpt localplay $MYNODE rpt/r_s_s_i_is"
-/opt/app_rpt/bin/speaktext.sh $level
+"$BINDIR/speaktext.sh" "$level"
 sleep 7
 asterisk -rx "rpt localplay $MYNODE rpt/transmit_power_is"
-/opt/app_rpt/bin/speaktext.sh $power
+"$BINDIR/speaktext.sh" "$power"
 sleep 7
 asterisk -rx "rpt localplay $MYNODE rpt/frequency_is"
-/opt/app_rpt/bin/speaktext.sh $frequency
+"$BINDIR/speaktext.sh" "$frequency"
 sleep 6
 asterisk -rx "rpt localplay $MYNODE rpt/flow_rate_is"
-/opt/app_rpt/bin/speaktext.sh $rate
+"$BINDIR/speaktext.sh" "$rate"
 
 ###VERSION=2.0.5

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ###VERSION=2.0.5
 #
 #    app_rpt__ultra :: the ultimate controller experience for app_rpt
