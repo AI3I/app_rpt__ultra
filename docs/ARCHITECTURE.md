@@ -79,7 +79,7 @@ chown asterisk:asterisk /home/asterisk
 3. Checks current system state via `asterisk -rx "rpt stats"`
 4. Generates audio files in `/opt/app_rpt/sounds/`
 5. Updates `/etc/asterisk/rpt.conf` parameters via `sed`
-6. Logs activity to `/var/log/app_rpt.log`
+6. Logs activity to `/opt/app_rpt/log/app_rpt.log`
 
 **Example: How `idkeeper.sh` works every minute:**
 ```bash
@@ -116,8 +116,8 @@ User=asterisk
 Group=asterisk
 ExecStart=/opt/app_rpt/bin/kerchunkd.sh
 Restart=on-failure
-StandardOutput=append:/var/log/app_rpt.log
-StandardError=append:/var/log/app_rpt.log
+StandardOutput=append:/opt/app_rpt/log/app_rpt.log
+StandardError=append:/opt/app_rpt/log/app_rpt.log
 
 [Install]
 WantedBy=multi-user.target
@@ -126,7 +126,7 @@ WantedBy=multi-user.target
 **How it integrates:**
 1. Polls `asterisk -rx "rpt stats"` every 1 second (vs. cron's 1 minute)
 2. Tracks transmission durations in real-time
-3. Logs to `/var/log/kerchunk_stats.log` (CSV format)
+3. Logs to `/opt/app_rpt/log/kerchunk_stats.log` (CSV format)
 4. Plays audio warnings via `asterisk -rx "rpt localplay"` (active mode)
 5. Survives Asterisk restarts (systemd auto-restarts it)
 
@@ -170,14 +170,19 @@ asterisk -rx "rpt reload"
 
 **Symlink strategy:**
 ```bash
-# install.sh creates symlinks in Asterisk's sound directory
-ln -sf /opt/app_rpt/sounds /var/lib/asterisk/sounds/app_rpt_ultra
+# install.sh replaces Asterisk's en/ language directory with symlinks
+# ASL3 uses astdatadir=/usr/share/asterisk, so sound lookups resolve as:
+#   /usr/share/asterisk/sounds/en/<file>
+# Both standard search paths are covered:
+ln -sf /opt/app_rpt/sounds /usr/share/asterisk/sounds/en
+ln -sf /opt/app_rpt/sounds /var/lib/asterisk/sounds/en
 
-# Why?
-# - Asterisk searches /var/lib/asterisk/sounds/ by default
-# - Scripts write to /opt/app_rpt/sounds/ (clean separation)
-# - Symlink makes both paths work
-# - No need to modify Asterisk configuration
+# Why symlink en/ specifically (not the parent)?
+# - Asterisk prepends the language code (default: en) to all sound lookups
+# - Replacing en/ with our sounds dir makes rpt/goodmorning resolve to
+#   /opt/app_rpt/sounds/rpt/goodmorning.ulaw (TMS5220), not Allison Smith
+# - The original en/ directory is preserved as en.allison_backup/
+# - Scripts that use absolute paths (/opt/app_rpt/sounds/wx/temp) are unaffected
 ```
 
 **TMS5220 vocabulary system:**
@@ -423,7 +428,7 @@ if [[ $FETCHLOCAL == 1 ]]; then
 fi
 ```
 
-**Output logged to `/var/log/app_rpt.log`:**
+**Output logged to `/opt/app_rpt/log/app_rpt.log`:**
 ```
 2026-01-07 21:00:01 [configkeeper] Syncing from hub hub.example.com
 2026-01-07 21:00:02 [configkeeper] Weather data synced: 2.1KB
@@ -445,7 +450,7 @@ sudo ./upgrade.sh
 
 # 3. Wait 5 minutes - child nodes detect version change
 # 4. Verify children upgraded (check logs):
-ssh child1.example.com "tail -50 /var/log/app_rpt.log | grep upgrade"
+ssh child1.example.com "tail -50 /opt/app_rpt/log/app_rpt.log | grep upgrade"
 ```
 
 **Updating a custom tail message network-wide:**
@@ -495,7 +500,7 @@ rsync -avz hub.example.com:/opt/app_rpt/lib/wunderground.out /tmp/test.out
 grep FETCHLOCAL /opt/app_rpt/config.ini
 
 # Check configkeeper.sh logs
-grep configkeeper /var/log/app_rpt.log | tail -20
+grep configkeeper /opt/app_rpt/log/app_rpt.log | tail -20
 ```
 
 **Version mismatch (child won't auto-upgrade):**

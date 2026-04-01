@@ -37,7 +37,7 @@ readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly INSTALL_BASE="/opt/app_rpt"
 readonly CONFIG_FILE="$INSTALL_BASE/config.ini"
 readonly VERSION_FILE="$INSTALL_BASE/VERSION"
-readonly LOG_FILE="/var/log/app_rpt.log"
+readonly LOG_FILE="/opt/app_rpt/log/app_rpt.log"
 
 # Expected file counts
 readonly EXPECTED_SCRIPTS=22  # Including common.sh
@@ -112,7 +112,7 @@ ask_repair() {
 
     if [[ "$AUTO_FIX" == true ]]; then
         log_info "Auto-fixing: $question"
-        eval "$fix_command"
+        bash -c "$fix_command"
         if [[ $? -eq 0 ]]; then
             log_fixed "$question"
             return 0
@@ -125,7 +125,7 @@ ask_repair() {
     read -p "$(echo -e "${YELLOW}Repair:${NC} $question? [y/N] ")" -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        eval "$fix_command"
+        bash -c "$fix_command"
         if [[ $? -eq 0 ]]; then
             log_fixed "$question"
             return 0

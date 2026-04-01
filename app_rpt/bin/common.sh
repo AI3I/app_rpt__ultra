@@ -81,7 +81,7 @@ validate_config
 # ==============================================================================
 
 # Log file location
-readonly LOG_FILE="/var/log/app_rpt.log"
+readonly LOG_FILE="/opt/app_rpt/log/app_rpt.log"
 
 # Log a message with timestamp
 # Usage: log "message"
@@ -166,4 +166,4 @@ ast_play() {
     ast_cmd "rpt localplay $MYNODE $1"
 }
 
-###VERSION=2.0.6
+###VERSION=2.0.7

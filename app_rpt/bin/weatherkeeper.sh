@@ -158,7 +158,7 @@ fi
 #    Space Weather Monitoring (NOAA SWPC)
 # ==============================================================================
 
-SWPC_OUTPUT="/tmp/noaa-space-weather.json"
+SWPC_OUTPUT="/opt/app_rpt/lib/noaa-space-weather.json"
 
 # Fetch current space weather conditions from NOAA SWPC
 if ! curl -s -k --fail --max-time 30 \
@@ -384,4 +384,4 @@ build_audio "$SNDWX/wind.ulaw" \
 
 log "Weather data updated successfully"
 
-###VERSION=2.0.6
+###VERSION=2.0.7

@@ -34,8 +34,8 @@ fi
 
 idstring="${1:0:2}"
 rewrite=$(echo "$1" | cut -d'D' -f2 | sed "s/*/ /g")
-cwmsg=/tmp/cwmsg
-voicemsg=/tmp/voicemsg
+cwmsg="${BASEDIR}/lib/cwmsg_${MYNODE}"
+voicemsg="${BASEDIR}/lib/voicemsg_${MYNODE}"
 
 if [[ "$idstring" == "00" ]]; then
     : > "$cwmsg"
@@ -79,4 +79,4 @@ else
     fi
 fi
 
-###VERSION=2.0.6
+###VERSION=2.0.7

@@ -24,8 +24,7 @@ source "%%BASEDIR%%/bin/common.sh"
 set -euo pipefail
 
 # Use unique temp file to avoid race conditions and symlink attacks
-speakfile="/tmp/speakfile.$$"
-trap 'rm -f "${speakfile}.ulaw"' EXIT
+speakfile="/opt/app_rpt/lib/speakfile_${MYNODE}"
 
 # Usage: speak <text> [File]
 # If second argument is "File", only generate the file without playing
@@ -80,4 +79,4 @@ fi
 
 speak "$1" "${2:-}"
 
-###VERSION=2.0.6
+###VERSION=2.0.7

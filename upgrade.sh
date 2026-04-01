@@ -195,6 +195,12 @@ get_repo_version() {
     fi
 }
 
+escape_sed_replacement() {
+    # Escape characters that have special meaning in sed replacement strings
+    # (when using '/' as the delimiter): backslash, forward slash, ampersand
+    printf '%s' "$1" | sed 's/[\\&/]/\\&/g'
+}
+
 compare_versions() {
     local current="$1"
     local new="$2"
@@ -421,18 +427,19 @@ migrate_config() {
     fi
 
     # Replace placeholders with user values
-    sed -i "s/MYNODE=%MYNODE%/MYNODE=$user_mynode/g" "$temp_config"
-    sed -i "s/NWSZONE=XXX000/NWSZONE=$user_nwszone/g" "$temp_config"
-    sed -i "s/WUSTATION=empty/WUSTATION=$user_wustation/g" "$temp_config"
-    sed -i "s/WUAPIKEY=empty/WUAPIKEY=$user_wuapikey/g" "$temp_config"
-    sed -i "s/FETCHLOCAL=0/FETCHLOCAL=$user_fetchlocal/g" "$temp_config"
-    sed -i "s/FETCHPOINT=localhost/FETCHPOINT=$user_fetchpoint/g" "$temp_config"
-    sed -i "s/RETENTION=60/RETENTION=$user_retention/g" "$temp_config"
+    # Values are escaped to prevent special characters (\, /, &) from breaking sed
+    sed -i "s/MYNODE=%MYNODE%/MYNODE=$(escape_sed_replacement "$user_mynode")/g" "$temp_config"
+    sed -i "s/NWSZONE=XXX000/NWSZONE=$(escape_sed_replacement "$user_nwszone")/g" "$temp_config"
+    sed -i "s/WUSTATION=empty/WUSTATION=$(escape_sed_replacement "$user_wustation")/g" "$temp_config"
+    sed -i "s/WUAPIKEY=empty/WUAPIKEY=$(escape_sed_replacement "$user_wuapikey")/g" "$temp_config"
+    sed -i "s/FETCHLOCAL=0/FETCHLOCAL=$(escape_sed_replacement "$user_fetchlocal")/g" "$temp_config"
+    sed -i "s/FETCHPOINT=localhost/FETCHPOINT=$(escape_sed_replacement "$user_fetchpoint")/g" "$temp_config"
+    sed -i "s/RETENTION=60/RETENTION=$(escape_sed_replacement "$user_retention")/g" "$temp_config"
 
     # Update network interface variables
-    sed -i "s/landevice=eth0/landevice=$user_landevice/g" "$temp_config"
-    sed -i "s/wlandevice=wlan0/wlandevice=$user_wlandevice/g" "$temp_config"
-    sed -i "s/vpndevice=tun0/vpndevice=$user_vpndevice/g" "$temp_config"
+    sed -i "s/landevice=eth0/landevice=$(escape_sed_replacement "$user_landevice")/g" "$temp_config"
+    sed -i "s/wlandevice=wlan0/wlandevice=$(escape_sed_replacement "$user_wlandevice")/g" "$temp_config"
+    sed -i "s/vpndevice=tun0/vpndevice=$(escape_sed_replacement "$user_vpndevice")/g" "$temp_config"
 
     # Replace %%BASEDIR%% placeholder
     sed -i "s|%%BASEDIR%%|$INSTALL_BASE|g" "$temp_config"
@@ -611,6 +618,27 @@ install_scripts() {
         log_info "[DRY RUN] Would install utility scripts"
     fi
 
+    # Install kerchunkd systemd service
+    if [[ "$DRY_RUN" == false ]]; then
+        if [[ -f "$REPO_DIR/kerchunkd.service" ]]; then
+            log_info "Updating kerchunkd systemd service..."
+            local kerchunkd_was_active=false
+            systemctl is-active --quiet kerchunkd 2>/dev/null && kerchunkd_was_active=true
+            cp "$REPO_DIR/kerchunkd.service" /etc/systemd/system/kerchunkd.service
+            systemctl daemon-reload
+            if [[ "$kerchunkd_was_active" == true ]]; then
+                systemctl restart kerchunkd
+                log_success "kerchunkd service updated and restarted"
+            else
+                log_success "kerchunkd service updated (was not running)"
+            fi
+        else
+            log_info "kerchunkd.service not found in repo — skipping systemd update"
+        fi
+    else
+        log_info "[DRY RUN] Would update kerchunkd.service and reload systemd"
+    fi
+
     # Install new config.ini
     if [[ "$DRY_RUN" == false ]]; then
         log_info "Installing new config.ini..."
@@ -624,15 +652,38 @@ install_scripts() {
 
     rm -f "$temp_config"
 
-    # Remove conflicting Asterisk en directory if it exists
-    if [[ -d "/var/lib/asterisk/sounds/en" ]] || [[ -d "$INSTALL_BASE/sounds/en" ]]; then
-        log_info "Removing conflicting Asterisk en directory..."
-        if [[ "$DRY_RUN" == false ]]; then
-            rm -rf /var/lib/asterisk/sounds/en 2>/dev/null || true
-            rm -rf "$INSTALL_BASE/sounds/en" 2>/dev/null || true
-            log_success "Removed conflicting en directory (conflicts with app_rpt__ultra vocabulary)"
+    # Ensure Asterisk en/ sound directories are symlinks to our TMS5220 sounds.
+    # ASL3 uses astdatadir=/usr/share/asterisk, so Asterisk resolves sound files
+    # from /usr/share/asterisk/sounds/en/.  Replace any real en/ directory with a
+    # symlink so app_rpt__ultra voices are used instead of the Allison Smith package.
+    local en_dirs=("/var/lib/asterisk/sounds/en" "/usr/share/asterisk/sounds/en")
+    for en_dir in "${en_dirs[@]}"; do
+        local parent
+        parent="$(dirname "$en_dir")"
+        [[ -d "$parent" ]] || continue  # parent doesn't exist on this system
+
+        if [[ -L "$en_dir" ]] && [[ "$(readlink "$en_dir")" == "$INSTALL_BASE/sounds" ]]; then
+            log_info "Sound symlink already correct: $en_dir"
         else
-            log_info "[DRY RUN] Would remove conflicting en directory"
+            if [[ "$DRY_RUN" == false ]]; then
+                if [[ -d "$en_dir" ]] && [[ ! -L "$en_dir" ]]; then
+                    mv "$en_dir" "${en_dir}.allison_backup" 2>/dev/null || rm -rf "$en_dir"
+                elif [[ -L "$en_dir" ]]; then
+                    rm -f "$en_dir"
+                fi
+                ln -sf "$INSTALL_BASE/sounds" "$en_dir"
+                log_success "Sound symlink set: $en_dir -> $INSTALL_BASE/sounds"
+            else
+                log_info "[DRY RUN] Would set sound symlink: $en_dir -> $INSTALL_BASE/sounds"
+            fi
+        fi
+    done
+
+    # Remove any stale en/ inside the app_rpt sounds dir itself (would be circular)
+    if [[ -d "$INSTALL_BASE/sounds/en" ]] && [[ ! -L "$INSTALL_BASE/sounds/en" ]]; then
+        if [[ "$DRY_RUN" == false ]]; then
+            rm -rf "$INSTALL_BASE/sounds/en"
+            log_success "Removed $INSTALL_BASE/sounds/en (circular reference)"
         fi
     fi
 }
@@ -763,11 +814,19 @@ fix_permissions() {
             fi
         done
 
-        # Ensure log file has proper permissions
-        if [[ -f /var/log/app_rpt.log ]]; then
-            chown asterisk:asterisk /var/log/app_rpt.log
-            chmod 664 /var/log/app_rpt.log
-        fi
+        # Ensure log directory exists and migrate from old /var/log location
+        mkdir -p /opt/app_rpt/log
+        chown asterisk:asterisk /opt/app_rpt/log
+        chmod 775 /opt/app_rpt/log
+        for _log in app_rpt.log kerchunk_stats.log state_history.log; do
+            if [[ -f /var/log/$_log ]] && [[ ! -f /opt/app_rpt/log/$_log ]]; then
+                mv /var/log/$_log /opt/app_rpt/log/$_log
+            fi
+            if [[ -f /opt/app_rpt/log/$_log ]]; then
+                chown asterisk:asterisk /opt/app_rpt/log/$_log
+                chmod 664 /opt/app_rpt/log/$_log
+            fi
+        done
 
         log_success "Ownership and permissions verified"
     else
@@ -991,7 +1050,7 @@ main() {
     fi
     echo ""
     log_info "Next steps:"
-    echo "  1. Review /var/log/app_rpt.log for any errors"
+    echo "  1. Review /opt/app_rpt/log/app_rpt.log for any errors"
     echo "  2. Test critical functions (IDs, messages, etc.)"
     echo "  3. Monitor system for 24 hours"
     if [[ -n "$backup_dir" ]]; then

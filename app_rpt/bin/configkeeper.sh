@@ -18,8 +18,8 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-source "%%BASEDIR%%/bin/common.sh"
 set -euo pipefail
+source "%%BASEDIR%%/bin/common.sh"
 
 # Auto-upgrade detection for child nodes
 # Only runs on child nodes (FETCHLOCAL=1) when AUTOUPGRADE=1
@@ -41,11 +41,11 @@ if [[ "${FETCHLOCAL:-0}" == "1" ]] && [[ "${AUTOUPGRADE:-0}" == "1" ]]; then
         # Run upgrade
         if [[ -x "${BASEDIR}/util/upgrade.sh" ]]; then
             log "Running upgrade.sh --force --auto-yes"
-            sudo "${BASEDIR}/util/upgrade.sh" --force --auto-yes >>/var/log/app_rpt.log 2>&1
+            sudo "${BASEDIR}/util/upgrade.sh" --force --auto-yes >>/opt/app_rpt/log/app_rpt.log 2>&1
             if [[ $? -eq 0 ]]; then
                 log "Auto-upgrade completed successfully (v$local_version -> v$hub_version)"
             else
-                log_error "Auto-upgrade failed, check /var/log/app_rpt.log"
+                log_error "Auto-upgrade failed, check /opt/app_rpt/log/app_rpt.log"
             fi
         else
             log_error "upgrade.sh not found or not executable at ${BASEDIR}/util/upgrade.sh"
@@ -54,14 +54,14 @@ if [[ "${FETCHLOCAL:-0}" == "1" ]] && [[ "${AUTOUPGRADE:-0}" == "1" ]]; then
 fi
 
 # Update local node master configuration file
-sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/config.ini" "${BASEDIR}/config.ini"
+sudo rsync -az "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/config.ini" "${BASEDIR}/config.ini"
 sleep 2
 
 # Replace configuration files with newer version, if necessary
-sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/rpt.conf" /etc/asterisk/rpt.conf
-sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/manager.conf" /etc/asterisk/manager.conf
-sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/extensions.conf" /etc/asterisk/custom/extensions.conf
-sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/allmon3.ini" /etc/allmon3/allmon3.ini
+sudo rsync -az "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/rpt.conf" /etc/asterisk/rpt.conf
+sudo rsync -az "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/manager.conf" /etc/asterisk/manager.conf
+sudo rsync -az "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/extensions.conf" /etc/asterisk/custom/extensions.conf
+sudo rsync -az "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/allmon3.ini" /etc/allmon3/allmon3.ini
 
 # Update scripts from bin directory
 sudo rsync -azr --delete "${FETCHPOINT}:${BINDIR}/" "${BINDIR}"
@@ -81,4 +81,4 @@ sudo asterisk -rx "module reload"
 # Reload configuration changes for allmon3
 sudo systemctl reload allmon3
 
-###VERSION=2.0.6
+###VERSION=2.0.7

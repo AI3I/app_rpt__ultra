@@ -63,7 +63,7 @@ For distributed systems with a hub and multiple child nodes:
 - **Automatic Upgrade:** Set `AUTOUPGRADE=1` in `config.ini`
   - `configkeeper.sh` (runs every 5 minutes via cron) checks hub version
   - Automatically runs `upgrade.sh --force --auto-yes` when hub version differs
-  - All output logged to `/var/log/app_rpt.log`
+  - All output logged to `/opt/app_rpt/log/app_rpt.log`
 - **Manual Upgrade:** Keep `AUTOUPGRADE=0` (default)
   - SSH to each child node and run `upgrade.sh` manually
 
@@ -100,7 +100,7 @@ sudo ./repair.sh --report /tmp/health.txt  # Save report to file
 5. ***Asterisk* Config** - `rpt.conf` exists, *Asterisk* running, `app_rpt` loaded
 6. **Cron Jobs** - Expected 7 cron jobs configured for `asterisk` user
 7. **Sound Files** - Voice files present, vocabulary files exist
-8. **Log File** - `/var/log/app_rpt.log` exists and writable
+8. **Log File** - `/opt/app_rpt/log/app_rpt.log` exists and writable
 9. **Runtime Tests** - Scripts can execute, `common.sh` sources correctly
 
 **What It Checks:**

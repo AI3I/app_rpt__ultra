@@ -496,7 +496,7 @@ if [[ "$SEVEREWEATHER" == "3" ]]; then
 
         # Log the state change with event type
         log "NWS Alert: $event (severity=$severity)"
-        echo "$(date '+%Y-%m-%d %H:%M:%S'), standard, severeweather, nws_alert:$event, ${MYNODE}" >> /var/log/state_history.log
+        echo "$(date '+%Y-%m-%d %H:%M:%S'), standard, severeweather, nws_alert:$event, ${MYNODE}" >> /opt/app_rpt/log/state_history.log
         exit 0
     elif [[ -n "$message" ]]; then
         sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=2/g" "$sourcefile"
@@ -513,7 +513,7 @@ if [[ "$SEVEREWEATHER" == "3" ]]; then
         cp -f /tmp/weather_alert_message.ulaw "${SOUNDS}/${RTWXALERT}.ulaw" 2>/dev/null || true
 
         log "NWS Alert: $event"
-        echo "$(date '+%Y-%m-%d %H:%M:%S'), standard, weatheralert, nws_alert:$event, ${MYNODE}" >> /var/log/state_history.log
+        echo "$(date '+%Y-%m-%d %H:%M:%S'), standard, weatheralert, nws_alert:$event, ${MYNODE}" >> /opt/app_rpt/log/state_history.log
         exit 0
     else
         exit 0
@@ -534,7 +534,7 @@ elif [[ "$SEVEREWEATHER" == "2" ]]; then
         cp -f /tmp/weather_alert_message.ulaw "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
 
         log "NWS Alert upgraded: $event (severity=$severity)"
-        echo "$(date '+%Y-%m-%d %H:%M:%S'), weatheralert, severeweather, nws_alert:$event, ${MYNODE}" >> /var/log/state_history.log
+        echo "$(date '+%Y-%m-%d %H:%M:%S'), weatheralert, severeweather, nws_alert:$event, ${MYNODE}" >> /opt/app_rpt/log/state_history.log
         exit 0
     elif [[ -z "$message" ]] && [[ -z "$severity" ]]; then
         sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
@@ -547,7 +547,7 @@ elif [[ "$SEVEREWEATHER" == "2" ]]; then
         rm -f "${SOUNDS}/${RTWXALERT}.ulaw" "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
 
         log "NWS Alert cleared"
-        echo "$(date '+%Y-%m-%d %H:%M:%S'), weatheralert, standard, nws_clear, ${MYNODE}" >> /var/log/state_history.log
+        echo "$(date '+%Y-%m-%d %H:%M:%S'), weatheralert, standard, nws_clear, ${MYNODE}" >> /opt/app_rpt/log/state_history.log
         exit 0
     else
         exit 0
@@ -566,7 +566,7 @@ elif [[ "$SEVEREWEATHER" == "1" ]]; then
         cp -f /tmp/weather_alert_message.ulaw "${SOUNDS}/${RTWXALERT}.ulaw" 2>/dev/null || true
 
         log "NWS Alert downgraded: $event"
-        echo "$(date '+%Y-%m-%d %H:%M:%S'), severeweather, weatheralert, nws_downgrade:$event, ${MYNODE}" >> /var/log/state_history.log
+        echo "$(date '+%Y-%m-%d %H:%M:%S'), severeweather, weatheralert, nws_downgrade:$event, ${MYNODE}" >> /opt/app_rpt/log/state_history.log
         exit 0
     elif [[ -z "$message" ]] && [[ -z "$severity" ]]; then
         sed -i "s/^SCHEDULER=.*$/SCHEDULER=1/g" "$sourcefile"
@@ -580,7 +580,7 @@ elif [[ "$SEVEREWEATHER" == "1" ]]; then
         rm -f "${SOUNDS}/${RTWXALERT}.ulaw" "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
 
         log "NWS Alert cleared"
-        echo "$(date '+%Y-%m-%d %H:%M:%S'), severeweather, standard, nws_clear, ${MYNODE}" >> /var/log/state_history.log
+        echo "$(date '+%Y-%m-%d %H:%M:%S'), severeweather, standard, nws_clear, ${MYNODE}" >> /opt/app_rpt/log/state_history.log
         exit 0
     else
         exit 0
@@ -591,4 +591,4 @@ else
     exit 0
 fi
 
-###VERSION=2.0.6
+###VERSION=2.0.7

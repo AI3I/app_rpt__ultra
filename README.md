@@ -154,6 +154,8 @@ Includes:
 
 ## Quick Links
 
+- **Release history & changes?** See [Changelog](CHANGELOG.md)
+
 - **First time user?** Start with [Installation](#installation) above, then read [Practical Operations](docs/OPERATIONS.md)
 - **Setting up multiple sites?** Read [System Architecture](docs/ARCHITECTURE.md) → Distributed Architecture section
 - **Need to program a message?** Check [Message Tables](docs/TABLES.md) for vocabulary, then [Script Reference](docs/REFERENCE.md) for `msgwriter.sh`

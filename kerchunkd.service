@@ -11,8 +11,8 @@ Group=asterisk
 ExecStart=/opt/app_rpt/bin/kerchunkd.sh
 Restart=on-failure
 RestartSec=10
-StandardOutput=append:/var/log/app_rpt.log
-StandardError=append:/var/log/app_rpt.log
+StandardOutput=append:/opt/app_rpt/log/app_rpt.log
+StandardError=append:/opt/app_rpt/log/app_rpt.log
 
 # Security settings
 NoNewPrivileges=true

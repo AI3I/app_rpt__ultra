@@ -471,36 +471,46 @@ create_directories() {
 setup_sound_symlinks() {
     print_step "Setting Up Sound Symlinks"
 
-    # Remove conflicting Asterisk en directory if it exists
-    if [[ -d "/var/lib/asterisk/sounds/en" ]]; then
-        print_info "Removing conflicting Asterisk en directory"
-        rm -rf /var/lib/asterisk/sounds/en
-        print_success "Removed /var/lib/asterisk/sounds/en (conflicts with app_rpt__ultra vocabulary)"
-    fi
+    # Asterisk resolves sound files as <astdatadir>/sounds/<lang>/<file>
+    # ASL3 uses astdatadir=/usr/share/asterisk and lang=en by default, so sounds
+    # are resolved from /usr/share/asterisk/sounds/en/.  /var/lib/asterisk/sounds/en
+    # is also searched by some Asterisk paths.  Both en/ directories must be
+    # symlinks pointing to $DEST_DIR/sounds so that app_rpt__ultra's TMS5220
+    # vocabulary is used instead of the Allison Smith default sound package.
 
-    # Remove existing sound directories (they'll be replaced with symlinks)
-    local sound_dirs=("/var/lib/asterisk/sounds" "/usr/share/asterisk/sounds")
+    local en_dirs=("/var/lib/asterisk/sounds/en" "/usr/share/asterisk/sounds/en")
 
-    for dir in "${sound_dirs[@]}"; do
-        if [[ -L "$dir" ]]; then
-            print_info "Symlink already exists: $dir"
-        elif [[ -d "$dir" ]]; then
-            print_info "Removing existing directory: $dir"
-            rm -rf "$dir"
-            ln -s "$DEST_DIR/sounds" "$dir"
-            print_success "Created symlink: $dir -> $DEST_DIR/sounds"
+    for en_dir in "${en_dirs[@]}"; do
+        local parent
+        parent="$(dirname "$en_dir")"
+
+        if [[ ! -d "$parent" ]]; then
+            continue  # Parent sound dir doesn't exist on this system; skip
+        fi
+
+        if [[ -L "$en_dir" ]] && [[ "$(readlink "$en_dir")" == "$DEST_DIR/sounds" ]]; then
+            print_info "Symlink already correct: $en_dir -> $DEST_DIR/sounds"
+        elif [[ -L "$en_dir" ]]; then
+            print_info "Updating existing symlink: $en_dir"
+            rm -f "$en_dir"
+            ln -s "$DEST_DIR/sounds" "$en_dir"
+            print_success "Updated symlink: $en_dir -> $DEST_DIR/sounds"
+        elif [[ -d "$en_dir" ]]; then
+            print_info "Replacing Asterisk en/ directory with symlink (backup at ${en_dir}.allison_backup)"
+            mv "$en_dir" "${en_dir}.allison_backup"
+            ln -s "$DEST_DIR/sounds" "$en_dir"
+            print_success "Created symlink: $en_dir -> $DEST_DIR/sounds"
         else
-            mkdir -p "$(dirname "$dir")"
-            ln -s "$DEST_DIR/sounds" "$dir"
-            print_success "Created symlink: $dir -> $DEST_DIR/sounds"
+            ln -s "$DEST_DIR/sounds" "$en_dir"
+            print_success "Created symlink: $en_dir -> $DEST_DIR/sounds"
         fi
     done
 
-    # Also check for en directory in destination sounds directory
-    if [[ -d "$DEST_DIR/sounds/en" ]]; then
+    # Remove any stale en/ directory from inside the app_rpt sounds dir itself
+    if [[ -d "$DEST_DIR/sounds/en" ]] && [[ ! -L "$DEST_DIR/sounds/en" ]]; then
         print_info "Removing conflicting en directory from $DEST_DIR/sounds"
         rm -rf "$DEST_DIR/sounds/en"
-        print_success "Removed en directory (conflicts with app_rpt__ultra vocabulary)"
+        print_success "Removed $DEST_DIR/sounds/en (would create circular symlink)"
     fi
 }
 
@@ -514,6 +524,17 @@ install_scripts() {
         sed -i "s|%%BASEDIR%%|$DEST_DIR|g" {} \;
 
     chmod +x "$DEST_DIR/bin/"*.sh
+
+    # Install kerchunkd systemd service
+    if [[ -f "$SCRIPT_DIR/kerchunkd.service" ]]; then
+        cp "$SCRIPT_DIR/kerchunkd.service" /etc/systemd/system/kerchunkd.service
+        systemctl daemon-reload
+        systemctl enable kerchunkd 2>/dev/null || true
+        systemctl start kerchunkd 2>/dev/null || true
+        print_success "kerchunkd service installed and started"
+    else
+        print_warning "kerchunkd.service not found in repo — skipping systemd install"
+    fi
 
     print_success "Scripts installed"
 }
@@ -710,7 +731,7 @@ install_crontab() {
 0 0 * * *      $DEST_DIR/bin/datadumper.sh      >/dev/null 2>&1
 EOF
 
-    crontab -u "$OWNER_USER" "$crontab_file"
+    crontab -u "$OWNER_USER" "$crontab_file" || { rm -f "$crontab_file"; die_with_error "Failed to install crontab"; }
     rm -f "$crontab_file"
 
     print_success "Crontab installed"
@@ -753,10 +774,13 @@ set_permissions() {
         chmod 755 "$dir"
     done
 
-    # Create log file with proper permissions
-    touch /var/log/app_rpt.log
-    chown "$OWNER_USER:$OWNER_GROUP" /var/log/app_rpt.log
-    chmod 664 /var/log/app_rpt.log
+    # Create log directory and file with proper permissions
+    mkdir -p /opt/app_rpt/log
+    chown "$OWNER_USER:$OWNER_GROUP" /opt/app_rpt/log
+    chmod 775 /opt/app_rpt/log
+    touch /opt/app_rpt/log/app_rpt.log
+    chown "$OWNER_USER:$OWNER_GROUP" /opt/app_rpt/log/app_rpt.log
+    chmod 664 /opt/app_rpt/log/app_rpt.log
 
     print_success "Permissions set (all directories owned by $OWNER_USER:$OWNER_GROUP)"
 }
@@ -780,7 +804,7 @@ print_summary() {
     echo "  Installation directory: $DEST_DIR"
     echo "  Node number:            $NODE_NUMBER"
     echo "  Callsign:               $CALLSIGN"
-    echo "  Log file:               /var/log/app_rpt.log"
+    echo "  Log file:               /opt/app_rpt/log/app_rpt.log"
     echo ""
     echo -e "${YELLOW}Next steps:${NC}"
     echo ""

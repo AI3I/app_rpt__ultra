@@ -23,7 +23,7 @@ set -euo pipefail
 sourcefile="$CONFIG_FILE"
 
 # State history logging
-STATE_HISTORY_LOG="/var/log/state_history.log"
+STATE_HISTORY_LOG="/opt/app_rpt/log/state_history.log"
 LAST_STATE_FILE="/tmp/app_rpt_last_state"
 
 # Get previous state
@@ -240,4 +240,4 @@ clock) # Grandfather Clock
     ;;
 esac
 
-###VERSION=2.0.6
+###VERSION=2.0.7
