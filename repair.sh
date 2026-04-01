@@ -352,32 +352,39 @@ check_directory_structure() {
         fi
     done
 
-    # Check symlinks
+    # Check en/ language symlinks — ASL3 resolves sounds as <astdatadir>/sounds/en/
+    # Both Asterisk sound search paths must have their en/ dir pointing to our sounds
     local symlinks=(
-        "/var/lib/asterisk/sounds:$INSTALL_BASE/sounds"
-        "/usr/share/asterisk/sounds:$INSTALL_BASE/sounds"
+        "/var/lib/asterisk/sounds/en:$INSTALL_BASE/sounds"
+        "/usr/share/asterisk/sounds/en:$INSTALL_BASE/sounds"
     )
 
     for link_def in "${symlinks[@]}"; do
         IFS=':' read -r link target <<< "$link_def"
+        local parent
+        parent="$(dirname "$link")"
+        if [[ ! -d "$parent" ]]; then
+            log_info "Skipping symlink check (parent absent): $link"
+            continue
+        fi
         if [[ -L "$link" ]]; then
             local actual_target
-            actual_target=$(readlink -f "$link")
+            actual_target=$(readlink "$link")
             if [[ "$actual_target" == "$target" ]]; then
-                log_pass "Symlink correct: $link → $target"
+                log_pass "Sound symlink correct: $link → $target"
             else
-                log_fail "Symlink wrong target: $link → $actual_target (expected $target)"
-                ask_repair "Fix symlink $link" \
-                    "rm -f '$link' && ln -s '$target' '$link'"
+                log_fail "Sound symlink wrong target: $link → $actual_target (expected $target)"
+                ask_repair "Fix sound symlink $link" \
+                    "rm -f '$link' && ln -sf '$target' '$link'"
             fi
+        elif [[ -d "$link" ]]; then
+            log_fail "Sound en/ is a real directory (Allison Smith voices active): $link"
+            ask_repair "Replace $link with symlink to TMS5220 sounds" \
+                "mv '$link' '${link}.allison_backup' && ln -sf '$target' '$link'"
         else
-            if [[ -e "$link" ]]; then
-                log_warn "Path exists but is not a symlink: $link"
-            else
-                log_warn "Symlink missing: $link → $target"
-                ask_repair "Create symlink $link → $target" \
-                    "ln -s '$target' '$link'"
-            fi
+            log_warn "Sound symlink missing: $link"
+            ask_repair "Create sound symlink $link → $target" \
+                "ln -sf '$target' '$link'"
         fi
     done
 }
