@@ -195,14 +195,14 @@ build_weather_message() {
             log "Built custom message: dense fog advisory (as heavy fog condition)"
             ;;
         *flash*flood*warning*|*flood*warning*)
-            # NWS: "Flash Flood Warning", "Flood Warning" → "heavy rain warning"
-            cat "${SOUNDS}/_male/heavy.ulaw" "${SOUNDS}/_male/rain.ulaw" "${SOUNDS}/_male/warning.ulaw" > "$message_file"
-            log "Built custom message: flood warning (as heavy rain warning)"
+            # NWS: "Flash Flood Warning", "Flood Warning" → "high water warning"
+            cat "${SOUNDS}/_male/high.ulaw" "${SOUNDS}/_male/watt.ulaw" "${SOUNDS}/_male/suffix_er.ulaw" "${SOUNDS}/_male/warning.ulaw" > "$message_file"
+            log "Built custom message: flood warning (as high water warning)"
             ;;
         *flash*flood*watch*|*flood*watch*)
-            # NWS: "Flash Flood Watch", "Flood Watch" → "heavy rain watch"
-            cat "${SOUNDS}/_male/heavy.ulaw" "${SOUNDS}/_male/rain.ulaw" "${SOUNDS}/_male/watch.ulaw" > "$message_file"
-            log "Built custom message: flood watch (as heavy rain watch)"
+            # NWS: "Flash Flood Watch", "Flood Watch" → "high water watch"
+            cat "${SOUNDS}/_male/high.ulaw" "${SOUNDS}/_male/watt.ulaw" "${SOUNDS}/_male/suffix_er.ulaw" "${SOUNDS}/_male/watch.ulaw" > "$message_file"
+            log "Built custom message: flood watch (as high water watch)"
             ;;
         *freeze*warning*|*hard*freeze*warning*)
             # NWS: "Freeze Warning", "Hard Freeze Warning" → "freezing warning"
@@ -230,14 +230,14 @@ build_weather_message() {
             log "Built custom message: frost advisory (as freezing condition)"
             ;;
         *coastal*flood*warning*|*lakeshore*flood*warning*)
-            # NWS: "Coastal Flood Warning", "Lakeshore Flood Warning" → "heavy rain warning"
-            cat "${SOUNDS}/_male/heavy.ulaw" "${SOUNDS}/_male/rain.ulaw" "${SOUNDS}/_male/warning.ulaw" > "$message_file"
-            log "Built custom message: coastal/lakeshore flood warning (as heavy rain warning)"
+            # NWS: "Coastal Flood Warning", "Lakeshore Flood Warning" → "high water warning"
+            cat "${SOUNDS}/_male/high.ulaw" "${SOUNDS}/_male/watt.ulaw" "${SOUNDS}/_male/suffix_er.ulaw" "${SOUNDS}/_male/warning.ulaw" > "$message_file"
+            log "Built custom message: coastal/lakeshore flood warning (as high water warning)"
             ;;
         *coastal*flood*watch*|*lakeshore*flood*watch*)
-            # NWS: "Coastal Flood Watch", "Lakeshore Flood Watch" → "heavy rain watch"
-            cat "${SOUNDS}/_male/heavy.ulaw" "${SOUNDS}/_male/rain.ulaw" "${SOUNDS}/_male/watch.ulaw" > "$message_file"
-            log "Built custom message: coastal/lakeshore flood watch (as heavy rain watch)"
+            # NWS: "Coastal Flood Watch", "Lakeshore Flood Watch" → "high water watch"
+            cat "${SOUNDS}/_male/high.ulaw" "${SOUNDS}/_male/watt.ulaw" "${SOUNDS}/_male/suffix_er.ulaw" "${SOUNDS}/_male/watch.ulaw" > "$message_file"
+            log "Built custom message: coastal/lakeshore flood watch (as high water watch)"
             ;;
         *extreme*heat*warning*|*excessive*heat*warning*)
             # NWS: "Extreme Heat Warning", "Excessive Heat Warning" → "severe temperature warning"
