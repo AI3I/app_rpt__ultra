@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-###VERSION=2.0.7
+###VERSION=2.0.8
 #
 #    app_rpt__ultra :: the ultimate controller experience for app_rpt
 #    Copyright (C) 2025   John D. Lewis (AI3I)

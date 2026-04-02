@@ -18,8 +18,8 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-source "%%BASEDIR%%/bin/common.sh"
 set -euo pipefail
+source "%%BASEDIR%%/bin/common.sh"
 
 #    USAGE:  Accept single digit commands from CLI or DTMF with
 #    prepended 0 or otherwise proceed with double digits as entered
@@ -57,4 +57,4 @@ status) # Status Commands
     ;;
 esac
 
-###VERSION=2.0.7
+###VERSION=2.0.8

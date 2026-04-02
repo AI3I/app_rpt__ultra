@@ -119,6 +119,13 @@ die() {
     exit 1
 }
 
+# Escape a string for safe use as a sed replacement value.
+# Escapes \, /, and & which have special meaning in sed replacement strings.
+# Usage: escaped=$(escape_sed_replacement "value")
+escape_sed_replacement() {
+    printf '%s' "$1" | sed 's/[\\&/]/\\&/g'
+}
+
 # ==============================================================================
 #    Validation Functions
 # ==============================================================================
@@ -166,4 +173,4 @@ ast_play() {
     ast_cmd "rpt localplay $MYNODE $1"
 }
 
-###VERSION=2.0.7
+###VERSION=2.0.8

@@ -18,8 +18,8 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-source "%%BASEDIR%%/bin/common.sh"
 set -euo pipefail
+source "%%BASEDIR%%/bin/common.sh"
 
 #    PURPOSE:  Ability to generate courtesy tones from CLI or DTMF dynamically without having to directly edit file.
 #
@@ -90,4 +90,4 @@ else
     exit 1
 fi
 
-###VERSION=2.0.7
+###VERSION=2.0.8

@@ -18,13 +18,13 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-source "%%BASEDIR%%/bin/common.sh"
 set -euo pipefail
+source "%%BASEDIR%%/bin/common.sh"
 sourcefile="$CONFIG_FILE"
 
 # State history logging
-STATE_HISTORY_LOG="/opt/app_rpt/log/state_history.log"
-LAST_STATE_FILE="/tmp/app_rpt_last_state"
+STATE_HISTORY_LOG="${BASEDIR}/log/state_history.log"
+LAST_STATE_FILE="${BASEDIR}/lib/last_state_${MYNODE}"
 
 # Get previous state
 PREVIOUS_STATE=$(cat "$LAST_STATE_FILE" 2>/dev/null || echo "unknown")
@@ -60,9 +60,9 @@ default) # Reset to Default Operations
     sed -i "s/^;tailmessagetime=/tailmessagetime=$TMTIMEL/g" "$RPTCONF"
     sed -i "s/^;tailmessagelist=/tailmessagelist=none/g" "$RPTCONF"
     sed -i "s/^nounkeyct=.*$/nounkeyct=0/g" "$RPTCONF"
-    sed -i "s/^unlinkedct=.*$/unlinkedct=$CTUNL/g" "$RPTCONF"
-    sed -i "s/^remotect=.*$/remotect=$CTRMT/g" "$RPTCONF"
-    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTUNK/g" "$RPTCONF"
+    sed -i "s/^unlinkedct=.*$/unlinkedct=$(escape_sed_replacement "$CTUNL")/g" "$RPTCONF"
+    sed -i "s/^remotect=.*$/remotect=$(escape_sed_replacement "$CTRMT")/g" "$RPTCONF"
+    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$(escape_sed_replacement "$CTUNK")/g" "$RPTCONF"
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" "$RPTCONF"
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" "$RPTCONF"
     sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
@@ -85,9 +85,9 @@ default) # Reset to Default Operations
 standard) # Standard Operations
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
     sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEL/g" "$RPTCONF"
-    sed -i "s/^unlinkedct=.*$/unlinkedct=$CTUNL/g" "$RPTCONF"
-    sed -i "s/^remotect=.*$/remotect=$CTRMT/g" "$RPTCONF"
-    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTUNK/g" "$RPTCONF"
+    sed -i "s/^unlinkedct=.*$/unlinkedct=$(escape_sed_replacement "$CTUNL")/g" "$RPTCONF"
+    sed -i "s/^remotect=.*$/remotect=$(escape_sed_replacement "$CTRMT")/g" "$RPTCONF"
+    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$(escape_sed_replacement "$CTUNK")/g" "$RPTCONF"
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" "$RPTCONF"
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" "$RPTCONF"
     sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
@@ -107,9 +107,9 @@ litzalert) # Long Tone Zero (LiTZ) Alert
     ;;
 severeweather) # Severe Weather Alert
     sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMES/g" "$RPTCONF"
-    sed -i "s/^unlinkedct=.*$/unlinkedct=$CTSWX/g" "$RPTCONF"
-    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTSWX/g" "$RPTCONF"
-    sed -i "s/^remotect=.*$/remotect=$CTSWX/g" "$RPTCONF"
+    sed -i "s/^unlinkedct=.*$/unlinkedct=$(escape_sed_replacement "$CTSWX")/g" "$RPTCONF"
+    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$(escape_sed_replacement "$CTSWX")/g" "$RPTCONF"
+    sed -i "s/^remotect=.*$/remotect=$(escape_sed_replacement "$CTSWX")/g" "$RPTCONF"
     sed -i "s/^remotemon=.*$/remotemon=|t(660,880,100,4096)/g" "$RPTCONF"
     sed -i "s/^remotetx=.*$/remotetx=|t(660,880,100,4096)/g" "$RPTCONF"
     sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
@@ -126,9 +126,9 @@ severeweather) # Severe Weather Alert
     ;;
 weatheralert) # Weather Alert
     sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEM/g" "$RPTCONF"
-    sed -i "s/^unlinkedct=.*$/unlinkedct=$CTWXA/g" "$RPTCONF"
-    sed -i "s/^remotect=.*$/remotect=$CTWXA/g" "$RPTCONF"
-    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTWXA/g" "$RPTCONF"
+    sed -i "s/^unlinkedct=.*$/unlinkedct=$(escape_sed_replacement "$CTWXA")/g" "$RPTCONF"
+    sed -i "s/^remotect=.*$/remotect=$(escape_sed_replacement "$CTWXA")/g" "$RPTCONF"
+    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$(escape_sed_replacement "$CTWXA")/g" "$RPTCONF"
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" "$RPTCONF"
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" "$RPTCONF"
     sudo asterisk -rx "module reload"
@@ -140,9 +140,9 @@ tactical) # Tactical Operations
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=4/g" "$sourcefile"
     sed -i "s/^KERCHUNK_ENABLE=.*$/KERCHUNK_ENABLE=0/g" "$sourcefile"
     sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEX/g" "$RPTCONF"
-    sed -i "s/^unlinkedct=.*$/unlinkedct=$CTTAC/g" "$RPTCONF"
-    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTTAC/g" "$RPTCONF"
-    sed -i "s/^remotect=.*$/remotect=$CTTAC/g" "$RPTCONF"
+    sed -i "s/^unlinkedct=.*$/unlinkedct=$(escape_sed_replacement "$CTTAC")/g" "$RPTCONF"
+    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$(escape_sed_replacement "$CTTAC")/g" "$RPTCONF"
+    sed -i "s/^remotect=.*$/remotect=$(escape_sed_replacement "$CTTAC")/g" "$RPTCONF"
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" "$RPTCONF"
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" "$RPTCONF"
     sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
@@ -164,9 +164,9 @@ stealth) # Stealth Operations
     sed -i "s/^tailmessagetime=/;tailmessagetime=/g" "$RPTCONF"
     sed -i "s/^tailmessagelist=/;tailmessagelist=/g" "$RPTCONF"
     sed -i "s/^nounkeyct=.*$/nounkeyct=1/g" "$RPTCONF"
-    sed -i "s/^unlinkedct=.*$/unlinkedct=$CTSTL/g" "$RPTCONF"
-    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTSTL/g" "$RPTCONF"
-    sed -i "s/^remotect=.*$/remotect=$CTSTL/g" "$RPTCONF"
+    sed -i "s/^unlinkedct=.*$/unlinkedct=$(escape_sed_replacement "$CTSTL")/g" "$RPTCONF"
+    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$(escape_sed_replacement "$CTSTL")/g" "$RPTCONF"
+    sed -i "s/^remotect=.*$/remotect=$(escape_sed_replacement "$CTSTL")/g" "$RPTCONF"
     sed -i "s/^remotemon=.*$/remotemon=|t(0,0,50,0)/g" "$RPTCONF"
     sed -i "s/^remotetx=.*$/remotetx=|t(0,0,50,0)/g" "$RPTCONF"
     sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSSTL"
@@ -183,9 +183,9 @@ daytime) # Daytime Operations
     sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
     sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEL/g" "$RPTCONF"
-    sed -i "s/^unlinkedct=.*$/unlinkedct=$CTUNL/g" "$RPTCONF"
-    sed -i "s/^remotect=.*$/remotect=$CTRMT/g" "$RPTCONF"
-    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTUNK/g" "$RPTCONF"
+    sed -i "s/^unlinkedct=.*$/unlinkedct=$(escape_sed_replacement "$CTUNL")/g" "$RPTCONF"
+    sed -i "s/^remotect=.*$/remotect=$(escape_sed_replacement "$CTRMT")/g" "$RPTCONF"
+    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$(escape_sed_replacement "$CTUNK")/g" "$RPTCONF"
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" "$RPTCONF"
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" "$RPTCONF"
     sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
@@ -200,9 +200,9 @@ nighttime) # Nighttime Operations
     sed -i "s/^SPECIALID=.*$/SPECIALID=0/g" "$sourcefile"
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
     sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEL/g" "$RPTCONF"
-    sed -i "s/^unlinkedct=.*$/unlinkedct=$CTUNL/g" "$RPTCONF"
-    sed -i "s/^remotect=.*$/remotect=$CTRMT/g" "$RPTCONF"
-    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTUNK/g" "$RPTCONF"
+    sed -i "s/^unlinkedct=.*$/unlinkedct=$(escape_sed_replacement "$CTUNL")/g" "$RPTCONF"
+    sed -i "s/^remotect=.*$/remotect=$(escape_sed_replacement "$CTRMT")/g" "$RPTCONF"
+    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$(escape_sed_replacement "$CTUNK")/g" "$RPTCONF"
     sed -i "s/^remotetx=.*$/remotetx=|t(350,440,100,4096)/g" "$RPTCONF"
     sed -i "s/^remotemon=.*$/remotemon=|t(480,620,100,4096)/g" "$RPTCONF"
     sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
@@ -217,9 +217,9 @@ net) # Net
     sed -i "s/^SPECIALID=.*$/SPECIALID=1/g" "$sourcefile"
     sed -i "s/^KERCHUNK_ENABLE=.*$/KERCHUNK_ENABLE=0/g" "$sourcefile"
     sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEX/g" "$RPTCONF"
-    sed -i "s/^unlinkedct=.*$/unlinkedct=$CTNET/g" "$RPTCONF"
-    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$CTNET/g" "$RPTCONF"
-    sed -i "s/^remotect=.*$/remotect=$CTNET/g" "$RPTCONF"
+    sed -i "s/^unlinkedct=.*$/unlinkedct=$(escape_sed_replacement "$CTNET")/g" "$RPTCONF"
+    sed -i "s/^linkunkeyct=.*$/linkunkeyct=$(escape_sed_replacement "$CTNET")/g" "$RPTCONF"
+    sed -i "s/^remotect=.*$/remotect=$(escape_sed_replacement "$CTNET")/g" "$RPTCONF"
     sed -i "s/^remotemon=.*$/remotemon=|mN/g" "$RPTCONF"
     sed -i "s/^remotetx=.*$/remotetx=|mN/g" "$RPTCONF"
     sudo asterisk -rx "rpt localplay $MYNODE rpt/change_over"
@@ -240,4 +240,4 @@ clock) # Grandfather Clock
     ;;
 esac
 
-###VERSION=2.0.7
+###VERSION=2.0.8

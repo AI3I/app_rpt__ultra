@@ -4,6 +4,22 @@ All notable changes to `app_rpt__ultra` are documented here.
 
 ---
 
+## [2.0.8] - 2026-04-02
+
+### Fixed
+- **`weatheralert.sh`: Alert audio temp file vulnerable to `fs.protected_regular`** — `/tmp/weather_alert_message.ulaw` failed silently after first run (same root cause as 2.0.7 `weatherkeeper.sh` fix). Moved to stable per-node path `${BASEDIR}/lib/weatheralert_${MYNODE}.ulaw`.
+- **`kerchunkd.sh`: PID/lock/state files in `/tmp` vulnerable to `fs.protected_regular`** — `/tmp/kerchunkd.pid`, `/tmp/kerchunkd.lock`, and `/tmp/app_rpt_kerchunk/` moved to `${BASEDIR}/lib/` per-node paths.
+- **`statekeeper.sh`: State file in `/tmp` vulnerable to `fs.protected_regular`** — `/tmp/app_rpt_last_state` moved to `${BASEDIR}/lib/last_state_${MYNODE}`.
+- **`statekeeper.sh`: sed injection via courtesy tone config values** — CT config values (e.g. `ct/unlinked`) containing `/` corrupted `rpt.conf` sed expressions. All CT variable substitutions now wrapped with `escape_sed_replacement()`.
+- **`statekeeper.sh`: `set -euo pipefail` after `source common.sh`** — Moved before `source` so errors during `common.sh` loading are caught (same fix applied to `configkeeper.sh` in 2.0.7).
+- **`weatheralert.sh`, `asterisk.sh`, `cmdparser.sh`, `ctkeeper.sh`, `ctwriter.sh`: `set -euo pipefail` after `source common.sh`** — Moved before `source` in all five scripts.
+- **`msgwriter.sh`: `xargs cat` splits on whitespace** — Changed to `xargs -d '\n' cat` so sound file paths containing spaces are handled correctly.
+
+### Infrastructure
+- `escape_sed_replacement()` moved to `common.sh` so all scripts can use it (previously only available in `upgrade.sh`).
+
+---
+
 ## [2.0.7] - 2026-04-01
 
 ### Fixed

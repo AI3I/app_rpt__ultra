@@ -57,7 +57,7 @@ else
         grep "^${i} " "$VOCAB" 2>/dev/null | cut -d' ' -f2 >> "$voicemsg" || true
     done
     # Read file paths from voicemsg and concatenate them safely
-    xargs cat < "$voicemsg" > "${SOUNDS}/${msgid}.ulaw"
+    xargs -d '\n' cat < "$voicemsg" > "${SOUNDS}/${msgid}.ulaw"
     : > "$voicemsg"
     if [[ "$idstring" -le "10" ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/write_i_d"
@@ -79,4 +79,4 @@ else
     fi
 fi
 
-###VERSION=2.0.7
+###VERSION=2.0.8

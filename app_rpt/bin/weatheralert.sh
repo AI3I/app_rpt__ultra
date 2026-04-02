@@ -18,9 +18,12 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-source "%%BASEDIR%%/bin/common.sh"
 set -euo pipefail
+source "%%BASEDIR%%/bin/common.sh"
 sourcefile="$CONFIG_FILE"
+
+# Stable per-node path for the built alert audio message (avoids fs.protected_regular)
+ALERT_MSG_FILE="${BASEDIR}/lib/weatheralert_${MYNODE}.ulaw"
 
 # ==============================================================================
 #    Fetch NWS Alerts
@@ -115,7 +118,7 @@ fi
 
 build_weather_message() {
     local event_type="$1"
-    local message_file="/tmp/weather_alert_message.ulaw"
+    local message_file="${ALERT_MSG_FILE}"
 
     # Convert event to lowercase for matching
     local event_lower=$(echo "$event_type" | tr '[:upper:]' '[:lower:]')
@@ -470,7 +473,7 @@ build_weather_message() {
     esac
 
     # Play the custom message
-    asterisk -rx "rpt localplay $MYNODE /tmp/weather_alert_message" &>/dev/null
+    asterisk -rx "rpt localplay $MYNODE ${BASEDIR}/lib/weatheralert_${MYNODE}" &>/dev/null
     return 0
 }
 
@@ -487,12 +490,12 @@ if [[ "$SEVEREWEATHER" == "3" ]]; then
         # Try to build and play custom message, fall back to generic if not possible
         if ! build_weather_message "$event"; then
             # Create fallback message for tail
-            cat "${SOUNDS}/_male/severe.ulaw" "${SOUNDS}/_male/weather.ulaw" "${SOUNDS}/_male/alert.ulaw" > /tmp/weather_alert_message.ulaw
-            asterisk -rx "rpt localplay $MYNODE /tmp/weather_alert_message" &>/dev/null
+            cat "${SOUNDS}/_male/severe.ulaw" "${SOUNDS}/_male/weather.ulaw" "${SOUNDS}/_male/alert.ulaw" > "${ALERT_MSG_FILE}"
+            asterisk -rx "rpt localplay $MYNODE ${BASEDIR}/lib/weatheralert_${MYNODE}" &>/dev/null
         fi
 
         # Copy the built message to tail message location for tailkeeper
-        cp -f /tmp/weather_alert_message.ulaw "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
+        cp -f "${ALERT_MSG_FILE}" "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
 
         # Log the state change with event type
         log "NWS Alert: $event (severity=$severity)"
@@ -505,12 +508,12 @@ if [[ "$SEVEREWEATHER" == "3" ]]; then
 
         # Try to build and play custom message, fall back to generic if not possible
         if ! build_weather_message "$event"; then
-            cat "${SOUNDS}/_male/weather.ulaw" "${SOUNDS}/_male/alert.ulaw" > /tmp/weather_alert_message.ulaw
-            asterisk -rx "rpt localplay $MYNODE /tmp/weather_alert_message" &>/dev/null
+            cat "${SOUNDS}/_male/weather.ulaw" "${SOUNDS}/_male/alert.ulaw" > "${ALERT_MSG_FILE}"
+            asterisk -rx "rpt localplay $MYNODE ${BASEDIR}/lib/weatheralert_${MYNODE}" &>/dev/null
         fi
 
         # Copy the built message to tail message location for tailkeeper
-        cp -f /tmp/weather_alert_message.ulaw "${SOUNDS}/${RTWXALERT}.ulaw" 2>/dev/null || true
+        cp -f "${ALERT_MSG_FILE}" "${SOUNDS}/${RTWXALERT}.ulaw" 2>/dev/null || true
 
         log "NWS Alert: $event"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), standard, weatheralert, nws_alert:$event, ${MYNODE}" >> /opt/app_rpt/log/state_history.log
@@ -526,12 +529,12 @@ elif [[ "$SEVEREWEATHER" == "2" ]]; then
 
         if ! build_weather_message "$event"; then
             # Create fallback message for tail
-            cat "${SOUNDS}/_male/severe.ulaw" "${SOUNDS}/_male/weather.ulaw" "${SOUNDS}/_male/alert.ulaw" > /tmp/weather_alert_message.ulaw
-            asterisk -rx "rpt localplay $MYNODE /tmp/weather_alert_message" &>/dev/null
+            cat "${SOUNDS}/_male/severe.ulaw" "${SOUNDS}/_male/weather.ulaw" "${SOUNDS}/_male/alert.ulaw" > "${ALERT_MSG_FILE}"
+            asterisk -rx "rpt localplay $MYNODE ${BASEDIR}/lib/weatheralert_${MYNODE}" &>/dev/null
         fi
 
         # Copy the built message to tail message location for tailkeeper
-        cp -f /tmp/weather_alert_message.ulaw "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
+        cp -f "${ALERT_MSG_FILE}" "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
 
         log "NWS Alert upgraded: $event (severity=$severity)"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), weatheralert, severeweather, nws_alert:$event, ${MYNODE}" >> /opt/app_rpt/log/state_history.log
@@ -561,9 +564,9 @@ elif [[ "$SEVEREWEATHER" == "1" ]]; then
 
         # Build new tail message for downgraded alert level
         if ! build_weather_message "$event"; then
-            cat "${SOUNDS}/_male/weather.ulaw" "${SOUNDS}/_male/alert.ulaw" > /tmp/weather_alert_message.ulaw
+            cat "${SOUNDS}/_male/weather.ulaw" "${SOUNDS}/_male/alert.ulaw" > "${ALERT_MSG_FILE}"
         fi
-        cp -f /tmp/weather_alert_message.ulaw "${SOUNDS}/${RTWXALERT}.ulaw" 2>/dev/null || true
+        cp -f "${ALERT_MSG_FILE}" "${SOUNDS}/${RTWXALERT}.ulaw" 2>/dev/null || true
 
         log "NWS Alert downgraded: $event"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), severeweather, weatheralert, nws_downgrade:$event, ${MYNODE}" >> /opt/app_rpt/log/state_history.log
@@ -591,4 +594,4 @@ else
     exit 0
 fi
 
-###VERSION=2.0.7
+###VERSION=2.0.8

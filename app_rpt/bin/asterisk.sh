@@ -18,8 +18,8 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-source "%%BASEDIR%%/bin/common.sh"
 set -euo pipefail
+source "%%BASEDIR%%/bin/common.sh"
 
 case "$1" in
 restart) # Restart Asterisk
@@ -49,4 +49,4 @@ stop) # Stop Asterisk
     ;;
 esac
 
-###VERSION=2.0.7
+###VERSION=2.0.8

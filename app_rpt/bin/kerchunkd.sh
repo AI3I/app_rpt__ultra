@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-###VERSION=2.0.7
+###VERSION=2.0.8
 #
 #    app_rpt__ultra :: the ultimate controller experience for app_rpt
 #    Copyright (C) 2025   John D. Lewis (AI3I)
@@ -51,12 +51,12 @@ KERCHUNK_WAITLIMIT="${KERCHUNK_WAITLIMIT:-30}"
 KERCHUNK_MIN_DURATION="${KERCHUNK_MIN_DURATION:-0.2}"  # Minimum duration to count (ignore noise/blips)
 KERCHUNK_MAX_DURATION="${KERCHUNK_MAX_DURATION:-1.5}"  # Maximum duration - anything over this resets counter
 
-# PID file and lock file
-PID_FILE="/tmp/kerchunkd.pid"
-LOCK_FILE="/tmp/kerchunkd.lock"
+# PID file and lock file (per-node, outside sticky /tmp to avoid fs.protected_regular)
+PID_FILE="${BASEDIR}/lib/kerchunkd_${MYNODE}.pid"
+LOCK_FILE="${BASEDIR}/lib/kerchunkd_${MYNODE}.lock"
 
 # State file locations
-STATE_DIR="/tmp/app_rpt_kerchunk"
+STATE_DIR="${BASEDIR}/lib/kerchunk_${MYNODE}"
 CONSECUTIVE_FILE="${STATE_DIR}/consecutive"
 LAST_WARNING_FILE="${STATE_DIR}/last_warning"
 LAST_KEYUPS_FILE="${STATE_DIR}/last_keyups"

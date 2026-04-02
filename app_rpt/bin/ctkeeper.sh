@@ -18,8 +18,8 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-source "%%BASEDIR%%/bin/common.sh"
 set -euo pipefail
+source "%%BASEDIR%%/bin/common.sh"
 
 #    PURPOSE:  Allow changing courtesy tones from table of courtesy tones
 #    defined in rpt.conf (template: 00-99) and announce change locally.
@@ -49,4 +49,4 @@ unlinkedct)
     ;;
 esac
 
-###VERSION=2.0.7
+###VERSION=2.0.8
