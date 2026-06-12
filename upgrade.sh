@@ -36,6 +36,7 @@ readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Installation paths
 readonly INSTALL_BASE="/opt/app_rpt"
+readonly AST_SOUNDS_RP="/usr/share/asterisk/sounds/rp"
 readonly CONFIG_FILE="$INSTALL_BASE/config.ini"
 readonly VERSION_FILE="$INSTALL_BASE/VERSION"
 readonly BACKUP_BASE="$INSTALL_BASE/backups"
@@ -652,39 +653,61 @@ install_scripts() {
 
     rm -f "$temp_config"
 
-    # Ensure Asterisk en/ sound directories are symlinks to our TMS5220 sounds.
-    # ASL3 uses astdatadir=/usr/share/asterisk, so Asterisk resolves sound files
-    # from /usr/share/asterisk/sounds/en/.  Replace any real en/ directory with a
-    # symlink so app_rpt__ultra voices are used instead of the Allison Smith package.
-    local en_dirs=("/var/lib/asterisk/sounds/en" "/usr/share/asterisk/sounds/en")
-    for en_dir in "${en_dirs[@]}"; do
-        local parent
-        parent="$(dirname "$en_dir")"
-        [[ -d "$parent" ]] || continue  # parent doesn't exist on this system
+    # Ensure AST_SOUNDS_RP exists as a real directory and the convenience symlink
+    # at INSTALL_BASE/sounds points to it.  The secondary /var/lib path is also symlinked.
+    if [[ "$DRY_RUN" == false ]]; then
+        mkdir -p "$AST_SOUNDS_RP"/{ids,rpt,tails,wx,weather,letters,digits,custom,_male,_female,_sndfx}
+        log_success "Real sounds directory: $AST_SOUNDS_RP"
 
-        if [[ -L "$en_dir" ]] && [[ "$(readlink "$en_dir")" == "$INSTALL_BASE/sounds" ]]; then
-            log_info "Sound symlink already correct: $en_dir"
-        else
-            if [[ "$DRY_RUN" == false ]]; then
-                if [[ -d "$en_dir" ]] && [[ ! -L "$en_dir" ]]; then
-                    mv "$en_dir" "${en_dir}.allison_backup" 2>/dev/null || rm -rf "$en_dir"
-                elif [[ -L "$en_dir" ]]; then
-                    rm -f "$en_dir"
-                fi
-                ln -sf "$INSTALL_BASE/sounds" "$en_dir"
-                log_success "Sound symlink set: $en_dir -> $INSTALL_BASE/sounds"
+        # /opt/app_rpt/sounds — must be a symlink to AST_SOUNDS_RP
+        if [[ -d "$INSTALL_BASE/sounds" ]] && [[ ! -L "$INSTALL_BASE/sounds" ]]; then
+            log_warn "sounds/ is a real dir (pre-migration install) — replacing with symlink"
+            rm -rf "$INSTALL_BASE/sounds"
+        fi
+        if [[ ! -e "$INSTALL_BASE/sounds" ]]; then
+            ln -s "$AST_SOUNDS_RP" "$INSTALL_BASE/sounds"
+            log_success "Created symlink: $INSTALL_BASE/sounds -> $AST_SOUNDS_RP"
+        elif [[ -L "$INSTALL_BASE/sounds" ]] && [[ "$(readlink "$INSTALL_BASE/sounds")" == "$AST_SOUNDS_RP" ]]; then
+            log_info "sounds symlink already correct"
+        fi
+
+        # /var/lib/asterisk/sounds/rp — secondary Asterisk search path
+        local lib_rp="/var/lib/asterisk/sounds/rp"
+        if [[ -d "/var/lib/asterisk/sounds" ]]; then
+            if [[ ! -L "$lib_rp" ]] || [[ "$(readlink "$lib_rp")" != "$AST_SOUNDS_RP" ]]; then
+                rm -f "$lib_rp"
+                ln -sf "$AST_SOUNDS_RP" "$lib_rp"
+                log_success "Symlink: $lib_rp -> $AST_SOUNDS_RP"
             else
-                log_info "[DRY RUN] Would set sound symlink: $en_dir -> $INSTALL_BASE/sounds"
+                log_info "Secondary sounds symlink already correct"
             fi
         fi
-    done
+    else
+        log_info "[DRY RUN] Would ensure $AST_SOUNDS_RP exists and symlinks are correct"
+    fi
 
-    # Remove any stale en/ inside the app_rpt sounds dir itself (would be circular)
-    if [[ -d "$INSTALL_BASE/sounds/en" ]] && [[ ! -L "$INSTALL_BASE/sounds/en" ]]; then
-        if [[ "$DRY_RUN" == false ]]; then
-            rm -rf "$INSTALL_BASE/sounds/en"
-            log_success "Removed $INSTALL_BASE/sounds/en (circular reference)"
+    # Patch chan_dahdi.conf to use language=rp so DAHDI (app_rpt's pseudo channel)
+    # looks up sounds in sounds/rp/ and never overwrites the system en/ sounds.
+    local dahdi_conf="/etc/asterisk/chan_dahdi.conf"
+    if [[ -f "$dahdi_conf" ]]; then
+        if grep -q "^language=rp" "$dahdi_conf"; then
+            log_info "chan_dahdi.conf already has language=rp"
+        else
+            if [[ "$DRY_RUN" == false ]]; then
+                if grep -q "^language=" "$dahdi_conf"; then
+                    sed -i 's/^language=.*/language=rp/' "$dahdi_conf"
+                elif grep -q "^;language=en" "$dahdi_conf"; then
+                    sed -i 's/^;language=en/language=rp/' "$dahdi_conf"
+                else
+                    sed -i '/^\[general\]/a language=rp' "$dahdi_conf"
+                fi
+                log_success "Set language=rp in chan_dahdi.conf"
+            else
+                log_info "[DRY RUN] Would set language=rp in chan_dahdi.conf"
+            fi
         fi
+    else
+        log_warn "chan_dahdi.conf not found — skipping language patch"
     fi
 }
 

@@ -35,6 +35,7 @@ readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Installation paths
 readonly INSTALL_BASE="/opt/app_rpt"
+readonly AST_SOUNDS_RP="/usr/share/asterisk/sounds/rp"
 readonly CONFIG_FILE="$INSTALL_BASE/config.ini"
 readonly VERSION_FILE="$INSTALL_BASE/VERSION"
 readonly LOG_FILE="/opt/app_rpt/log/app_rpt.log"
@@ -352,41 +353,68 @@ check_directory_structure() {
         fi
     done
 
-    # Check en/ language symlinks — ASL3 resolves sounds as <astdatadir>/sounds/en/
-    # Both Asterisk sound search paths must have their en/ dir pointing to our sounds
-    local symlinks=(
-        "/var/lib/asterisk/sounds/en:$INSTALL_BASE/sounds"
-        "/usr/share/asterisk/sounds/en:$INSTALL_BASE/sounds"
-    )
+    # Check that AST_SOUNDS_RP is a real directory (not a symlink)
+    if [[ -d "$AST_SOUNDS_RP" ]] && [[ ! -L "$AST_SOUNDS_RP" ]]; then
+        log_pass "Real sounds directory exists: $AST_SOUNDS_RP"
+    elif [[ -L "$AST_SOUNDS_RP" ]]; then
+        log_fail "$AST_SOUNDS_RP is a symlink (should be a real directory)"
+        ask_repair "Replace symlink with real directory" \
+            "rm -f '$AST_SOUNDS_RP' && mkdir -p '$AST_SOUNDS_RP'"
+    else
+        log_fail "Missing real sounds directory: $AST_SOUNDS_RP"
+        ask_repair "Create sounds directory" \
+            "mkdir -p '$AST_SOUNDS_RP'"
+    fi
 
-    for link_def in "${symlinks[@]}"; do
-        IFS=':' read -r link target <<< "$link_def"
-        local parent
-        parent="$(dirname "$link")"
-        if [[ ! -d "$parent" ]]; then
-            log_info "Skipping symlink check (parent absent): $link"
-            continue
-        fi
-        if [[ -L "$link" ]]; then
-            local actual_target
-            actual_target=$(readlink "$link")
-            if [[ "$actual_target" == "$target" ]]; then
-                log_pass "Sound symlink correct: $link → $target"
-            else
-                log_fail "Sound symlink wrong target: $link → $actual_target (expected $target)"
-                ask_repair "Fix sound symlink $link" \
-                    "rm -f '$link' && ln -sf '$target' '$link'"
-            fi
-        elif [[ -d "$link" ]]; then
-            log_fail "Sound en/ is a real directory (Allison Smith voices active): $link"
-            ask_repair "Replace $link with symlink to TMS5220 sounds" \
-                "mv '$link' '${link}.allison_backup' && ln -sf '$target' '$link'"
-        else
-            log_warn "Sound symlink missing: $link"
-            ask_repair "Create sound symlink $link → $target" \
-                "ln -sf '$target' '$link'"
-        fi
-    done
+    # Check /opt/app_rpt/sounds is a symlink → AST_SOUNDS_RP
+    local sounds_link="$INSTALL_BASE/sounds"
+    if [[ -L "$sounds_link" ]] && [[ "$(readlink "$sounds_link")" == "$AST_SOUNDS_RP" ]]; then
+        log_pass "sounds symlink correct: $sounds_link -> $AST_SOUNDS_RP"
+    elif [[ -L "$sounds_link" ]]; then
+        local actual
+        actual=$(readlink "$sounds_link")
+        log_fail "sounds symlink wrong target: $sounds_link -> $actual (expected $AST_SOUNDS_RP)"
+        ask_repair "Fix sounds symlink" \
+            "rm -f '$sounds_link' && ln -s '$AST_SOUNDS_RP' '$sounds_link'"
+    elif [[ -d "$sounds_link" ]]; then
+        log_fail "sounds/ is a real directory (expected symlink to $AST_SOUNDS_RP)"
+        ask_repair "Replace with symlink (WARNING: removes real dir)" \
+            "rm -rf '$sounds_link' && ln -s '$AST_SOUNDS_RP' '$sounds_link'"
+    else
+        log_fail "sounds symlink missing: $sounds_link"
+        ask_repair "Create sounds symlink" \
+            "ln -s '$AST_SOUNDS_RP' '$sounds_link'"
+    fi
+
+    # Check /var/lib/asterisk/sounds/rp → AST_SOUNDS_RP (secondary Asterisk path)
+    local lib_rp="/var/lib/asterisk/sounds/rp"
+    if [[ ! -d "/var/lib/asterisk/sounds" ]]; then
+        log_info "Skipping secondary sounds symlink check (parent absent)"
+    elif [[ -L "$lib_rp" ]] && [[ "$(readlink "$lib_rp")" == "$AST_SOUNDS_RP" ]]; then
+        log_pass "Secondary sounds symlink correct: $lib_rp -> $AST_SOUNDS_RP"
+    else
+        log_warn "Secondary sounds symlink missing or wrong: $lib_rp"
+        ask_repair "Create secondary sounds symlink" \
+            "rm -f '$lib_rp' && ln -sf '$AST_SOUNDS_RP' '$lib_rp'"
+    fi
+
+    # Check chan_dahdi.conf has language=rp so DAHDI pseudo channels use sounds/rp/
+    local dahdi_conf="/etc/asterisk/chan_dahdi.conf"
+    if [[ ! -f "$dahdi_conf" ]]; then
+        log_warn "chan_dahdi.conf not found — cannot verify language setting"
+    elif grep -q "^language=rp" "$dahdi_conf"; then
+        log_pass "chan_dahdi.conf: language=rp"
+    elif grep -q "^language=" "$dahdi_conf"; then
+        local cur_lang
+        cur_lang=$(grep "^language=" "$dahdi_conf" | head -1)
+        log_fail "chan_dahdi.conf has wrong language: $cur_lang (expected language=rp)"
+        ask_repair "Set language=rp in chan_dahdi.conf" \
+            "sed -i 's/^language=.*/language=rp/' '$dahdi_conf'"
+    else
+        log_warn "chan_dahdi.conf: language= not set (sounds/rp/ will not be used)"
+        ask_repair "Add language=rp to chan_dahdi.conf" \
+            "sed -i 's/^;language=en/language=rp/' '$dahdi_conf' || sed -i '/^\[general\]/a language=rp' '$dahdi_conf'"
+    fi
 }
 
 # ==============================================================================
@@ -951,21 +979,15 @@ check_sound_files() {
         log_fail "vocabulary.txt missing"
     fi
 
-    # Check for conflicting Asterisk en directory
-    if [[ -d "/var/lib/asterisk/sounds/en" ]]; then
-        log_fail "Conflicting directory found: /var/lib/asterisk/sounds/en"
-        log_info "   This conflicts with app_rpt__ultra's internal vocabulary"
-        if [[ "$CHECK_ONLY" != true ]]; then
-            if ask_repair "Remove /var/lib/asterisk/sounds/en directory?"; then
-                if rm -rf /var/lib/asterisk/sounds/en 2>/dev/null; then
-                    log_fixed "Removed conflicting en directory"
-                else
-                    log_fail "Failed to remove en directory"
-                fi
-            fi
-        fi
+    # Check that AST_SOUNDS_RP is a real directory (package-safe, no symlink contamination)
+    if [[ -d "$AST_SOUNDS_RP" ]] && [[ ! -L "$AST_SOUNDS_RP" ]]; then
+        local rp_count
+        rp_count=$(find "$AST_SOUNDS_RP" -maxdepth 1 -name "*.ulaw" 2>/dev/null | wc -l)
+        log_pass "Real sounds/rp directory present ($rp_count top-level .ulaw files)"
+    elif [[ -L "$AST_SOUNDS_RP" ]]; then
+        log_fail "sounds/rp is a symlink (should be real directory): $AST_SOUNDS_RP"
     else
-        log_pass "No conflicting en directory"
+        log_warn "Real sounds/rp directory missing: $AST_SOUNDS_RP"
     fi
 
     # Check male/female voice directories

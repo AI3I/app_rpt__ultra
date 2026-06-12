@@ -48,6 +48,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_APP_RPT="$SCRIPT_DIR/app_rpt"
 SOURCE_ASTERISK="$SCRIPT_DIR/asterisk"
 
+# Canonical Asterisk sounds directory for the "rp" language — this is a real
+# directory we own; /opt/app_rpt/sounds symlinks here so scripts still work.
+AST_SOUNDS_RP="/usr/share/asterisk/sounds/rp"
+
 # Defaults
 DEST_DIR="/opt/app_rpt"
 OWNER_USER="asterisk"
@@ -459,11 +463,23 @@ EOF
 create_directories() {
     print_step "Creating Directory Structure"
 
-    mkdir -p "$DEST_DIR"/{bin,lib,util,sounds,backups}
-    mkdir -p "$DEST_DIR"/sounds/{ids,rpt,tails,wx,weather,letters,digits,custom}
-    mkdir -p "$DEST_DIR"/sounds/{_male,_female,_sndfx}
+    mkdir -p "$DEST_DIR"/{bin,lib,util,backups}
     mkdir -p /opt/asterisk
     mkdir -p /etc/asterisk/custom
+
+    # Real sounds directory lives in Asterisk's own hierarchy under language "rp".
+    # /opt/app_rpt/sounds is a symlink here so all scripts work unchanged.
+    mkdir -p "$AST_SOUNDS_RP"/{ids,rpt,tails,wx,weather,letters,digits,custom}
+    mkdir -p "$AST_SOUNDS_RP"/{_male,_female,_sndfx}
+
+    if [[ -d "$DEST_DIR/sounds" ]] && [[ ! -L "$DEST_DIR/sounds" ]]; then
+        print_info "Replacing real sounds/ dir with symlink (old dir removed)"
+        rm -rf "$DEST_DIR/sounds"
+    fi
+    if [[ ! -e "$DEST_DIR/sounds" ]]; then
+        ln -s "$AST_SOUNDS_RP" "$DEST_DIR/sounds"
+        print_success "Created symlink: $DEST_DIR/sounds -> $AST_SOUNDS_RP"
+    fi
 
     print_success "Directories created"
 }
@@ -471,47 +487,56 @@ create_directories() {
 setup_sound_symlinks() {
     print_step "Setting Up Sound Symlinks"
 
-    # Asterisk resolves sound files as <astdatadir>/sounds/<lang>/<file>
-    # ASL3 uses astdatadir=/usr/share/asterisk and lang=en by default, so sounds
-    # are resolved from /usr/share/asterisk/sounds/en/.  /var/lib/asterisk/sounds/en
-    # is also searched by some Asterisk paths.  Both en/ directories must be
-    # symlinks pointing to $DEST_DIR/sounds so that app_rpt__ultra's TMS5220
-    # vocabulary is used instead of the Allison Smith default sound package.
+    # /usr/share/asterisk/sounds/rp is the real directory (created in create_directories).
+    # /var/lib/asterisk/sounds/rp is a secondary Asterisk search path — symlink it there.
+    # /opt/app_rpt/sounds symlink is handled in create_directories.
 
-    local en_dirs=("/var/lib/asterisk/sounds/en" "/usr/share/asterisk/sounds/en")
+    local lib_rp="/var/lib/asterisk/sounds/rp"
+    local lib_parent="/var/lib/asterisk/sounds"
 
-    for en_dir in "${en_dirs[@]}"; do
-        local parent
-        parent="$(dirname "$en_dir")"
-
-        if [[ ! -d "$parent" ]]; then
-            continue  # Parent sound dir doesn't exist on this system; skip
-        fi
-
-        if [[ -L "$en_dir" ]] && [[ "$(readlink "$en_dir")" == "$DEST_DIR/sounds" ]]; then
-            print_info "Symlink already correct: $en_dir -> $DEST_DIR/sounds"
-        elif [[ -L "$en_dir" ]]; then
-            print_info "Updating existing symlink: $en_dir"
-            rm -f "$en_dir"
-            ln -s "$DEST_DIR/sounds" "$en_dir"
-            print_success "Updated symlink: $en_dir -> $DEST_DIR/sounds"
-        elif [[ -d "$en_dir" ]]; then
-            print_info "Replacing Asterisk en/ directory with symlink (backup at ${en_dir}.allison_backup)"
-            mv "$en_dir" "${en_dir}.allison_backup"
-            ln -s "$DEST_DIR/sounds" "$en_dir"
-            print_success "Created symlink: $en_dir -> $DEST_DIR/sounds"
-        else
-            ln -s "$DEST_DIR/sounds" "$en_dir"
-            print_success "Created symlink: $en_dir -> $DEST_DIR/sounds"
-        fi
-    done
-
-    # Remove any stale en/ directory from inside the app_rpt sounds dir itself
-    if [[ -d "$DEST_DIR/sounds/en" ]] && [[ ! -L "$DEST_DIR/sounds/en" ]]; then
-        print_info "Removing conflicting en directory from $DEST_DIR/sounds"
-        rm -rf "$DEST_DIR/sounds/en"
-        print_success "Removed $DEST_DIR/sounds/en (would create circular symlink)"
+    if [[ ! -d "$lib_parent" ]]; then
+        print_info "Skipping /var/lib symlink (parent absent)"
+        return
     fi
+
+    if [[ -L "$lib_rp" ]] && [[ "$(readlink "$lib_rp")" == "$AST_SOUNDS_RP" ]]; then
+        print_info "Symlink already correct: $lib_rp -> $AST_SOUNDS_RP"
+    else
+        rm -f "$lib_rp"
+        ln -s "$AST_SOUNDS_RP" "$lib_rp"
+        print_success "Created symlink: $lib_rp -> $AST_SOUNDS_RP"
+    fi
+}
+
+setup_channel_language() {
+    print_step "Configuring DAHDI Channel Language"
+
+    # app_rpt uses ast_channel_language() on its DAHDI pseudo channel to resolve
+    # sound files.  Setting language=rp in chan_dahdi.conf makes DAHDI channels use
+    # sounds/rp/ instead of sounds/en/, so the system "en" sounds are never overwritten.
+    local dahdi_conf="/etc/asterisk/chan_dahdi.conf"
+
+    if [[ ! -f "$dahdi_conf" ]]; then
+        print_warning "chan_dahdi.conf not found — skipping language patch"
+        return
+    fi
+
+    if grep -q "^language=rp" "$dahdi_conf"; then
+        print_info "chan_dahdi.conf already has language=rp"
+        return
+    fi
+
+    # Replace any existing active language= line, or uncomment the default one
+    if grep -q "^language=" "$dahdi_conf"; then
+        sed -i 's/^language=.*/language=rp/' "$dahdi_conf"
+    elif grep -q "^;language=en" "$dahdi_conf"; then
+        sed -i 's/^;language=en/language=rp/' "$dahdi_conf"
+    else
+        # Insert after [general] or at the start of the file as a fallback
+        sed -i '/^\[general\]/a language=rp' "$dahdi_conf"
+    fi
+
+    print_success "Set language=rp in chan_dahdi.conf"
 }
 
 install_scripts() {
@@ -901,6 +926,7 @@ main() {
     configure_sudoers
     create_directories
     setup_sound_symlinks
+    setup_channel_language
     install_scripts
     install_utils
     install_sounds

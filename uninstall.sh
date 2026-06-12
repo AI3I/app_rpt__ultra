@@ -23,8 +23,8 @@ set -euo pipefail
 readonly SCRIPT_NAME=$(basename "$0")
 readonly INSTALL_DIR="/opt/app_rpt"
 readonly RECORDINGS_DIR="/opt/asterisk"
-readonly ASTERISK_SOUNDS_1="/var/lib/asterisk/sounds"
-readonly ASTERISK_SOUNDS_2="/usr/share/asterisk/sounds"
+readonly AST_SOUNDS_RP="/usr/share/asterisk/sounds/rp"
+readonly ASTERISK_SOUNDS_LIB_RP="/var/lib/asterisk/sounds/rp"
 
 # Colors for output
 RED='\033[0;31m'
@@ -131,17 +131,27 @@ remove_crontab() {
     fi
 }
 
-remove_symlinks() {
-    log_info "Removing sound directory symlinks..."
+remove_sound_directories() {
+    log_info "Removing app_rpt sound directories and symlinks..."
 
-    for dir in "$ASTERISK_SOUNDS_1" "$ASTERISK_SOUNDS_2"; do
-        if [[ -L "$dir" ]]; then
-            rm -f "$dir"
-            log_info "Removed symlink: $dir"
-        elif [[ -d "$dir" ]]; then
-            log_warn "$dir exists but is not a symlink, skipping"
-        fi
-    done
+    # Remove the convenience symlink at /opt/app_rpt/sounds
+    local sounds_link="$INSTALL_DIR/sounds"
+    if [[ -L "$sounds_link" ]]; then
+        rm -f "$sounds_link"
+        log_info "Removed symlink: $sounds_link"
+    fi
+
+    # Remove the secondary Asterisk symlink
+    if [[ -L "$ASTERISK_SOUNDS_LIB_RP" ]]; then
+        rm -f "$ASTERISK_SOUNDS_LIB_RP"
+        log_info "Removed symlink: $ASTERISK_SOUNDS_LIB_RP"
+    fi
+
+    # Remove the real sounds directory from Asterisk's hierarchy
+    if [[ -d "$AST_SOUNDS_RP" ]] && [[ ! -L "$AST_SOUNDS_RP" ]]; then
+        rm -rf "$AST_SOUNDS_RP"
+        log_info "Removed real sounds directory: $AST_SOUNDS_RP"
+    fi
 }
 
 remove_install_dir() {
@@ -270,7 +280,7 @@ main() {
     echo ""
 
     remove_crontab
-    remove_symlinks
+    remove_sound_directories
     remove_install_dir
     remove_recordings
     remove_asterisk_configs
