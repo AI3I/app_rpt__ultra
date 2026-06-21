@@ -1062,6 +1062,22 @@ main() {
         [[ -n "$backup_dir" ]] && rollback_upgrade "$backup_dir"
         exit 4
     fi
+
+    # Step 4.5: Sync sound files from repo (skips user dirs: ids/ tails/ custom/)
+    if [[ "$DRY_RUN" == false ]]; then
+        local sounds_src="$REPO_DIR/app_rpt/sounds"
+        if [[ -d "$sounds_src" ]]; then
+            log_info "Syncing sound files to $AST_SOUNDS_RP ..."
+            for subdir in rpt _male _female _sndfx letters digits wx weather; do
+                if [[ -d "$sounds_src/$subdir" ]]; then
+                    cp -r "$sounds_src/$subdir/." "$AST_SOUNDS_RP/$subdir/"
+                fi
+            done
+            log_success "Sound files synced"
+        fi
+    else
+        log_info "[DRY RUN] Would sync sound files from repo to $AST_SOUNDS_RP"
+    fi
     echo ""
 
     # Step 4: Validate (skip in dry-run)
