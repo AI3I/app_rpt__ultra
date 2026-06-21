@@ -509,34 +509,45 @@ setup_sound_symlinks() {
 }
 
 setup_channel_language() {
-    print_step "Configuring DAHDI Channel Language"
+    print_step "Configuring Asterisk Language"
 
-    # app_rpt uses ast_channel_language() on its DAHDI pseudo channel to resolve
-    # sound files.  Setting language=rp in chan_dahdi.conf makes DAHDI channels use
-    # sounds/rp/ instead of sounds/en/, so the system "en" sounds are never overwritten.
+    # defaultlanguage in asterisk.conf covers ALL channel types (including the
+    # pseudo channels app_rpt creates internally for sound playback).
+    # language= in chan_dahdi.conf only covers DAHDI trunk channels, so it is
+    # not sufficient on its own.
+    local ast_conf="/etc/asterisk/asterisk.conf"
     local dahdi_conf="/etc/asterisk/chan_dahdi.conf"
 
-    if [[ ! -f "$dahdi_conf" ]]; then
-        print_warning "chan_dahdi.conf not found — skipping language patch"
-        return
-    fi
-
-    if grep -q "^language=rp" "$dahdi_conf"; then
-        print_info "chan_dahdi.conf already has language=rp"
-        return
-    fi
-
-    # Replace any existing active language= line, or uncomment the default one
-    if grep -q "^language=" "$dahdi_conf"; then
-        sed -i 's/^language=.*/language=rp/' "$dahdi_conf"
-    elif grep -q "^;language=en" "$dahdi_conf"; then
-        sed -i 's/^;language=en/language=rp/' "$dahdi_conf"
+    # asterisk.conf — primary fix
+    if [[ -f "$ast_conf" ]]; then
+        if grep -q "^defaultlanguage = rp" "$ast_conf"; then
+            print_info "asterisk.conf already has defaultlanguage = rp"
+        elif grep -q "^;*defaultlanguage" "$ast_conf"; then
+            sed -i 's/^;*defaultlanguage\s*=.*/defaultlanguage = rp/' "$ast_conf"
+            print_success "Set defaultlanguage = rp in asterisk.conf"
+        else
+            sed -i '/^\[options\]/a defaultlanguage = rp' "$ast_conf"
+            print_success "Added defaultlanguage = rp to asterisk.conf [options]"
+        fi
     else
-        # Insert after [general] or at the start of the file as a fallback
-        sed -i '/^\[general\]/a language=rp' "$dahdi_conf"
+        print_warning "asterisk.conf not found — set defaultlanguage = rp manually"
     fi
 
-    print_success "Set language=rp in chan_dahdi.conf"
+    # chan_dahdi.conf — belt-and-suspenders for DAHDI trunk channels
+    if [[ -f "$dahdi_conf" ]]; then
+        if grep -q "^language=rp" "$dahdi_conf"; then
+            print_info "chan_dahdi.conf already has language=rp"
+        elif grep -q "^language=" "$dahdi_conf"; then
+            sed -i 's/^language=.*/language=rp/' "$dahdi_conf"
+            print_success "Set language=rp in chan_dahdi.conf"
+        elif grep -q "^;language=en" "$dahdi_conf"; then
+            sed -i 's/^;language=en/language=rp/' "$dahdi_conf"
+            print_success "Set language=rp in chan_dahdi.conf"
+        else
+            sed -i '/^\[general\]/a language=rp' "$dahdi_conf"
+            print_success "Added language=rp to chan_dahdi.conf [general]"
+        fi
+    fi
 }
 
 install_scripts() {

@@ -686,9 +686,31 @@ install_scripts() {
         log_info "[DRY RUN] Would ensure $AST_SOUNDS_RP exists and symlinks are correct"
     fi
 
-    # Patch chan_dahdi.conf to use language=rp so DAHDI (app_rpt's pseudo channel)
-    # looks up sounds in sounds/rp/ and never overwrites the system en/ sounds.
+    # defaultlanguage in asterisk.conf covers ALL channel types — including the
+    # pseudo channels app_rpt creates for sound playback.  chan_dahdi.conf only
+    # covers DAHDI trunk channels and is not sufficient on its own.
+    local ast_conf="/etc/asterisk/asterisk.conf"
     local dahdi_conf="/etc/asterisk/chan_dahdi.conf"
+
+    if [[ -f "$ast_conf" ]]; then
+        if grep -q "^defaultlanguage = rp" "$ast_conf"; then
+            log_info "asterisk.conf already has defaultlanguage = rp"
+        else
+            if [[ "$DRY_RUN" == false ]]; then
+                if grep -q "^;*defaultlanguage" "$ast_conf"; then
+                    sed -i 's/^;*defaultlanguage\s*=.*/defaultlanguage = rp/' "$ast_conf"
+                else
+                    sed -i '/^\[options\]/a defaultlanguage = rp' "$ast_conf"
+                fi
+                log_success "Set defaultlanguage = rp in asterisk.conf"
+            else
+                log_info "[DRY RUN] Would set defaultlanguage = rp in asterisk.conf"
+            fi
+        fi
+    else
+        log_warn "asterisk.conf not found — set defaultlanguage = rp manually"
+    fi
+
     if [[ -f "$dahdi_conf" ]]; then
         if grep -q "^language=rp" "$dahdi_conf"; then
             log_info "chan_dahdi.conf already has language=rp"
@@ -707,7 +729,7 @@ install_scripts() {
             fi
         fi
     else
-        log_warn "chan_dahdi.conf not found — skipping language patch"
+        log_warn "chan_dahdi.conf not found — skipping"
     fi
 }
 

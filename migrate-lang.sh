@@ -137,21 +137,37 @@ else
     fail "  sounds/en/ is still a symlink or missing after reinstall"
 fi
 
-# ── 9. Set language=rp in chan_dahdi.conf ─────────────────────────────────────
-info "Step 9: Setting language=rp in chan_dahdi.conf ..."
+# ── 9. Set language=rp in asterisk.conf and chan_dahdi.conf ──────────────────
+# asterisk.conf defaultlanguage covers ALL channel types including app_rpt's
+# internal pseudo channels.  chan_dahdi.conf only covers DAHDI trunk channels.
+AST_CONF="/etc/asterisk/asterisk.conf"
+info "Step 9: Setting defaultlanguage=rp in asterisk.conf ..."
+if [[ ! -f "$AST_CONF" ]]; then
+    info "  asterisk.conf not found — set defaultlanguage = rp manually"
+elif grep -q "^defaultlanguage = rp" "$AST_CONF"; then
+    success "  Already set: defaultlanguage = rp"
+elif grep -q "^;*defaultlanguage" "$AST_CONF"; then
+    sed -i 's/^;*defaultlanguage\s*=.*/defaultlanguage = rp/' "$AST_CONF"
+    success "  Set: defaultlanguage = rp in asterisk.conf"
+else
+    sed -i '/^\[options\]/a defaultlanguage = rp' "$AST_CONF"
+    success "  Added defaultlanguage = rp to asterisk.conf [options]"
+fi
+
+info "      Setting language=rp in chan_dahdi.conf ..."
 if [[ ! -f "$DAHDI_CONF" ]]; then
-    info "  chan_dahdi.conf not found — add 'language=rp' to [general] manually"
+    info "  chan_dahdi.conf not found — skipping"
 elif grep -q "^language=rp" "$DAHDI_CONF"; then
     success "  Already set: language=rp"
 elif grep -q "^language=" "$DAHDI_CONF"; then
     sed -i 's/^language=.*/language=rp/' "$DAHDI_CONF"
-    success "  Updated: language=rp"
+    success "  Updated: language=rp in chan_dahdi.conf"
 elif grep -q "^;language=en" "$DAHDI_CONF"; then
     sed -i 's/^;language=en/language=rp/' "$DAHDI_CONF"
-    success "  Uncommented and set: language=rp"
+    success "  Set: language=rp in chan_dahdi.conf"
 else
     sed -i '/^\[general\]/a language=rp' "$DAHDI_CONF"
-    success "  Added language=rp to [general]"
+    success "  Added language=rp to chan_dahdi.conf [general]"
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────

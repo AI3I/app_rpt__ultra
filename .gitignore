@@ -56,3 +56,6 @@ debug_*.sh
 # Deployment-specific
 upgrade_backup_*/
 backups/
+
+# Personal node bootstrap (contains embedded SSH keys — never commit)
+bootstrap-node.sh
