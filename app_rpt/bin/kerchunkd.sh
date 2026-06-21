@@ -93,12 +93,12 @@ get_stats() {
     # Extract keyups
     local keyups
     keyups=$(echo "$stats" | grep "Keyups since system initialization" | awk -F: '{print $2}' | tr -d ' ')
-    [[ -z "$keyups" ]] || [[ ! "$keyups" =~ ^[0-9]+$ ]] && keyups="0"
+    [[ "$keyups" =~ ^[0-9]+$ ]] || keyups="0"
 
     # Extract TX time
     local txtime
     txtime=$(echo "$stats" | grep "TX time since system initialization" | awk -F: '{print $2":"$3":"$4":"$5}' | tr -d ' ')
-    [[ -z "$txtime" ]] && txtime="00:00:00:000"
+    [[ -n "$txtime" ]] || txtime="00:00:00:000"
 
     # Convert TX time to milliseconds
     local txtime_ms
@@ -109,10 +109,10 @@ get_stats() {
 
 initialize_state() {
     mkdir -p "${STATE_DIR}"
-    [[ ! -f "${CONSECUTIVE_FILE}" ]] && echo "0" > "${CONSECUTIVE_FILE}"
-    [[ ! -f "${LAST_WARNING_FILE}" ]] && echo "0" > "${LAST_WARNING_FILE}"
-    [[ ! -f "${LAST_KEYUPS_FILE}" ]] && echo "0" > "${LAST_KEYUPS_FILE}"
-    [[ ! -f "${LAST_TXTIME_FILE}" ]] && echo "0" > "${LAST_TXTIME_FILE}"
+    [[ -f "${CONSECUTIVE_FILE}" ]] || echo "0" > "${CONSECUTIVE_FILE}"
+    [[ -f "${LAST_WARNING_FILE}" ]] || echo "0" > "${LAST_WARNING_FILE}"
+    [[ -f "${LAST_KEYUPS_FILE}" ]] || echo "0" > "${LAST_KEYUPS_FILE}"
+    [[ -f "${LAST_TXTIME_FILE}" ]] || echo "0" > "${LAST_TXTIME_FILE}"
 }
 
 read_state() {
