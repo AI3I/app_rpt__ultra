@@ -147,6 +147,7 @@ log_kerchunk_stats() {
 }
 
 play_kerchunk_warning() {
+    sleep 2
     log "Playing kerchunk reminder message (consecutive: ${CONSECUTIVE})"
 
     # Check if we have a custom message
