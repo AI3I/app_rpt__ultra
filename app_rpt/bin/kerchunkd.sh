@@ -47,6 +47,9 @@ KERCHUNK_THRESHOLD="${KERCHUNK_THRESHOLD:-3}"
 # Rate limiting (seconds between warning messages)
 KERCHUNK_WAITLIMIT="${KERCHUNK_WAITLIMIT:-30}"
 
+# Delay (seconds) after COS drops before playing the warning
+KERCHUNK_WARNDELAY="${KERCHUNK_WARNDELAY:-2}"
+
 # Kerchunk duration range (seconds)
 KERCHUNK_MIN_DURATION="${KERCHUNK_MIN_DURATION:-0.2}"  # Minimum duration to count (ignore noise/blips)
 KERCHUNK_MAX_DURATION="${KERCHUNK_MAX_DURATION:-1.5}"  # Maximum duration - anything over this resets counter
@@ -147,7 +150,7 @@ log_kerchunk_stats() {
 }
 
 play_kerchunk_warning() {
-    sleep 2
+    sleep "${KERCHUNK_WARNDELAY}"
     log "Playing kerchunk reminder message (consecutive: ${CONSECUTIVE})"
 
     # Check if we have a custom message
@@ -250,7 +253,7 @@ _loop_iteration() {
 }
 
 main_loop() {
-    log "Kerchunk daemon started (poll: ${POLL_INTERVAL}s, mode: ${KERCHUNK_MODE}, threshold: ${KERCHUNK_THRESHOLD}, duration: ${KERCHUNK_MIN_DURATION}-${KERCHUNK_MAX_DURATION}s)"
+    log "Kerchunk daemon started (poll: ${POLL_INTERVAL}s, mode: ${KERCHUNK_MODE}, threshold: ${KERCHUNK_THRESHOLD}, duration: ${KERCHUNK_MIN_DURATION}-${KERCHUNK_MAX_DURATION}s, warndelay: ${KERCHUNK_WARNDELAY}s)"
 
     # Initialize state
     initialize_state
