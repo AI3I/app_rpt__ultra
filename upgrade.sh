@@ -847,6 +847,7 @@ fix_permissions() {
 
         # Ensure critical Asterisk directories have correct ownership
         local asterisk_dirs=(
+            "/usr/share/asterisk"
             "/var/lib/asterisk"
             "/var/log/asterisk"
             "/var/spool/asterisk"
