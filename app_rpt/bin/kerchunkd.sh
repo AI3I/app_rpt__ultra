@@ -64,6 +64,7 @@ CONSECUTIVE_FILE="${STATE_DIR}/consecutive"
 LAST_WARNING_FILE="${STATE_DIR}/last_warning"
 LAST_KEYUPS_FILE="${STATE_DIR}/last_keyups"
 LAST_TXTIME_FILE="${STATE_DIR}/last_txtime"
+LAST_KERCHUNKS_FILE="${STATE_DIR}/last_kerchunks"
 
 # ==============================================================================
 #    Functions
@@ -89,7 +90,7 @@ txtime_to_ms() {
 }
 
 get_stats() {
-    # Get current keyups and TX time from rpt stats
+    # Get current keyups, TX time, and kerchunks from rpt stats
     local stats
     stats=$(asterisk -rx "rpt stats ${MYNODE}" 2>/dev/null)
 
@@ -97,6 +98,11 @@ get_stats() {
     local keyups
     keyups=$(echo "$stats" | grep "Keyups since system initialization" | awk -F: '{print $2}' | tr -d ' ')
     [[ "$keyups" =~ ^[0-9]+$ ]] || keyups="0"
+
+    # Extract kerchunks (RF-only, excludes node connect events)
+    local kerchunks
+    kerchunks=$(echo "$stats" | grep "Kerchunks since system initialization" | awk -F: '{print $2}' | tr -d ' ')
+    [[ "$kerchunks" =~ ^[0-9]+$ ]] || kerchunks="0"
 
     # Extract TX time
     local txtime
@@ -107,7 +113,7 @@ get_stats() {
     local txtime_ms
     txtime_ms=$(txtime_to_ms "$txtime")
 
-    echo "${keyups}:${txtime_ms}"
+    echo "${keyups}:${txtime_ms}:${kerchunks}"
 }
 
 initialize_state() {
@@ -116,6 +122,7 @@ initialize_state() {
     [[ -f "${LAST_WARNING_FILE}" ]] || echo "0" > "${LAST_WARNING_FILE}"
     [[ -f "${LAST_KEYUPS_FILE}" ]] || echo "0" > "${LAST_KEYUPS_FILE}"
     [[ -f "${LAST_TXTIME_FILE}" ]] || echo "0" > "${LAST_TXTIME_FILE}"
+    [[ -f "${LAST_KERCHUNKS_FILE}" ]] || echo "0" > "${LAST_KERCHUNKS_FILE}"
 }
 
 read_state() {
@@ -123,6 +130,7 @@ read_state() {
     LAST_WARNING=$(cat "${LAST_WARNING_FILE}" 2>/dev/null || echo "0")
     LAST_KEYUPS=$(cat "${LAST_KEYUPS_FILE}" 2>/dev/null || echo "0")
     LAST_TXTIME=$(cat "${LAST_TXTIME_FILE}" 2>/dev/null || echo "0")
+    LAST_KERCHUNKS=$(cat "${LAST_KERCHUNKS_FILE}" 2>/dev/null || echo "0")
 }
 
 write_state() {
@@ -130,6 +138,7 @@ write_state() {
     echo "${LAST_WARNING}" > "${LAST_WARNING_FILE}"
     echo "${LAST_KEYUPS}" > "${LAST_KEYUPS_FILE}"
     echo "${LAST_TXTIME}" > "${LAST_TXTIME_FILE}"
+    echo "${LAST_KERCHUNKS}" > "${LAST_KERCHUNKS_FILE}"
 }
 
 log_kerchunk_stats() {
@@ -184,71 +193,81 @@ _loop_iteration() {
     # Read current state
     read_state
 
-    # Get current stats (keyups:txtime_ms)
+    # Get current stats (keyups:txtime_ms:kerchunks)
     local stats
     stats=$(get_stats)
     local current_keyups
     current_keyups=$(echo "$stats" | cut -d: -f1)
     local current_txtime
     current_txtime=$(echo "$stats" | cut -d: -f2)
+    local current_kerchunks
+    current_kerchunks=$(echo "$stats" | cut -d: -f3)
 
-    # Check if keyups increased
-    if [[ $current_keyups -gt $LAST_KEYUPS ]]; then
-        # New transmission(s) detected
-        local new_keyups=$((current_keyups - LAST_KEYUPS))
+    local new_kerchunks=$((current_kerchunks - LAST_KERCHUNKS))
+    local new_keyups=$((current_keyups - LAST_KEYUPS))
+
+    if [[ $new_kerchunks -gt 0 ]]; then
+        # app_rpt classified this as a kerchunk (RF-only, node connects excluded)
+        local avg_duration_s="n/a"
+        if [[ $new_keyups -gt 0 ]]; then
+            local txtime_delta_ms=$((current_txtime - LAST_TXTIME))
+            local avg_duration_ms=$((txtime_delta_ms / new_keyups))
+            avg_duration_s=$(awk "BEGIN {printf \"%.1f\", $avg_duration_ms/1000.0}")
+        fi
+
+        CONSECUTIVE=$((CONSECUTIVE + new_kerchunks))
+        log "Kerchunk detected (duration: ${avg_duration_s}s, consecutive: ${CONSECUTIVE})"
+
+        if [[ $CONSECUTIVE -ge $KERCHUNK_THRESHOLD ]]; then
+            log "Kerchunk threshold reached (${CONSECUTIVE} >= ${KERCHUNK_THRESHOLD})"
+
+            if [[ "$KERCHUNK_MODE" == "active" ]]; then
+                if check_rate_limit; then
+                    play_kerchunk_warning
+                    log_kerchunk_stats "$avg_duration_s" "$CONSECUTIVE" "yes" "kerchunk"
+                    LAST_WARNING=$(date +%s)
+                    CONSECUTIVE=0
+                else
+                    log_kerchunk_stats "$avg_duration_s" "$CONSECUTIVE" "no" "kerchunk"
+                fi
+            else
+                log "Passive mode: kerchunks logged, no warning played"
+                log_kerchunk_stats "$avg_duration_s" "$CONSECUTIVE" "no-passive" "kerchunk"
+                CONSECUTIVE=0
+            fi
+        else
+            log_kerchunk_stats "$avg_duration_s" "$CONSECUTIVE" "no" "kerchunk"
+        fi
+
+    elif [[ $new_keyups -gt 0 ]]; then
+        # Keyups increased but kerchunks counter didn't — use duration to decide
+        # whether this is a normal transmission (reset counter) or a non-RF event
+        # like a node connect (ignore entirely)
         local txtime_delta_ms=$((current_txtime - LAST_TXTIME))
-
-        # Calculate average duration per transmission in this poll cycle
         local avg_duration_ms=$((txtime_delta_ms / new_keyups))
         local avg_duration_s=$(awk "BEGIN {printf \"%.1f\", $avg_duration_ms/1000.0}")
 
-        # Convert duration thresholds to milliseconds for comparison
         local kerchunk_min_ms=$(awk "BEGIN {printf \"%.0f\", $KERCHUNK_MIN_DURATION*1000}")
         local kerchunk_max_ms=$(awk "BEGIN {printf \"%.0f\", $KERCHUNK_MAX_DURATION*1000}")
 
         if [[ $avg_duration_ms -lt $kerchunk_min_ms ]]; then
-            # Too short - ignore (noise/blip), don't affect counter
+            # Too short — noise/blip, ignore
             log "Transmission too short (duration: ${avg_duration_s}s < ${KERCHUNK_MIN_DURATION}s, ignored)"
-        elif [[ $avg_duration_ms -le $kerchunk_max_ms ]]; then
-            # Kerchunk detected (within MIN-MAX range)
-            CONSECUTIVE=$((CONSECUTIVE + new_keyups))
-            log "Kerchunk detected (duration: ${avg_duration_s}s in ${KERCHUNK_MIN_DURATION}-${KERCHUNK_MAX_DURATION}s range, consecutive: ${CONSECUTIVE})"
-
-            # Check if we've reached the threshold
-            if [[ $CONSECUTIVE -ge $KERCHUNK_THRESHOLD ]]; then
-                log "Kerchunk threshold reached (${CONSECUTIVE} >= ${KERCHUNK_THRESHOLD})"
-
-                # Check if active mode (play warning) or passive mode (log only)
-                if [[ "$KERCHUNK_MODE" == "active" ]]; then
-                    # Active mode: play warning message
-                    if check_rate_limit; then
-                        play_kerchunk_warning
-                        log_kerchunk_stats "$avg_duration_s" "$CONSECUTIVE" "yes" "kerchunk"
-                        LAST_WARNING=$(date +%s)
-                        CONSECUTIVE=0  # Reset after warning
-                    else
-                        log_kerchunk_stats "$avg_duration_s" "$CONSECUTIVE" "no" "kerchunk"
-                    fi
-                else
-                    # Passive mode: log only, no warning played
-                    log "Passive mode: kerchunks logged, no warning played"
-                    log_kerchunk_stats "$avg_duration_s" "$CONSECUTIVE" "no-passive" "kerchunk"
-                    CONSECUTIVE=0  # Reset after threshold in passive mode too
-                fi
-            else
-                log_kerchunk_stats "$avg_duration_s" "$CONSECUTIVE" "no" "kerchunk"
-            fi
-        else
-            # Normal transmission (> MAX) - reset consecutive counter
+        elif [[ $avg_duration_ms -gt $kerchunk_max_ms ]]; then
+            # Long enough to be a normal transmission — reset consecutive counter
             log "Normal transmission detected (duration: ${avg_duration_s}s > ${KERCHUNK_MAX_DURATION}s, consecutive reset)"
             log_kerchunk_stats "$avg_duration_s" "0" "no" "normal"
             CONSECUTIVE=0
+        else
+            # In kerchunk duration range but not counted by app_rpt — non-RF event (e.g. node connect), ignore
+            log "Non-RF event ignored (duration: ${avg_duration_s}s, not counted as kerchunk by app_rpt)"
         fi
     fi
 
     # Update state
     LAST_KEYUPS=$current_keyups
     LAST_TXTIME=$current_txtime
+    LAST_KERCHUNKS=$current_kerchunks
     write_state
 }
 
