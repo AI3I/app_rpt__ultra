@@ -122,7 +122,12 @@ initialize_state() {
     [[ -f "${LAST_WARNING_FILE}" ]] || echo "0" > "${LAST_WARNING_FILE}"
     [[ -f "${LAST_KEYUPS_FILE}" ]] || echo "0" > "${LAST_KEYUPS_FILE}"
     [[ -f "${LAST_TXTIME_FILE}" ]] || echo "0" > "${LAST_TXTIME_FILE}"
-    [[ -f "${LAST_KERCHUNKS_FILE}" ]] || echo "0" > "${LAST_KERCHUNKS_FILE}"
+    if [[ ! -f "${LAST_KERCHUNKS_FILE}" ]]; then
+        local cur_kerchunks
+        cur_kerchunks=$(asterisk -rx "rpt stats ${MYNODE}" 2>/dev/null | grep "Kerchunks since system initialization" | awk -F: '{print $2}' | tr -d ' ')
+        [[ "$cur_kerchunks" =~ ^[0-9]+$ ]] || cur_kerchunks="0"
+        echo "$cur_kerchunks" > "${LAST_KERCHUNKS_FILE}"
+    fi
 }
 
 read_state() {
