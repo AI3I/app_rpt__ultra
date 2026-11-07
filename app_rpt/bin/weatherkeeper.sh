@@ -45,6 +45,16 @@ wx_get() {
     fi
 }
 
+# Print one sound path per digit of a decimal fraction ("04" -> 0.ulaw 4.ulaw).
+# The two-digit 00-09 files are time-readback words ("o'clock", "oh four").
+# Usage: mapfile -t arr < <(decimal_digits "04")
+decimal_digits() {
+    local digits="$1" i
+    for (( i=0; i<${#digits}; i++ )); do
+        echo "$SNDMALE/${digits:i:1}.ulaw"
+    done
+}
+
 # Build an audio file from sound segments
 # Usage: build_audio "output_file" "segment1" "segment2" ...
 build_audio() {
@@ -133,6 +143,9 @@ preciprate_left="${preciprate%%.*}"
 preciprate_right="${preciprate#*.}"
 preciptotal_left="${preciptotal%%.*}"
 preciptotal_right="${preciptotal#*.}"
+mapfile -t pressure_frac < <(decimal_digits "$pressure_right")
+mapfile -t preciprate_frac < <(decimal_digits "$preciprate_right")
+mapfile -t preciptotal_frac < <(decimal_digits "$preciptotal_right")
 uv="${uv%%.*}"
 
 # ==============================================================================
@@ -275,7 +288,7 @@ build_audio "$SNDWX/humidity.ulaw" \
 # Barometer: "Current pressure is X point Y"
 build_audio "$SNDWX/pressure.ulaw" \
     "$SNDMALE/current.ulaw" "$SNDMALE/pressure.ulaw" "$SNDMALE/is.ulaw" \
-    "$SNDMALE/${pressure_left}.ulaw" "$SNDMALE/point.ulaw" "$SNDMALE/${pressure_right}.ulaw"
+    "$SNDMALE/${pressure_left}.ulaw" "$SNDMALE/point.ulaw" "${pressure_frac[@]}"
 
 # UV Index: "Currently indicated at X"
 build_audio "$SNDWX/uv.ulaw" \
@@ -286,14 +299,14 @@ build_audio "$SNDWX/uv.ulaw" \
 build_audio "$SNDWX/preciprate.ulaw" \
     "$SNDMALE/current.ulaw" "$SNDMALE/suffix_ly.ulaw" "$SNDMALE/indicated.ulaw" \
     "$SNDMALE/at.ulaw" "$SNDMALE/${preciprate_left}.ulaw" "$SNDMALE/point.ulaw" \
-    "$SNDMALE/${preciprate_right}.ulaw" "$SNDMALE/inch.ulaw" "$SNDMALE/suffix_s.ulaw" \
+    "${preciprate_frac[@]}" "$SNDMALE/inch.ulaw" "$SNDMALE/suffix_s.ulaw" \
     "$SNDMALE/per.ulaw" "$SNDMALE/hour.ulaw"
 
 # Precipitation Total: "Currently indicated at X point Y inches"
 build_audio "$SNDWX/preciptotal.ulaw" \
     "$SNDMALE/current.ulaw" "$SNDMALE/suffix_ly.ulaw" "$SNDMALE/indicated.ulaw" \
     "$SNDMALE/at.ulaw" "$SNDMALE/${preciptotal_left}.ulaw" "$SNDMALE/point.ulaw" \
-    "$SNDMALE/${preciptotal_right}.ulaw" "$SNDMALE/inch.ulaw" "$SNDMALE/suffix_s.ulaw"
+    "${preciptotal_frac[@]}" "$SNDMALE/inch.ulaw" "$SNDMALE/suffix_s.ulaw"
 
 # Temperature: "Current temperature is [minus] X degrees"
 if [[ $temp -lt 0 ]]; then
