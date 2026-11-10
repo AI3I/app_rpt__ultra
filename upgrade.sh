@@ -491,6 +491,28 @@ migrate_sounds_layout() {
     log_success "Sounds migrated to $AST_SOUNDS_RP"
 }
 
+# Keep a copy of this release in $INSTALL_BASE/src.  Child nodes with
+# AUTOUPGRADE=1 pull it from their hub (configkeeper.sh) and run src/upgrade.sh,
+# which needs the full tree (app_rpt/, VERSION, ...), not just util/.
+stage_release() {
+    local src_dir="$INSTALL_BASE/src"
+    if [[ "$(readlink -f "$REPO_DIR")" == "$(readlink -f "$src_dir")" ]]; then
+        return 0
+    fi
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY RUN] Would stage release in $src_dir"
+        return 0
+    fi
+    log_info "Staging release in $src_dir for child node auto-upgrade..."
+    mkdir -p "$src_dir"
+    if rsync -a --delete --exclude=.git "$REPO_DIR/" "$src_dir/"; then
+        chown -R asterisk:asterisk "$src_dir"
+        log_success "Release staged in $src_dir"
+    else
+        log_warn "Could not stage $src_dir — child auto-upgrade from this hub will be skipped"
+    fi
+}
+
 # ==============================================================================
 #    Directory Structure
 # ==============================================================================
@@ -1136,6 +1158,10 @@ main() {
 
     # Step 6: Update version
     update_version_file
+    echo ""
+
+    # Step 7: Stage this release for child nodes' auto-upgrade
+    stage_release
     echo ""
 
     set -e

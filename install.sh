@@ -491,6 +491,27 @@ create_directories() {
     print_success "Directories created"
 }
 
+# Keep a copy of this release in $DEST_DIR/src.  Child nodes with AUTOUPGRADE=1
+# pull it from their hub (configkeeper.sh) and run src/upgrade.sh, which needs
+# the full tree (app_rpt/, VERSION, ...), not just the util/ scripts.
+stage_release() {
+    local src_dir="$DEST_DIR/src"
+    if [[ "$(readlink -f "$SCRIPT_DIR")" == "$(readlink -f "$src_dir")" ]]; then
+        return 0
+    fi
+    if ! command -v rsync &>/dev/null; then
+        print_info "rsync not installed — not staging $src_dir (child auto-upgrade needs it)"
+        return 0
+    fi
+    print_info "Staging release in $src_dir for child node auto-upgrade"
+    mkdir -p "$src_dir"
+    if rsync -a --delete --exclude=.git "$SCRIPT_DIR/" "$src_dir/"; then
+        chown -R asterisk:asterisk "$src_dir"
+    else
+        print_info "Could not stage $src_dir — child auto-upgrade from this hub will be skipped"
+    fi
+}
+
 setup_sound_symlinks() {
     print_step "Setting Up Sound Symlinks"
 
@@ -954,6 +975,7 @@ main() {
     install_asterisk_configs
     generate_voice_id
     install_crontab
+    stage_release
     set_permissions
     run_initial_setup
 

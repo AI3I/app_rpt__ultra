@@ -21,64 +21,95 @@
 set -euo pipefail
 source "%%BASEDIR%%/bin/common.sh"
 
-# Auto-upgrade detection for child nodes
-# Only runs on child nodes (FETCHLOCAL=1) when AUTOUPGRADE=1
-if [[ "${FETCHLOCAL:-0}" == "1" ]] && [[ "${AUTOUPGRADE:-0}" == "1" ]]; then
-    # Get hub's version (use $BASEDIR which is set after placeholder replacement)
-    hub_version=$(ssh "${FETCHPOINT}" "cat ${BASEDIR}/VERSION 2>/dev/null" || echo "unknown")
+# Every hub connection runs as root (sudo) so it uses root's keys, never prompts,
+# and gives up instead of hanging cron when the hub is unreachable.
+ssh_cmd="ssh -o BatchMode=yes -o ConnectTimeout=15"
+failures=0
 
-    # Get local version
+# Pull one file from the hub.  A failure is logged and counted, and the
+# remaining steps still run.
+pull_file() {
+    local src="$1" dest="$2"
+    if ! sudo rsync -az -e "$ssh_cmd" "${FETCHPOINT}:${src}" "$dest"; then
+        log_error "Failed to sync ${src} from ${FETCHPOINT}"
+        failures=$((failures + 1))
+    fi
+}
+
+# Mirror one directory from the hub (removes local files the hub no longer has).
+pull_dir() {
+    local src="$1" dest="$2"
+    if ! sudo rsync -azr --delete -e "$ssh_cmd" "${FETCHPOINT}:${src}/" "${dest}/"; then
+        log_error "Failed to sync ${src}/ from ${FETCHPOINT}"
+        failures=$((failures + 1))
+    fi
+}
+
+# Auto-upgrade detection for child nodes
+# Only runs on child nodes (FETCHLOCAL=1) when AUTOUPGRADE=1.  The hub stages a
+# full copy of the release in ${BASEDIR}/src (upgrade.sh/install.sh do this);
+# upgrade.sh needs that tree, not just the util/ scripts.
+if [[ "${FETCHLOCAL:-0}" == "1" ]] && [[ "${AUTOUPGRADE:-0}" == "1" ]]; then
+    hub_version=$(sudo $ssh_cmd "${FETCHPOINT}" "cat ${BASEDIR}/VERSION" 2>/dev/null || echo "unknown")
     local_version=$(cat "${BASEDIR}/VERSION" 2>/dev/null || echo "unknown")
 
-    # If versions differ, auto-upgrade
-    if [[ "$hub_version" != "unknown" ]] && [[ "$local_version" != "unknown" ]] && [[ "$hub_version" != "$local_version" ]]; then
-        log "Hub version ($hub_version) differs from local ($local_version)"
-        log "Auto-upgrading child node..."
-
-        # Sync util directory first to get latest upgrade.sh
-        sudo rsync -azr --delete "${FETCHPOINT}:${UTILDIR}/" "${UTILDIR}" 2>&1 || log_error "Failed to sync util directory"
-
-        # Run upgrade
-        if [[ -x "${BASEDIR}/util/upgrade.sh" ]]; then
-            log "Running upgrade.sh --force --auto-yes"
-            sudo "${BASEDIR}/util/upgrade.sh" --force --auto-yes >>/opt/app_rpt/log/app_rpt.log 2>&1
-            if [[ $? -eq 0 ]]; then
-                log "Auto-upgrade completed successfully (v$local_version -> v$hub_version)"
-            else
-                log_error "Auto-upgrade failed, check /opt/app_rpt/log/app_rpt.log"
-            fi
+    if [[ "$hub_version" == "unknown" ]]; then
+        log_error "Could not read ${BASEDIR}/VERSION on ${FETCHPOINT}; auto-upgrade check skipped"
+    elif [[ "$local_version" != "unknown" ]] && [[ "$hub_version" != "$local_version" ]]; then
+        log "Hub version ($hub_version) differs from local ($local_version); auto-upgrading"
+        if ! sudo rsync -azr --delete -e "$ssh_cmd" "${FETCHPOINT}:${BASEDIR}/src/" "${BASEDIR}/src/"; then
+            log_error "Could not fetch ${BASEDIR}/src from ${FETCHPOINT} (run upgrade.sh on the hub to stage it); auto-upgrade skipped"
+            failures=$((failures + 1))
         else
-            log_error "upgrade.sh not found or not executable at ${BASEDIR}/util/upgrade.sh"
+            rc=0
+            sudo bash "${BASEDIR}/src/upgrade.sh" --force --auto-yes >>"$LOG_FILE" 2>&1 || rc=$?
+            if [[ $rc -eq 0 ]]; then
+                log "Auto-upgrade completed (v$local_version -> v$hub_version)"
+            else
+                log_error "Auto-upgrade v$local_version -> v$hub_version failed (upgrade.sh exit $rc); continuing with config sync"
+                failures=$((failures + 1))
+            fi
         fi
     fi
 fi
 
 # Update local node master configuration file
-sudo rsync -az "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/config.ini" "${BASEDIR}/config.ini"
+pull_file "${BACKUPDIR}/${MYNODE}/config.ini" "${BASEDIR}/config.ini"
 sleep 2
 
 # Replace configuration files with newer version, if necessary
-sudo rsync -az "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/rpt.conf" /etc/asterisk/rpt.conf
-sudo rsync -az "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/manager.conf" /etc/asterisk/manager.conf
-sudo rsync -az "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/extensions.conf" /etc/asterisk/custom/extensions.conf
-sudo rsync -az "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/allmon3.ini" /etc/allmon3/allmon3.ini
+pull_file "${BACKUPDIR}/${MYNODE}/rpt.conf" /etc/asterisk/rpt.conf
+pull_file "${BACKUPDIR}/${MYNODE}/manager.conf" /etc/asterisk/manager.conf
+pull_file "${BACKUPDIR}/${MYNODE}/extensions.conf" /etc/asterisk/custom/extensions.conf
+if [[ -d /etc/allmon3 ]]; then
+    pull_file "${BACKUPDIR}/${MYNODE}/allmon3.ini" /etc/allmon3/allmon3.ini
+fi
 
 # Update scripts from bin directory
-sudo rsync -azr --delete "${FETCHPOINT}:${BINDIR}/" "${BINDIR}"
+pull_dir "${BINDIR}" "${BINDIR}"
 
-# Update utility scripts (install, upgrade, repair, uninstall)
-sudo rsync -azr --delete "${FETCHPOINT}:${UTILDIR}/" "${UTILDIR}"
+# Update utility scripts (install, upgrade, repair, uninstall, migrate-lang)
+pull_dir "${UTILDIR}" "${UTILDIR}"
 
 # Update sound files
-sudo rsync -azr --delete "${FETCHPOINT}:${SNDNODES}/" "${SNDNODES}"
-sudo rsync -azr --delete "${FETCHPOINT}:${SNDRPT}/" "${SNDRPT}"
-sudo rsync -azr --delete "${FETCHPOINT}:${BACKUPDIR}/${MYNODE}/sounds/ids/" "${SNDID}"
+pull_dir "${SNDNODES}" "${SNDNODES}"
+pull_dir "${SNDRPT}" "${SNDRPT}"
+# Recorded IDs are copied, never mirrored: an empty or missing ids/ in the hub's
+# backup must not delete the IDs this node transmits.
+pull_file "${BACKUPDIR}/${MYNODE}/sounds/ids/" "${SNDID}/"
 
-# Reload configuration changes for Asterisk
+# Reload even after partial failures: files that did sync must take effect so the
+# running config matches what is on disk.
 sleep 5
-sudo asterisk -rx "module reload"
+sudo asterisk -rx "module reload" || log_error "Asterisk module reload failed"
+if [[ -d /etc/allmon3 ]]; then
+    sudo systemctl reload allmon3 || log_error "allmon3 reload failed"
+fi
 
-# Reload configuration changes for allmon3
-sudo systemctl reload allmon3
+if [[ $failures -gt 0 ]]; then
+    log_error "Config sync from ${FETCHPOINT} finished with $failures failed step(s)"
+    exit 1
+fi
+log "Config sync from ${FETCHPOINT} complete"
 
 ###VERSION=2.0.8
