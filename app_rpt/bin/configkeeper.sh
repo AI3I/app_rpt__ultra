@@ -21,6 +21,13 @@
 set -euo pipefail
 source "%%BASEDIR%%/bin/common.sh"
 
+# Runs hourly from the rpt.conf scheduler (macro 5010 -> function C5010) on
+# every node.  Only child nodes (FETCHLOCAL=1) pull from a hub; on a hub this
+# would copy its own backup config.ini over the live one.
+if [[ "${FETCHLOCAL:-0}" != "1" ]]; then
+    exit 0
+fi
+
 # Every hub connection runs as root (sudo) so it uses root's keys, never prompts,
 # and gives up instead of hanging cron when the hub is unreachable.
 ssh_cmd="ssh -o BatchMode=yes -o ConnectTimeout=15"

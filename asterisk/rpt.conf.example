@@ -80,6 +80,7 @@ archivedir=/opt/asterisk
 ; Routine Schedules
 2002=30 06 * * *                                                                          ; Daytime Operations
 2003=30 22 * * *                                                                          ; Nighttime Operations
+5010=05 * * * *                                                                           ; Sync configuration from hub (child nodes only; hubs skip)
 
 [macro]
 ; Startup Macro
@@ -97,6 +98,9 @@ archivedir=/opt/asterisk
 2008=*C2008#                                                                              ; Net Operations
 2009=*C2009#                                                                              ; Long Tone Zero (LiTZ) Alert
 2010=*C2010#                                                                              ; Grandfather Clock
+
+; System Macros
+5010=*C5010#                                                                              ; Sync configuration from hub (configkeeper.sh)
 
 [control-states]
 ; rptena   Repeater Enable
@@ -374,5 +378,6 @@ C5006=cmd,sudo /opt/app_rpt/bin/restart.sh wlan                                 
 C5007=cmd,sudo /opt/app_rpt/bin/restart.sh wireguard                                      ; Restart WireGuard VPN
 C5008=cmd,sudo /opt/app_rpt/bin/restart.sh openvpn                                        ; Restart OpenVPN
 C5009=cmd,sudo /opt/app_rpt/bin/wireless.sh                                               ; Readback wireless network statistics
+C5010=cmd,sudo /opt/app_rpt/bin/configkeeper.sh                                           ; Sync configuration from hub (child nodes)
 
 ;;;EDIT: Tue Dec 31 2025
