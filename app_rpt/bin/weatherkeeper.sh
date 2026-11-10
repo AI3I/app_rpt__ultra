@@ -136,13 +136,18 @@ negwindchill="${windchill#-}"
 negheatindex="${heatindex#-}"
 negdewpt="${dewpt#-}"
 
-# Split decimal values
+# Split decimal values.  Weather Underground sends whole numbers without a
+# decimal point (30, not 30.0); "${x#*.}" would then return the whole value
+# and read it back again as the fraction.
+fraction_of() {
+    if [[ "$1" == *.* ]]; then echo "${1#*.}"; else echo "0"; fi
+}
 pressure_left="${pressure%%.*}"
-pressure_right="${pressure#*.}"
+pressure_right=$(fraction_of "$pressure")
 preciprate_left="${preciprate%%.*}"
-preciprate_right="${preciprate#*.}"
+preciprate_right=$(fraction_of "$preciprate")
 preciptotal_left="${preciptotal%%.*}"
-preciptotal_right="${preciptotal#*.}"
+preciptotal_right=$(fraction_of "$preciptotal")
 mapfile -t pressure_frac < <(decimal_digits "$pressure_right")
 mapfile -t preciprate_frac < <(decimal_digits "$preciprate_right")
 mapfile -t preciptotal_frac < <(decimal_digits "$preciptotal_right")
