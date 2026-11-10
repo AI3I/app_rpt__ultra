@@ -33,7 +33,7 @@ source "%%BASEDIR%%/bin/common.sh"
 #            98     : cmdmode
 #            99     : functcomplete
 
-if [[ -z "$1" ]]; then
+if [[ -z "${1:-}" ]]; then
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"
     exit 1
 fi
@@ -49,9 +49,11 @@ elif [[ "$ct" == "97" ]]; then
     tone=remotetx
 elif [[ "$ct" == "96" ]]; then
     tone=remotemon
-elif [[ "$ct" -le 95 ]]; then
+elif [[ "$ct" =~ ^[0-9]{2}$ ]] && (( 10#$ct >= 1 && 10#$ct <= 95 )); then
+    # 10# forces base 10: bash reads 08 and 09 as invalid octal otherwise
     tone="ct${ct}"
 else
+    asterisk -rx "rpt localplay $MYNODE rpt/program_error"
     exit 1
 fi
 
@@ -76,10 +78,13 @@ elif [[ "$type" == "B" ]]; then
     exit 0
 elif [[ "$type" == "A" ]]; then
     rewrite=$(echo "$1" | cut -s -dA -f2)
-    myword=$(grep "^${rewrite} " "$VOCAB" 2>/dev/null | cut -d' ' -f2 || true)
-    if [[ -n "$myword" && -f "${SOUNDS}/${myword}" ]]; then
-        cp "${SOUNDS}/${myword}" "${SNDCST}/ct${ct}.ulaw"
+    # vocabulary.txt holds absolute paths (e.g. /opt/app_rpt/sounds/_female/1.ulaw)
+    myword=$(grep "^${rewrite} " "$VOCAB" 2>/dev/null | head -1 | cut -d' ' -f2 || true)
+    if [[ -z "$myword" || ! -f "$myword" ]]; then
+        asterisk -rx "rpt localplay $MYNODE rpt/program_error"
+        exit 1
     fi
+    cp "$myword" "${SNDCST}/ct${ct}.ulaw"
     sed -i "s/^${tone}=.*$/${tone}=custom\/ct${ct}/g" "$RPTCONF"
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_t"
     sleep 3
