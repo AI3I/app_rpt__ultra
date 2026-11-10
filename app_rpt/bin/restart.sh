@@ -21,7 +21,7 @@
 source "%%BASEDIR%%/bin/common.sh"
 set -euo pipefail
 
-case "$1" in
+case "${1:-}" in
 network) # Network Restart
     sleep 2
     asterisk -rx "rpt localplay $MYNODE rpt/start_internet"

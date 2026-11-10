@@ -23,7 +23,7 @@ set -euo pipefail
 
 #    PURPOSE:  Read messages from table (as defined in messagetable.txt).
 
-if [[ -z "$1" ]]; then
+if [[ ! "${1:-}" =~ ^[0-9]{2}$ ]]; then
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"
     exit 1
 fi
@@ -34,8 +34,8 @@ if [[ "$1" == "00" ]]; then
     exit 0
 fi
 
-# Use grep -F for fixed string matching to avoid regex injection
-msgid=$(grep -F "$1 " "$MSGTBL" 2>/dev/null | head -1 | cut -d' ' -f2 || true)
+# Exact match on the slot column (a substring match let "1" hit "01 ...")
+msgid=$(awk -v slot="$1" '$1 == slot { print $2; exit }' "$MSGTBL" 2>/dev/null || true)
 
 if [[ -n "$msgid" ]]; then
     asterisk -rx "rpt localplay $MYNODE $msgid"

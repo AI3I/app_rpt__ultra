@@ -420,7 +420,7 @@ check_directory_structure() {
     else
         log_warn "chan_dahdi.conf: language= not set (sounds/rp/ will not be used)"
         ask_repair "Add language=rp to chan_dahdi.conf" \
-            "sed -i 's/^;language=en/language=rp/' '$dahdi_conf' || sed -i '/^\[general\]/a language=rp' '$dahdi_conf'"
+            "if grep -q '^;language=en' '$dahdi_conf'; then sed -i 's/^;language=en/language=rp/' '$dahdi_conf'; else sed -i '/^\[general\]/a language=rp' '$dahdi_conf'; fi"
     fi
 }
 

@@ -44,7 +44,10 @@ if [[ "$FETCHLOCAL" == "1" ]]; then
         log_error "RECORDDIR or FETCHPOINT not set for rsync"
         exit 1
     fi
-    if ! rsync -azr --delete "${RECORDDIR}/${MYNODE}/" "${FETCHPOINT}:${RECORDDIR}/${MYNODE}/" 2>/dev/null; then
+    # No --delete: the hub keeps its copy until its own RETENTION purge, so an
+    # empty or reimaged child can't wipe the hub's archive of its recordings.
+    if ! rsync -az -e "ssh -o BatchMode=yes -o ConnectTimeout=15" \
+        "${RECORDDIR}/${MYNODE}/" "${FETCHPOINT}:${RECORDDIR}/${MYNODE}/" 2>/dev/null; then
         log_error "Failed to upload recordings to ${FETCHPOINT}"
         exit 1
     fi

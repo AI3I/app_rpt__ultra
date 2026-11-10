@@ -35,23 +35,29 @@ build_time_audio() {
     hour=$(date +%l | tr -d ' ')
     local mins
     mins=$(date +%M)
+    # Build under a temporary name and swap it in, so a failed or in-progress
+    # build is never what gets played
+    local tmp="$SNDRPT/current_time.ulaw.tmp.$$"
 
     if [[ -n "$extra" ]]; then
         if ! cat "$SNDFEMALE/${greeting}.ulaw" "$SNDFEMALE/pause.ulaw" \
             "$SNDFEMALE/the_time_is.ulaw" "$SNDFEMALE/${hour}.ulaw" \
             "$SNDFEMALE/${mins}.ulaw" "$SNDFEMALE/${ampm}.ulaw" \
-            "$SNDFEMALE/pause.ulaw" "$extra" > "$SNDRPT/current_time.ulaw" 2>/dev/null; then
+            "$SNDFEMALE/pause.ulaw" "$extra" > "$tmp" 2>/dev/null; then
+            rm -f "$tmp"
             log_error "Failed to build time audio - missing sound files"
             return 1
         fi
     else
         if ! cat "$SNDFEMALE/${greeting}.ulaw" "$SNDFEMALE/pause.ulaw" \
             "$SNDFEMALE/the_time_is.ulaw" "$SNDFEMALE/${hour}.ulaw" \
-            "$SNDFEMALE/${mins}.ulaw" "$SNDFEMALE/${ampm}.ulaw" > "$SNDRPT/current_time.ulaw" 2>/dev/null; then
+            "$SNDFEMALE/${mins}.ulaw" "$SNDFEMALE/${ampm}.ulaw" > "$tmp" 2>/dev/null; then
+            rm -f "$tmp"
             log_error "Failed to build time audio - missing sound files"
             return 1
         fi
     fi
+    mv -f "$tmp" "$SNDRPT/current_time.ulaw"
 }
 
 # ==============================================================================
