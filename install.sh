@@ -600,6 +600,11 @@ install_scripts() {
         print_warning "kerchunkd.service not found in repo — skipping systemd install"
     fi
 
+    if [[ -f "$SCRIPT_DIR/app_rpt__ultra.logrotate" ]]; then
+        install -o root -g root -m 644 "$SCRIPT_DIR/app_rpt__ultra.logrotate" /etc/logrotate.d/app_rpt__ultra
+        print_success "Log rotation installed: /etc/logrotate.d/app_rpt__ultra"
+    fi
+
     print_success "Scripts installed"
 }
 

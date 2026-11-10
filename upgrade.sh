@@ -712,21 +712,27 @@ install_scripts() {
     if [[ "$DRY_RUN" == false ]]; then
         if [[ -f "$REPO_DIR/kerchunkd.service" ]]; then
             log_info "Updating kerchunkd systemd service..."
-            local kerchunkd_was_active=false
-            systemctl is-active --quiet kerchunkd 2>/dev/null && kerchunkd_was_active=true
             cp "$REPO_DIR/kerchunkd.service" /etc/systemd/system/kerchunkd.service
             systemctl daemon-reload
-            if [[ "$kerchunkd_was_active" == true ]]; then
+            # Restart whenever enabled: a daemon stuck crash-looping (or stopped
+            # by the start limit) must pick up the new script too
+            if systemctl is-enabled --quiet kerchunkd 2>/dev/null; then
+                systemctl reset-failed kerchunkd 2>/dev/null || true
                 systemctl restart kerchunkd
                 log_success "kerchunkd service updated and restarted"
             else
-                log_success "kerchunkd service updated (was not running)"
+                log_success "kerchunkd service updated (not enabled)"
             fi
         else
             log_info "kerchunkd.service not found in repo — skipping systemd update"
         fi
+
+        if [[ -f "$REPO_DIR/app_rpt__ultra.logrotate" ]]; then
+            install -o root -g root -m 644 "$REPO_DIR/app_rpt__ultra.logrotate" /etc/logrotate.d/app_rpt__ultra
+            log_success "Log rotation installed: /etc/logrotate.d/app_rpt__ultra"
+        fi
     else
-        log_info "[DRY RUN] Would update kerchunkd.service and reload systemd"
+        log_info "[DRY RUN] Would update kerchunkd.service, reload systemd and install log rotation"
     fi
 
     # Install new config.ini

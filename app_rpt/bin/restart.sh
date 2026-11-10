@@ -29,7 +29,7 @@ network) # Network Restart
     systemctl restart NetworkManager
     exit 0
     ;;
-lan) # Wireline Interface Restart
+lan|eth0) # Wireline Interface Restart (eth0: name used by existing rpt.conf files)
     if [[ -z "${landevice:-}" ]]; then
         log_error "landevice not configured"
         asterisk -rx "rpt localplay $MYNODE rpt/program_error"
@@ -41,7 +41,7 @@ lan) # Wireline Interface Restart
     ip link set "$landevice" up
     exit 0
     ;;
-wlan) # Wireless Interface Restart
+wlan|wlan0) # Wireless Interface Restart (wlan0: name used by existing rpt.conf files)
     if [[ -z "${wlandevice:-}" ]]; then
         log_error "wlandevice not configured"
         asterisk -rx "rpt localplay $MYNODE rpt/program_error"

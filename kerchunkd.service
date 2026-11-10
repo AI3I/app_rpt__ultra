@@ -3,6 +3,10 @@ Description=app_rpt__ultra Kerchunk Detection Daemon
 Documentation=https://github.com/AI3I/app_rpt__ultra
 After=asterisk.service
 Requires=asterisk.service
+# Give up after 5 failures in 10 minutes instead of restarting forever
+# (a crash loop restarted every 10s and flooded app_rpt.log)
+StartLimitIntervalSec=600
+StartLimitBurst=5
 
 [Service]
 Type=simple

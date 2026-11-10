@@ -1,0 +1,14 @@
+# Installed to /etc/logrotate.d/app_rpt__ultra by install.sh / upgrade.sh.
+# Scripts and kerchunkd append to these files, so copytruncate keeps them
+# writing to the same file.  "su root asterisk" is required because the log
+# directory is group-writable by asterisk.
+/opt/app_rpt/log/*.log {
+    su root asterisk
+    weekly
+    rotate 8
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+}
