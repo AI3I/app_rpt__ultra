@@ -33,6 +33,9 @@ if [[ -z "${1:-}" ]]; then
 fi
 
 idstring="${1:0:2}"
+if [[ "${1:2:1}" != "D" ]]; then
+    die_with_error "Invalid message format: $1 (expected <slot>D<codes>, nothing changed)"
+fi
 rewrite=$(echo "$1" | cut -d'D' -f2 | sed "s/*/ /g")
 cwmsg="${BASEDIR}/lib/cwmsg_${MYNODE}"
 voicemsg="${BASEDIR}/lib/voicemsg_${MYNODE}"
@@ -40,9 +43,16 @@ voicemsg="${BASEDIR}/lib/voicemsg_${MYNODE}"
 if [[ "$idstring" == "00" ]]; then
     : > "$cwmsg"
     for i in $rewrite; do
-        grep "^${i} " "$CWCHARS" 2>/dev/null | cut -d' ' -f2 | tr -d '\n' >> "$cwmsg" || true
+        char=$(grep "^${i} " "$CWCHARS" 2>/dev/null | head -1 | cut -d' ' -f2 || true)
+        if [[ -z "$char" ]]; then
+            die_with_error "Unknown CW character code: $i (CW ID not changed)"
+        fi
+        printf '%s' "$char" >> "$cwmsg"
     done
     cwid=$(cat "$cwmsg")
+    if [[ -z "$cwid" ]]; then
+        die_with_error "No CW characters given (CW ID not changed)"
+    fi
     sed -i "s/^idtalkover=.*$/idtalkover=|i$cwid/g" "$RPTCONF"
     : > "$cwmsg"
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_w_i_d"
@@ -52,12 +62,29 @@ else
     if [[ -z "$msgid" ]]; then
         die_with_error "Invalid message slot: $idstring"
     fi
+    # Resolve every code before touching the slot: a typo must not replace a
+    # transmitted ID or message with silence or a partial phrase.
     : > "$voicemsg"
     for i in $rewrite; do
-        grep "^${i} " "$VOCAB" 2>/dev/null | cut -d' ' -f2 >> "$voicemsg" || true
+        word=$(grep "^${i} " "$VOCAB" 2>/dev/null | head -1 | cut -d' ' -f2 || true)
+        if [[ -z "$word" ]]; then
+            die_with_error "Unknown vocabulary code: $i (slot $idstring not changed)"
+        fi
+        if [[ ! -f "$word" ]]; then
+            die_with_error "Missing sound file for code $i: $word (slot $idstring not changed)"
+        fi
+        echo "$word" >> "$voicemsg"
     done
-    # Read file paths from voicemsg and concatenate them safely
-    xargs -d '\n' cat < "$voicemsg" > "${SOUNDS}/${msgid}.ulaw"
+    if [[ ! -s "$voicemsg" ]]; then
+        die_with_error "No vocabulary codes given (slot $idstring not changed)"
+    fi
+    # Build under a temporary name, then swap it in
+    tmpmsg="${SOUNDS}/${msgid}.ulaw.tmp.$$"
+    if ! xargs -d '\n' cat < "$voicemsg" > "$tmpmsg"; then
+        rm -f "$tmpmsg"
+        die_with_error "Failed to build slot $idstring (not changed)"
+    fi
+    mv -f "$tmpmsg" "${SOUNDS}/${msgid}.ulaw"
     : > "$voicemsg"
     if [[ "$idstring" -le "10" ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/write_i_d"
