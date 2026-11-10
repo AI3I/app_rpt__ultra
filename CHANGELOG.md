@@ -20,6 +20,9 @@ All notable changes to `app_rpt__ultra` are documented here.
 - **`timekeeper.sh`: time clip written in place** — A failed build left a truncated `current_time.ulaw`; it is now built under a temporary name and moved into place.
 - **`msgreader.sh`: loose slot match** — `"1"` matched slot `01`; slots must be two digits and match exactly. `restart.sh`/`msgreader.sh` no longer trip `set -u` when run without an argument.
 - **`repair.sh`: `language=rp` never added to `chan_dahdi.conf`** — The `sed || sed` fallback never ran because `sed` succeeds on no match.
+- **`restart.sh`: `eth0`/`wlan0` rejected** — Deployed `rpt.conf` files call `restart.sh eth0` and `restart.sh wlan0`; only `lan`/`wlan` were accepted, so those restarts played `program_error`. Both names now work.
+- **`kerchunkd.service`: endless restart loop** — A daemon failing at startup was restarted every 10 seconds forever (188,000 restarts and ~17,000 log lines a day on one node). It now stops after 5 failures in 10 minutes, and `upgrade.sh` restarts it whenever the service is enabled so the fixed script is picked up.
+- **No log rotation** — `/opt/app_rpt/log/*.log` grew without limit; `install.sh`/`upgrade.sh` now install `/etc/logrotate.d/app_rpt__ultra` (weekly, 8 kept, compressed).
 - **`upgrade.sh`: settings reset on every upgrade** — `migrate_config` now carries over every non-empty, non-path setting from the existing `config.ini` (previously `AUTOUPGRADE`, ID/tail rotation, `KERCHUNK_*`, CT names and timers were reset to defaults).
 
 ---
