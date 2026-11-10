@@ -364,6 +364,36 @@ detect_network_interfaces() {
 #    Configuration Migration
 # ==============================================================================
 
+# Replace each KEY=value line in the template ($2) with the operator's line from
+# the old config ($1) when the old value is non-empty and the template value is
+# not an absolute path.  Keys only in the old config (removed settings) are
+# dropped; keys only in the template (new settings) keep their defaults.
+carry_over_settings() {
+    local old_config="$1" template="$2"
+    local merged="$template.merged"
+    awk '
+        NR == FNR {
+            if (match($0, /^[A-Za-z_][A-Za-z0-9_]*=/)) {
+                key = substr($0, 1, RLENGTH - 1)
+                val = substr($0, RLENGTH + 1)
+                sub(/[ \t]*#.*$/, "", val)
+                if (val != "") old[key] = $0
+            }
+            next
+        }
+        match($0, /^[A-Za-z_][A-Za-z0-9_]*=/) {
+            key = substr($0, 1, RLENGTH - 1)
+            tval = substr($0, RLENGTH + 1)
+            if ((key in old) && tval !~ /^"?\//) { print old[key]; kept++; next }
+        }
+        { print }
+        END { print kept + 0 > "/dev/stderr" }
+    ' "$old_config" "$template" > "$merged" 2> "$merged.count"
+    mv "$merged" "$template"
+    log_info "Carried over $(cat "$merged.count") existing settings"
+    rm -f "$merged.count"
+}
+
 migrate_config() {
     log_step "Migrating configuration..."
 
@@ -427,20 +457,26 @@ migrate_config() {
         return 3
     fi
 
+    # Carry over every setting the operator has given a value (AUTOUPGRADE,
+    # ID/tail rotation, KERCHUNK_*, CT names, timers, ...).  Paths (template
+    # values starting with /) stay release-managed; empty old values fall
+    # through to the placeholder/detection handling below.
+    carry_over_settings "$CONFIG_FILE" "$temp_config"
+
     # Replace placeholders with user values
     # Values are escaped to prevent special characters (\, /, &) from breaking sed
-    sed -i "s/MYNODE=%MYNODE%/MYNODE=$(escape_sed_replacement "$user_mynode")/g" "$temp_config"
-    sed -i "s/NWSZONE=XXX000/NWSZONE=$(escape_sed_replacement "$user_nwszone")/g" "$temp_config"
-    sed -i "s/WUSTATION=empty/WUSTATION=$(escape_sed_replacement "$user_wustation")/g" "$temp_config"
-    sed -i "s/WUAPIKEY=empty/WUAPIKEY=$(escape_sed_replacement "$user_wuapikey")/g" "$temp_config"
-    sed -i "s/FETCHLOCAL=0/FETCHLOCAL=$(escape_sed_replacement "$user_fetchlocal")/g" "$temp_config"
-    sed -i "s/FETCHPOINT=localhost/FETCHPOINT=$(escape_sed_replacement "$user_fetchpoint")/g" "$temp_config"
-    sed -i "s/RETENTION=60/RETENTION=$(escape_sed_replacement "$user_retention")/g" "$temp_config"
+    sed -i "s/^MYNODE=%MYNODE%[[:space:]]*$/MYNODE=$(escape_sed_replacement "$user_mynode")/g" "$temp_config"
+    sed -i "s/^NWSZONE=XXX000[[:space:]]*$/NWSZONE=$(escape_sed_replacement "$user_nwszone")/g" "$temp_config"
+    sed -i "s/^WUSTATION=empty[[:space:]]*$/WUSTATION=$(escape_sed_replacement "$user_wustation")/g" "$temp_config"
+    sed -i "s/^WUAPIKEY=empty[[:space:]]*$/WUAPIKEY=$(escape_sed_replacement "$user_wuapikey")/g" "$temp_config"
+    sed -i "s/^FETCHLOCAL=0[[:space:]]*$/FETCHLOCAL=$(escape_sed_replacement "$user_fetchlocal")/g" "$temp_config"
+    sed -i "s/^FETCHPOINT=localhost[[:space:]]*$/FETCHPOINT=$(escape_sed_replacement "$user_fetchpoint")/g" "$temp_config"
+    sed -i "s/^RETENTION=60[[:space:]]*$/RETENTION=$(escape_sed_replacement "$user_retention")/g" "$temp_config"
 
     # Update network interface variables
-    sed -i "s/landevice=eth0/landevice=$(escape_sed_replacement "$user_landevice")/g" "$temp_config"
-    sed -i "s/wlandevice=wlan0/wlandevice=$(escape_sed_replacement "$user_wlandevice")/g" "$temp_config"
-    sed -i "s/vpndevice=tun0/vpndevice=$(escape_sed_replacement "$user_vpndevice")/g" "$temp_config"
+    sed -i "s/^landevice=eth0[[:space:]]*$/landevice=$(escape_sed_replacement "$user_landevice")/g" "$temp_config"
+    sed -i "s/^wlandevice=wlan0[[:space:]]*$/wlandevice=$(escape_sed_replacement "$user_wlandevice")/g" "$temp_config"
+    sed -i "s/^vpndevice=tun0[[:space:]]*$/vpndevice=$(escape_sed_replacement "$user_vpndevice")/g" "$temp_config"
 
     # Replace %%BASEDIR%% placeholder
     sed -i "s|%%BASEDIR%%|$INSTALL_BASE|g" "$temp_config"
