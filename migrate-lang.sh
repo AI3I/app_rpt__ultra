@@ -169,8 +169,10 @@ fi
 # ── 8. Reinstall asl3-asterisk for a clean sounds/en/ ────────────────────────
 # With the old symlinks removed, dpkg will now place files in a real sounds/en/ dir.
 info "Step 8: Reinstalling asl3-asterisk to restore clean sounds/en/ ..."
+EN_STATUS="clean Allison Smith  (package-managed, real dir)"
 if ! DEBIAN_FRONTEND=noninteractive apt-get install --reinstall -y asl3-asterisk; then
     info "  apt-get failed — sounds/en/ not restored; rerun: apt-get install --reinstall asl3-asterisk"
+    EN_STATUS="NOT restored (apt-get failed) — rerun: apt-get install --reinstall asl3-asterisk"
 elif [[ -d "$AST_SOUNDS/en" ]] && [[ ! -L "$AST_SOUNDS/en" ]]; then
     count=$(find "$AST_SOUNDS/en" -maxdepth 1 -name "*.ulaw" | wc -l)
     success "  sounds/en/ restored ($count .ulaw files)"
@@ -219,7 +221,7 @@ echo ""
 echo "════════════════════════════════════════════════════════"
 success "Migration complete."
 echo ""
-echo "  sounds/en/  ← clean Allison Smith  (package-managed, real dir)"
+echo "  sounds/en/  ← $EN_STATUS"
 echo "  sounds/rp/  ← $AST_SOUNDS_RP  (real dir, app_rpt__ultra)"
 echo "  $INSTALL_BASE/sounds -> $AST_SOUNDS_RP"
 if [[ -n "${PRESERVE:-}" ]]; then

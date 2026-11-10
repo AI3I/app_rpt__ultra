@@ -33,10 +33,15 @@ fi
 ssh_cmd="ssh -o BatchMode=yes -o ConnectTimeout=15"
 failures=0
 
+# Destinations are resolved to real paths first: /opt/app_rpt/sounds is a
+# symlink (owned by asterisk) to sounds/rp, and rsync running as root refuses
+# to write through a symlink owned by another user.
+
 # Pull one file from the hub.  A failure is logged and counted, and the
 # remaining steps still run.
 pull_file() {
-    local src="$1" dest="$2"
+    local src="$1" dest
+    dest=$(readlink -f "$2" || echo "$2")
     if ! sudo rsync -az -e "$ssh_cmd" "${FETCHPOINT}:${src}" "$dest"; then
         log_error "Failed to sync ${src} from ${FETCHPOINT}"
         failures=$((failures + 1))
@@ -45,7 +50,8 @@ pull_file() {
 
 # Mirror one directory from the hub (removes local files the hub no longer has).
 pull_dir() {
-    local src="$1" dest="$2"
+    local src="$1" dest
+    dest=$(readlink -f "$2" || echo "$2")
     if ! sudo rsync -azr --delete -e "$ssh_cmd" "${FETCHPOINT}:${src}/" "${dest}/"; then
         log_error "Failed to sync ${src}/ from ${FETCHPOINT}"
         failures=$((failures + 1))
