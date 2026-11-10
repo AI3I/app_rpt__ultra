@@ -15,6 +15,11 @@ All notable changes to `app_rpt__ultra` are documented here.
 - **`msgwriter.sh`: a typo could replace an ID with silence** — Unknown vocabulary codes were skipped and `xargs cat` with no input truncated the slot to 0 bytes. Every code is resolved before writing, the slot is built under a temporary name and moved into place, input without the `D` delimiter is rejected, and an empty CW ID is never written.
 - **`ctwriter.sh`: CT slots 08 and 09 could not be programmed** — Bash parsed them as invalid octal. Type A (vocabulary) tones also never copied their sound (path doubled) while `rpt.conf` was still repointed, silencing the tone.
 - **`weatherkeeper.sh`: decimals read as clock words** — Fractions were played with the two-digit `00`–`09` files ("o'clock", "oh four"); each fractional digit is now spoken individually. Whole numbers without a decimal point no longer repeat as the fraction ("thirty point three zero").
+- **`configkeeper.sh` was never run** — `rpt.conf.example` now schedules it hourly (function `C5010`, macro `5010`). It exits immediately on hubs (`FETCHLOCAL` other than `1`), where it would have copied the hub's backup `config.ini` over its live one.
+- **`datadumper.sh`: recordings pushed to the hub with `--delete`** — An empty or reimaged child could wipe the hub's copy of its recordings; the hub's own retention purge now handles cleanup.
+- **`timekeeper.sh`: time clip written in place** — A failed build left a truncated `current_time.ulaw`; it is now built under a temporary name and moved into place.
+- **`msgreader.sh`: loose slot match** — `"1"` matched slot `01`; slots must be two digits and match exactly. `restart.sh`/`msgreader.sh` no longer trip `set -u` when run without an argument.
+- **`repair.sh`: `language=rp` never added to `chan_dahdi.conf`** — The `sed || sed` fallback never ran because `sed` succeeds on no match.
 - **`upgrade.sh`: settings reset on every upgrade** — `migrate_config` now carries over every non-empty, non-path setting from the existing `config.ini` (previously `AUTOUPGRADE`, ID/tail rotation, `KERCHUNK_*`, CT names and timers were reset to defaults).
 
 ---
