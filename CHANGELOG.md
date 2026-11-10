@@ -4,6 +4,21 @@ All notable changes to `app_rpt__ultra` are documented here.
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- **`upgrade.sh`, `install.sh`, `repair.sh`: `rm -rf` of a pre-rp `sounds/` directory** — Replacing a real `/opt/app_rpt/sounds` with a symlink deleted recorded IDs, tails and custom messages. On nodes where `/usr/share/asterisk/sounds` is itself a symlink to `/opt/app_rpt/sounds`, `sounds/rp` lived inside the old directory and was deleted as well. All three now hand the layout change to `migrate-lang.sh`, which never deletes anything.
+- **`migrate-lang.sh`: unsafe on symlinked layouts** — Replaces parent symlinks into the old directory with real directories, removes `en` symlinks by resolved path (trailing-slash or relative targets were previously skipped), refuses if `sounds/rp` would resolve inside the old directory, copies `ids/ tails/ custom/ rpt/ recordings/` plus `voice_id`/`tail_message`, and moves the old directory to `backups/sounds_premigration_<timestamp>/` instead of deleting it. Safe to re-run; installed into `util/`.
+- **`configkeeper.sh`: child auto-upgrade always failed and stopped all syncing** — It ran `util/upgrade.sh`, which can't find the release tree from `util/`; under `set -e` the failure ended the script before any config, script or sound sync. Hubs now stage the release in `${BASEDIR}/src` (`upgrade.sh`, `install.sh`) and children run `src/upgrade.sh`; a failure is logged and the sync continues.
+- **`configkeeper.sh`: one failed `rsync` skipped every later step and the Asterisk reload** — Each sync is guarded and counted; files that did sync are still reloaded, and the script exits 1 if anything failed.
+- **`configkeeper.sh`: hub version check used the asterisk user's SSH keys** — All hub connections now run as root (matching the syncs) with `BatchMode`/`ConnectTimeout`, so cron can't hang on a prompt. Recorded IDs are copied from the hub rather than mirrored with `--delete`.
+- **`msgwriter.sh`: a typo could replace an ID with silence** — Unknown vocabulary codes were skipped and `xargs cat` with no input truncated the slot to 0 bytes. Every code is resolved before writing, the slot is built under a temporary name and moved into place, input without the `D` delimiter is rejected, and an empty CW ID is never written.
+- **`ctwriter.sh`: CT slots 08 and 09 could not be programmed** — Bash parsed them as invalid octal. Type A (vocabulary) tones also never copied their sound (path doubled) while `rpt.conf` was still repointed, silencing the tone.
+- **`weatherkeeper.sh`: decimals read as clock words** — Fractions were played with the two-digit `00`–`09` files ("o'clock", "oh four"); each fractional digit is now spoken individually. Whole numbers without a decimal point no longer repeat as the fraction ("thirty point three zero").
+- **`upgrade.sh`: settings reset on every upgrade** — `migrate_config` now carries over every non-empty, non-path setting from the existing `config.ini` (previously `AUTOUPGRADE`, ID/tail rotation, `KERCHUNK_*`, CT names and timers were reset to defaults).
+
+---
+
 ## [2.0.8] - 2026-04-02
 
 ### Fixed
