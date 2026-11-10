@@ -315,7 +315,6 @@ check_directory_structure() {
         "$INSTALL_BASE/bin"
         "$INSTALL_BASE/lib"
         "$INSTALL_BASE/util"
-        "$INSTALL_BASE/sounds"
         "$INSTALL_BASE/backups"
     )
 
@@ -353,6 +352,19 @@ check_directory_structure() {
         fi
     done
 
+    # A real sounds/ dir is a pre-rp install holding user IDs, tails and custom
+    # messages, possibly with /usr/share/asterisk/sounds symlinked to it.  Only
+    # migrate-lang.sh may change it; never mkdir or relink anything under it here.
+    local sounds_link="$INSTALL_BASE/sounds"
+    if [[ -d "$sounds_link" ]] && [[ ! -L "$sounds_link" ]]; then
+        log_fail "sounds/ is a real directory (pre-rp layout; expected symlink to $AST_SOUNDS_RP)"
+        ask_repair "Migrate sounds to the rp layout with migrate-lang.sh (nothing is deleted)" \
+            "bash '$REPO_DIR/migrate-lang.sh' '$INSTALL_BASE'"
+        if [[ -d "$sounds_link" ]] && [[ ! -L "$sounds_link" ]]; then
+            return 0
+        fi
+    fi
+
     # Check that AST_SOUNDS_RP is a real directory (not a symlink)
     if [[ -d "$AST_SOUNDS_RP" ]] && [[ ! -L "$AST_SOUNDS_RP" ]]; then
         log_pass "Real sounds directory exists: $AST_SOUNDS_RP"
@@ -367,7 +379,6 @@ check_directory_structure() {
     fi
 
     # Check /opt/app_rpt/sounds is a symlink → AST_SOUNDS_RP
-    local sounds_link="$INSTALL_BASE/sounds"
     if [[ -L "$sounds_link" ]] && [[ "$(readlink "$sounds_link")" == "$AST_SOUNDS_RP" ]]; then
         log_pass "sounds symlink correct: $sounds_link -> $AST_SOUNDS_RP"
     elif [[ -L "$sounds_link" ]]; then
@@ -376,10 +387,6 @@ check_directory_structure() {
         log_fail "sounds symlink wrong target: $sounds_link -> $actual (expected $AST_SOUNDS_RP)"
         ask_repair "Fix sounds symlink" \
             "rm -f '$sounds_link' && ln -s '$AST_SOUNDS_RP' '$sounds_link'"
-    elif [[ -d "$sounds_link" ]]; then
-        log_fail "sounds/ is a real directory (expected symlink to $AST_SOUNDS_RP)"
-        ask_repair "Replace with symlink (WARNING: removes real dir)" \
-            "rm -rf '$sounds_link' && ln -s '$AST_SOUNDS_RP' '$sounds_link'"
     else
         log_fail "sounds symlink missing: $sounds_link"
         ask_repair "Create sounds symlink" \

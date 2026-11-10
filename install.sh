@@ -467,15 +467,22 @@ create_directories() {
     mkdir -p /opt/asterisk
     mkdir -p /etc/asterisk/custom
 
+    # An existing pre-rp install keeps user IDs, tails and custom messages in a
+    # real sounds/ dir, sometimes with /usr/share/asterisk/sounds symlinked to it.
+    # Migrate it (nothing is deleted) before creating anything under those paths.
+    if [[ -d "$DEST_DIR/sounds" ]] && [[ ! -L "$DEST_DIR/sounds" ]]; then
+        print_info "Existing real sounds/ dir found — migrating it to $AST_SOUNDS_RP"
+        if ! bash "$SCRIPT_DIR/migrate-lang.sh" "$DEST_DIR"; then
+            print_error "migrate-lang.sh failed; $DEST_DIR/sounds left untouched"
+            exit 1
+        fi
+    fi
+
     # Real sounds directory lives in Asterisk's own hierarchy under language "rp".
     # /opt/app_rpt/sounds is a symlink here so all scripts work unchanged.
     mkdir -p "$AST_SOUNDS_RP"/{ids,rpt,tails,wx,weather,letters,digits,custom}
     mkdir -p "$AST_SOUNDS_RP"/{_male,_female,_sndfx}
 
-    if [[ -d "$DEST_DIR/sounds" ]] && [[ ! -L "$DEST_DIR/sounds" ]]; then
-        print_info "Replacing real sounds/ dir with symlink (old dir removed)"
-        rm -rf "$DEST_DIR/sounds"
-    fi
     if [[ ! -e "$DEST_DIR/sounds" ]]; then
         ln -s "$AST_SOUNDS_RP" "$DEST_DIR/sounds"
         print_success "Created symlink: $DEST_DIR/sounds -> $AST_SOUNDS_RP"
@@ -579,7 +586,7 @@ install_utils() {
     print_step "Installing Utility Scripts"
 
     # Copy utility scripts from repo root to /opt/app_rpt/util/
-    local util_scripts=("install.sh" "upgrade.sh" "repair.sh" "uninstall.sh")
+    local util_scripts=("install.sh" "upgrade.sh" "repair.sh" "uninstall.sh" "migrate-lang.sh")
 
     for script in "${util_scripts[@]}"; do
         if [[ -f "$SCRIPT_DIR/$script" ]]; then

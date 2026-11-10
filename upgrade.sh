@@ -461,6 +461,37 @@ migrate_config() {
 }
 
 # ==============================================================================
+#    Sound Layout Migration
+# ==============================================================================
+
+# Pre-"rp" installs keep sounds in a real /opt/app_rpt/sounds directory, sometimes
+# with /usr/share/asterisk/sounds symlinked to it (so sounds/rp would live INSIDE
+# it).  migrate-lang.sh handles every such layout without deleting anything; run
+# it before any other step touches the sounds paths.
+migrate_sounds_layout() {
+    if [[ -L "$INSTALL_BASE/sounds" ]] || [[ ! -e "$INSTALL_BASE/sounds" ]]; then
+        return 0
+    fi
+
+    log_step "Migrating sounds to the rp layout..."
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY RUN] Would run migrate-lang.sh ($INSTALL_BASE/sounds is a real directory)"
+        return 0
+    fi
+
+    local migrator="$REPO_DIR/migrate-lang.sh"
+    if [[ ! -f "$migrator" ]]; then
+        log_error "$INSTALL_BASE/sounds is a real directory and migrate-lang.sh was not found in $REPO_DIR"
+        return 1
+    fi
+    if ! bash "$migrator" "$INSTALL_BASE" >&2; then
+        log_error "migrate-lang.sh failed; sounds left as they were"
+        return 1
+    fi
+    log_success "Sounds migrated to $AST_SOUNDS_RP"
+}
+
+# ==============================================================================
 #    Directory Structure
 # ==============================================================================
 
@@ -590,7 +621,7 @@ install_scripts() {
     fi
 
     # Copy utility scripts from repo root to /opt/app_rpt/util/
-    local util_scripts=("install.sh" "upgrade.sh" "repair.sh" "uninstall.sh")
+    local util_scripts=("install.sh" "upgrade.sh" "repair.sh" "uninstall.sh" "migrate-lang.sh")
 
     for util_name in "${util_scripts[@]}"; do
         if [[ -f "$REPO_DIR/$util_name" ]]; then
@@ -659,12 +690,12 @@ install_scripts() {
         mkdir -p "$AST_SOUNDS_RP"/{ids,rpt,tails,wx,weather,letters,digits,custom,_male,_female,_sndfx}
         log_success "Real sounds directory: $AST_SOUNDS_RP"
 
-        # /opt/app_rpt/sounds — must be a symlink to AST_SOUNDS_RP
+        # /opt/app_rpt/sounds — must be a symlink to AST_SOUNDS_RP.  A real
+        # directory here was migrated by migrate_sounds_layout before this step;
+        # never delete it (it holds user IDs, tails and custom messages).
         if [[ -d "$INSTALL_BASE/sounds" ]] && [[ ! -L "$INSTALL_BASE/sounds" ]]; then
-            log_warn "sounds/ is a real dir (pre-migration install) — replacing with symlink"
-            rm -rf "$INSTALL_BASE/sounds"
-        fi
-        if [[ ! -e "$INSTALL_BASE/sounds" ]]; then
+            log_error "sounds/ is still a real dir — run migrate-lang.sh; leaving it untouched"
+        elif [[ ! -e "$INSTALL_BASE/sounds" ]]; then
             ln -s "$AST_SOUNDS_RP" "$INSTALL_BASE/sounds"
             log_success "Created symlink: $INSTALL_BASE/sounds -> $AST_SOUNDS_RP"
         elif [[ -L "$INSTALL_BASE/sounds" ]] && [[ "$(readlink "$INSTALL_BASE/sounds")" == "$AST_SOUNDS_RP" ]]; then
@@ -1038,6 +1069,14 @@ main() {
     if [[ $? -ne 0 ]] && [[ "$SKIP_BACKUP" == false ]]; then
         log_error "Backup failed"
         exit 2
+    fi
+    echo ""
+
+    # Step 1.5: Move a pre-rp sounds directory into sounds/rp (before anything
+    # else creates directories under the old paths)
+    if ! migrate_sounds_layout; then
+        log_error "Sound layout migration failed — nothing else was changed"
+        exit 3
     fi
     echo ""
 
