@@ -369,8 +369,10 @@ detect_network_interfaces() {
 # not an absolute path.  Keys only in the old config (removed settings) are
 # dropped; keys only in the template (new settings) keep their defaults.
 carry_over_settings() {
-    local old_config="$1" template="$2"
+    local old_config="$1" template="$2" label="${3:-}"
     local merged="$template.merged"
+    # A deliberately empty old value (e.g. no NWSZONE) is also kept when the
+    # template value is only a placeholder (%MYNODE%, XXX000, empty).
     awk '
         NR == FNR {
             if (match($0, /^[A-Za-z_][A-Za-z0-9_]*=/)) {
@@ -378,20 +380,80 @@ carry_over_settings() {
                 val = substr($0, RLENGTH + 1)
                 sub(/[ \t]*#.*$/, "", val)
                 if (val != "") old[key] = $0
+                else blank[key] = $0
             }
             next
         }
         match($0, /^[A-Za-z_][A-Za-z0-9_]*=/) {
             key = substr($0, 1, RLENGTH - 1)
             tval = substr($0, RLENGTH + 1)
+            sub(/[ \t]*#.*$/, "", tval)
             if ((key in old) && tval !~ /^"?\//) { print old[key]; kept++; next }
+            if ((key in blank) && tval ~ /^(%[A-Z_]+%|XXX000|empty)$/) { print blank[key]; kept++; next }
         }
         { print }
         END { print kept + 0 > "/dev/stderr" }
     ' "$old_config" "$template" > "$merged" 2> "$merged.count"
     mv "$merged" "$template"
-    log_info "Carried over $(cat "$merged.count") existing settings"
+    log_info "Carried over $(cat "$merged.count") existing settings${label:+ ($label)}"
     rm -f "$merged.count"
+}
+
+# Hubs keep each child's config.ini in $BACKUP_BASE/<node>/ and children pull
+# it every hour (configkeeper.sh).  Migrate those copies with the same rules,
+# or each child gets an old-format config back right after its own upgrade.
+migrate_hub_backup_configs() {
+    local backup_dir="$1"
+    local template="$REPO_DIR/app_rpt/config.ini.example"
+    [[ -f "$template" ]] || template="$REPO_DIR/app_rpt/config.ini"
+    local cfg node tmp changed=0 current=0 failed=0
+    local -a cfgs=()
+
+    for cfg in "$BACKUP_BASE"/*/config.ini; do
+        [[ -f "$cfg" ]] || continue
+        node=$(basename "$(dirname "$cfg")")
+        [[ "$node" =~ ^[0-9]+$ ]] && cfgs+=("$cfg")
+    done
+    [[ ${#cfgs[@]} -gt 0 ]] || return 0
+    if [[ ! -f "$template" ]]; then
+        log_warn "No config template in $REPO_DIR; hub backup configs not migrated"
+        return 0
+    fi
+
+    log_step "Migrating hub backup configs (${#cfgs[@]} node(s))..."
+    for cfg in "${cfgs[@]}"; do
+        node=$(basename "$(dirname "$cfg")")
+        # Never guess at a copy that doesn't even load: report it and move on
+        if ! bash -c "set -euo pipefail; source '$cfg'" >/dev/null 2>&1; then
+            log_warn "  $node: existing config does not load cleanly; left unchanged"
+            failed=$((failed + 1))
+            continue
+        fi
+        tmp=$(mktemp "/tmp/config.ini.$node.XXXXXX")
+        cp "$template" "$tmp"
+        carry_over_settings "$cfg" "$tmp" "node $node"
+        sed -i "s|%%BASEDIR%%|$INSTALL_BASE|g; s|###VERSION=.*|###VERSION=$(get_repo_version)|g" "$tmp"
+
+        if ! bash -c "set -euo pipefail; source '$tmp'" >/dev/null 2>&1; then
+            log_warn "  $node: migrated config failed validation; left unchanged"
+            failed=$((failed + 1))
+        elif cmp -s "$cfg" "$tmp"; then
+            current=$((current + 1))
+        elif [[ "$DRY_RUN" == true ]]; then
+            log_info "  [DRY RUN] $node: would migrate $cfg"
+            changed=$((changed + 1))
+        else
+            if [[ -n "$backup_dir" ]]; then
+                mkdir -p "$backup_dir/hub_backups/$node"
+                cp -p "$cfg" "$backup_dir/hub_backups/$node/config.ini"
+            fi
+            install -o asterisk -g asterisk -m 644 "$tmp" "$cfg"
+            log_info "  $node: migrated"
+            changed=$((changed + 1))
+        fi
+        rm -f "$tmp"
+    done
+    log_success "Hub backup configs: $changed migrated, $current already current, $failed left unchanged"
 }
 
 migrate_config() {
@@ -1151,6 +1213,10 @@ main() {
         log_error "Config migration failed"
         exit 3
     fi
+    echo ""
+
+    # Step 2.5: Bring the hub's copies of child configs to the same format
+    migrate_hub_backup_configs "$backup_dir"
     echo ""
 
     # Step 3: Ensure directory structure
