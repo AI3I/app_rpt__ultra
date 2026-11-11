@@ -21,47 +21,66 @@
 source "%%BASEDIR%%/bin/common.sh"
 set -euo pipefail
 
-if [[ "$SEVEREWEATHER" == "1" ]]; then
-    ln -sf "$SOUNDS/${SVWXALERT}.ulaw" "$SOUNDS/tail_message.ulaw"
-    exit 0
-elif [[ "$SEVEREWEATHER" == "2" ]]; then
-    ln -sf "$SOUNDS/${RTWXALERT}.ulaw" "$SOUNDS/tail_message.ulaw"
-    exit 0
-elif [[ "$ENABLETAIL" == "1" ]]; then
-    if [[ "$ROTATETMSG" == "0" ]]; then
-        if [[ "$ENABLETEMP" == "1" ]] && [[ "$ENABLETIME" == "1" ]]; then
-            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tails/tail_message_${TAILMSG}.ulaw")" "$SOUNDS/tail_message.ulaw"
-            exit 0
-        elif [[ "$ENABLETEMP" == "1" ]]; then
-            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tails/tail_message_${TAILMSG}.ulaw")" "$SOUNDS/tail_message.ulaw"
-            exit 0
-        elif [[ "$ENABLETIME" == "1" ]]; then
-            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/tails/tail_message_${TAILMSG}.ulaw")" "$SOUNDS/tail_message.ulaw"
-            exit 0
-        else
-            ln -sf "$SOUNDS/tails/tail_message_${TAILMSG}.ulaw" "$SOUNDS/tail_message.ulaw"
-            exit 0
-        fi
-    elif [[ "$ROTATETMSG" == "1" ]]; then
-        tailchurn=$(shuf -i1-9 -n1) # Randomize Tail Messages 1 through 9
-        if [[ "$ENABLETEMP" == "1" ]] && [[ "$ENABLETIME" == "1" ]]; then
-            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tails/tail_message_${tailchurn}.ulaw")" "$SOUNDS/tail_message.ulaw"
-            exit 0
-        elif [[ "$ENABLETEMP" == "1" ]]; then
-            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TEMPMSG}.ulaw" "$SOUNDS/tails/tail_message_${tailchurn}.ulaw")" "$SOUNDS/tail_message.ulaw"
-            exit 0
-        elif [[ "$ENABLETIME" == "1" ]]; then
-            ln -sf "$(shuf -n 1 -e "$SOUNDS/${TIMEMSG}.ulaw" "$SOUNDS/tails/tail_message_${tailchurn}.ulaw")" "$SOUNDS/tail_message.ulaw"
-            exit 0
-        else
-            ln -sf "$SOUNDS/tails/tail_message_${tailchurn}.ulaw" "$SOUNDS/tail_message.ulaw"
-            exit 0
-        fi
-    else
-        exit 0
+TAILLINK="$SOUNDS/tail_message.ulaw"
+
+# Print one random file from the arguments that actually exists (nothing if
+# none do).  A slot nobody has recorded must never be linked: app_rpt would
+# play it as silence and log "tail_message does not exist".
+pick_existing() {
+    local f
+    local -a have=()
+    for f in "$@"; do
+        [[ -f "$f" ]] && have+=("$f")
+    done
+    if [[ ${#have[@]} -gt 0 ]]; then
+        shuf -n 1 -e "${have[@]}"
     fi
+}
+
+# Point tail_message.ulaw at the chosen file, or remove the link (logging only
+# when it changes, since this runs every minute) when nothing is available.
+set_tail() {
+    if [[ -n "$1" ]]; then
+        ln -sf "$1" "$TAILLINK"
+    elif [[ -L "$TAILLINK" || -e "$TAILLINK" ]]; then
+        rm -f "$TAILLINK"
+        log_error "No tail message recordings available; tail_message removed until one is recorded"
+    fi
+    exit 0
+}
+
+# Severe weather alerts take priority when their recording exists; otherwise
+# fall through to the normal tail rather than going silent.
+if [[ "$SEVEREWEATHER" == "1" ]] && [[ -f "$SOUNDS/${SVWXALERT}.ulaw" ]]; then
+    set_tail "$SOUNDS/${SVWXALERT}.ulaw"
+elif [[ "$SEVEREWEATHER" == "2" ]] && [[ -f "$SOUNDS/${RTWXALERT}.ulaw" ]]; then
+    set_tail "$SOUNDS/${RTWXALERT}.ulaw"
+fi
+
+if [[ "$ENABLETAIL" != "1" ]]; then
+    exit 0
+fi
+
+# Tail message: the configured slot, or a random recorded slot (1-9) when rotating
+if [[ "$ROTATETMSG" == "0" ]]; then
+    tailmsg=$(pick_existing "$SOUNDS/tails/tail_message_${TAILMSG}.ulaw")
+elif [[ "$ROTATETMSG" == "1" ]]; then
+    tailmsg=$(pick_existing "$SOUNDS"/tails/tail_message_{1..9}.ulaw)
 else
     exit 0
+fi
+
+# Time and temperature readbacks share the rotation equally with the tail
+# message, as before; missing files are simply left out.
+candidates=()
+[[ "$ENABLETIME" == "1" ]] && candidates+=("$SOUNDS/${TIMEMSG}.ulaw")
+[[ "$ENABLETEMP" == "1" ]] && candidates+=("$SOUNDS/${TEMPMSG}.ulaw")
+[[ -n "$tailmsg" ]] && candidates+=("$tailmsg")
+
+if [[ ${#candidates[@]} -gt 0 ]]; then
+    set_tail "$(pick_existing "${candidates[@]}")"
+else
+    set_tail ""
 fi
 
 ###VERSION=2.0.8
