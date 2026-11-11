@@ -175,7 +175,8 @@ if [[ $applied -gt 0 ]]; then
     sudo asterisk -rx "module reload" || log_error "Asterisk module reload failed"
 fi
 if [[ $allmon_applied -eq 1 ]]; then
-    sudo systemctl reload allmon3 || log_error "allmon3 reload failed"
+    # restart, not reload: allmon3 only re-reads its node list (allmon3.ini) on start
+    sudo systemctl restart allmon3 || log_error "allmon3 restart failed"
 fi
 
 if [[ $failures -gt 0 ]]; then

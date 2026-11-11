@@ -32,7 +32,7 @@ if ! cat "${SNDMALE}/today.ulaw" \
     "${SNDMALE}/${dow}.ulaw" \
     "${SNDMALE}/${month}.ulaw" \
     "${SNDMALE}/${day}.ulaw" \
-    "${SNDFX}/pause.ulaw" \
+    "${SNDFX}/shortpause.ulaw" \
     "${SNDMALE}/2000.ulaw" \
     "${SNDMALE}/${year}.ulaw" \
     > "${SNDRPT}/current_date.ulaw" 2>/dev/null; then

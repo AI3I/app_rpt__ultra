@@ -45,7 +45,9 @@ wlan)
         asterisk -rx "rpt localplay $MYNODE rpt/program_error"
         exit 1
     fi
-    asterisk -rx "rpt localplay $MYNODE rpt/wlan_ip_address"
+    # No "WLAN IP address" recording exists: "W" + "LAN IP address"
+    asterisk -rx "rpt localplay $MYNODE _male/w"
+    asterisk -rx "rpt localplay $MYNODE rpt/lan_ip_address"
     ip=$(ip addr show "$wlandevice" 2>/dev/null | awk '/inet / {print $2}' | awk 'BEGIN { FS = "/"}  {print $1}')
     sleep 3
     if [[ -z "$ip" ]]; then
