@@ -24,6 +24,7 @@ All notable changes to `app_rpt__ultra` are documented here.
 - **`kerchunkd.service`: endless restart loop** — A daemon failing at startup was restarted every 10 seconds forever (188,000 restarts and ~17,000 log lines a day on one node). It now stops after 5 failures in 10 minutes, and `upgrade.sh` restarts it whenever the service is enabled so the fixed script is picked up.
 - **No log rotation** — `/opt/app_rpt/log/*.log` grew without limit; `install.sh`/`upgrade.sh` now install `/etc/logrotate.d/app_rpt__ultra` (weekly, 8 kept, compressed).
 - **`configkeeper.sh`: sound sync failed on migrated nodes** — rsync 3.5 refuses, as root, to write through the asterisk-owned `/opt/app_rpt/sounds` symlink; destinations are now resolved to real paths first. `migrate-lang.sh` no longer reports a clean `sounds/en/` when the package reinstall failed.
+- **`tailkeeper.sh`: unrecorded tail slots played as silence** — The tail link pointed at `tail_message_N` whether or not it had been recorded. Only existing recordings are used now (time/temperature keep their equal share), a missing severe-weather recording falls back to the normal tail, and with nothing available the link is removed and logged once.
 - **`upgrade.sh`: settings reset on every upgrade** — `migrate_config` now carries over every non-empty, non-path setting from the existing `config.ini` (previously `AUTOUPGRADE`, ID/tail rotation, `KERCHUNK_*`, CT names and timers were reset to defaults).
 
 ---
