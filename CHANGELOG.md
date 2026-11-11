@@ -4,6 +4,25 @@ All notable changes to `app_rpt__ultra` are documented here.
 
 ---
 
+## [2.0.10] - 2026-11-11
+
+Follow-up to 2.0.9 from running auto-upgrade across a live network: a release no longer makes every child re-apply its configuration, upgrades can't rewrite a running script, the version lives in one place, and `rpt.conf.example` now uses the numbering deployed nodes use.
+
+### Changed
+- **`rpt.conf.example` renumbered to the deployed scheme** — State macros `9000`-`9010` → functions `C900`-`C910`; system functions `C9900`-`C9919`; courtesy-tone writers `C60`-`C63`; message writer `C70`; command menus `C93`-`C96`; GPIO `C980`-`C984`; hourly hub sync macro/function `9920`/`C9920`. Net-announcement macros `7101`-`7104` (slots 96-99) added. This also fixes the startup macro (`1000=*509000#`), which called macro 9000 while the example only defined 2000-2010.
+- **Version kept only in `VERSION`** — `###VERSION` markers removed from all scripts and the config template (nothing read them); `upgrade.sh` no longer writes one into `config.ini`; the `upgrade.sh`/`repair.sh` banners show the real version instead of a stale constant.
+- **`msgwriter.sh`: slot 50 is read-only** — Slot 50 is the LiTZ alert system sound; writable slots are 01-49 and 51-59.
+
+### Fixed
+- **`configkeeper.sh`: every release re-applied each child's `config.ini`** — Hub copies are compared on their settings only (comments, blank lines and old version markers are ignored), so a release or a comment edit no longer resets state values and reloads Asterisk. Existing records are converted without a re-apply. A config file with no settings (only comments, or empty) no longer stops the sync, and files are compared by content, so a same-size edit is never missed (previously the apply step could log "Applied" without changing the file).
+- **`upgrade.sh`: auto-upgrade rewrote the running `configkeeper.sh`** — Scripts are written next to their destination and renamed into place, so the script running the upgrade keeps reading its old copy.
+- **`install.sh`: no `/opt/app_rpt/VERSION`** — Fresh installs now record their version; without it a new child never auto-upgraded and a new hub had no version to publish.
+- **`weatherkeeper.sh`: hub fetch could hang** — A child's fetch of the hub's weather data uses `BatchMode` and a connect timeout.
+- **`weatheralert.sh`: generic alert recordings deleted** — Cancelling an alert restores the release's generic `tails/weather_alert`/`tails/severe_weather_alert` recordings instead of deleting them, so slots 60-61 aren't left empty after the first alert.
+- **`upgrade.sh`: wrong `sounds` symlink ignored** — A `/opt/app_rpt/sounds` link pointing anywhere but `sounds/rp` is now reported (fix with `repair.sh`).
+
+---
+
 ## [2.0.9] - 2026-11-11
 
 Hub-and-child operation now works end to end (hourly sync that keeps state changes, auto-upgrade from a hub-staged release, migrated hub backup configs), sounds move to their own `rp` language, and a long list of fixes found while upgrading live nodes. Upgrade with `upgrade.sh`; existing settings are carried over.
