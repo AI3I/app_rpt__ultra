@@ -95,6 +95,7 @@ standard) # Standard Operations
     sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSSTD"
     sleep 15
     sudo asterisk -rx "module reload"
+    log_state_change "standard" "manual"
     ;;
 litzalert) # Long Tone Zero (LiTZ) Alert
     sudo asterisk -rx "rpt fun $MYNODE *8404#"
@@ -123,6 +124,7 @@ severeweather) # Severe Weather Alert
     sudo asterisk -rx "rpt cmd $MYNODE cop 48 !1051/5000"
     sleep 7
     sudo asterisk -rx "rpt localplay $MYNODE rpt/severe_weather_alert"
+    log_state_change "severeweather" "manual"
     ;;
 weatheralert) # Weather Alert
     sed -i "s/^tailmessagetime=.*$/tailmessagetime=$TMTIMEM/g" "$RPTCONF"
@@ -227,6 +229,7 @@ net) # Net
     sudo asterisk -rx "rpt cmd $MYNODE cop 14 $SSNET"
     sleep 15
     sudo asterisk -rx "module reload"
+    log_state_change "net" "manual"
     ;;
 clock) # Grandfather Clock
     sudo asterisk -rx "rpt cmd $MYNODE cop 48 !830+829/450,!0/250,!659+658/450,!0/250,!739+738/450,!0/250,!493+492/450,!0/750,!493+492/450,!0/250,!739+738/450,!0/250,!830+829/450,!0/250,!659+658/450"
