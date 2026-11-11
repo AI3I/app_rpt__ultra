@@ -56,19 +56,26 @@ sudo ./upgrade.sh --auto-yes         # Automatic upgrade (no prompts)
 For distributed systems with a hub and multiple child nodes:
 
 **Hub Node (FETCHLOCAL=0):**
-1. Run `upgrade.sh` on the hub as normal
-2. Child nodes will automatically detect and upgrade (if AUTOUPGRADE=1)
+1. Run `upgrade.sh` on the hub from a checkout of the new release.
+2. The upgrade stages the release in `/opt/app_rpt/src` for child nodes and
+   migrates every `/opt/app_rpt/backups/<node>/config.ini` to the current
+   format (originals are kept in the upgrade backup).
 
 **Child Nodes (FETCHLOCAL=1):**
-- **Automatic Upgrade:** Set `AUTOUPGRADE=1` in `config.ini`
-  - `configkeeper.sh` (runs every 5 minutes via cron) checks hub version
-  - Automatically runs `upgrade.sh --force --auto-yes` when hub version differs
-  - All output logged to `/opt/app_rpt/log/app_rpt.log`
-- **Manual Upgrade:** Keep `AUTOUPGRADE=0` (default)
-  - SSH to each child node and run `upgrade.sh` manually
+- **Automatic Upgrade:** Set `AUTOUPGRADE=1` in the child's `config.ini`
+  (on the hub, in `backups/<node>/config.ini`).
+  - `configkeeper.sh` runs hourly at :05 from the `rpt.conf` scheduler and
+    compares the hub's `/opt/app_rpt/VERSION` with its own.
+  - **It only upgrades when the versions differ**, so bump `VERSION` for every
+    release you deploy to the hub.
+  - It then runs the hub's staged `src/upgrade.sh --force --auto-yes`; output is
+    logged to `/opt/app_rpt/log/app_rpt.log`. A failed upgrade is logged and the
+    rest of the sync continues.
+- **Manual Upgrade:** Keep `AUTOUPGRADE=0` (default) and, on the child:
+  `sudo rsync -a <hub>:/opt/app_rpt/src/ /opt/app_rpt/src/ && sudo bash /opt/app_rpt/src/upgrade.sh --force --auto-yes`
 
 > [!TIP]
-> Enable AUTOUPGRADE on child nodes to automatically propagate upgrades from the hub. This eliminates the need to manually upgrade each child node after upgrading the hub.
+> Enable AUTOUPGRADE on child nodes to propagate upgrades from the hub automatically, and bump `VERSION` with each release so they notice it.
 
 ## System Health & Repair
 ### repair.sh

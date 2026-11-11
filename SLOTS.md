@@ -62,10 +62,10 @@
 ### Weather Alert Messages (60-61)
 | Slot | Filename | Description | Updated By |
 |------|----------|-------------|------------|
-| 60 | weather/wx_severe_alert | Severe weather alert tail message | weatheralert.sh (fallback) |
-| 61 | weather/wx_alert | Routine weather alert tail message | weatheralert.sh (fallback) |
+| 60 | tails/severe_weather_alert | Severe weather alert tail message | weatheralert.sh |
+| 61 | tails/weather_alert | Routine weather alert tail message | weatheralert.sh |
 
-**Editable:** These are fallback messages used when no event-specific message exists.
+**How they're used:** a generic recording ships in `tails/`. While an NWS alert is active, `weatheralert.sh` replaces it with that alert's audio and `tailkeeper.sh` plays it as the tail message; the file is removed when the alert is cancelled. The paths come from `SVWXALERT`/`RTWXALERT` in `config.ini`.
 
 ### Space Weather Alerts (62-69) - RESERVED
 | Slot | Filename | Description | Status |

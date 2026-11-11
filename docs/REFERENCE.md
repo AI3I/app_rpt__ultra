@@ -139,8 +139,8 @@ UV index 6 (MODERATE) - no warning needed
 Geomagnetic storm G2 (MODERATE) - geo-storm alert generated
 ```
 ### configkeeper.sh
-#### CRONTAB: every 5 minutes (child nodes only)
-This script maintains configuration synchronization between hub and child nodes in a distributed architecture.  It syncs scripts, configs, sounds, and can automatically upgrade child nodes when the hub version changes.
+#### RPT.CONF SCHEDULER: hourly at :05 (child nodes only; exits immediately when FETCHLOCAL=0)
+This script keeps a child node in sync with its hub.  It pulls the node's config files from the hub's `backups/<node>/` copies (applied only when a copy changes, so `statekeeper.sh` state changes are kept), mirrors scripts and `rpt/` sounds, copies recorded IDs, and can automatically upgrade the child when the hub's `VERSION` changes.  Asterisk and allmon3 are reloaded only when a config file was applied.  See [Architecture](ARCHITECTURE.md#what-gets-synchronized) for details.
 |Variables|Values|Description & Behaviors (config.ini)|
 |-|-|-|
 |FETCHLOCAL|0 or 1 (_boolean_)|Whether this node pulls from a hub system.<br />_**0**_: standalone or hub node<br />_**1**_: child node (pulls from FETCHPOINT)|

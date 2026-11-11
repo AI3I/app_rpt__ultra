@@ -827,8 +827,8 @@ This gives the system its distinctive, nostalgic voice quality reminiscent of cl
 |57|custom/available_57|Available for Custom Messages|_empty_|
 |58|custom/available_58|Available for Custom Messages|_empty_|
 |59|custom/available_59|Available for Custom Messages|_empty_|
-|60|weather/wx_severe_alert|Severe Weather Alert|"SEVERE WEATHER ALERT"|
-|61|weather/wx_alert|Weather Alert|"WEATHER ALERT"|
+|60|tails/severe_weather_alert|Severe Weather Alert|"SEVERE WEATHER ALERT"|
+|61|tails/weather_alert|Weather Alert|"WEATHER ALERT"|
 |62|weather/space_geomag_minor|Space Weather: Geomag Minor|_auto-generated_|
 |63|weather/space_geomag_moderate|Space Weather: Geomag Moderate|_auto-generated_|
 |64|weather/space_geomag_strong|Space Weather: Geomag Strong|_auto-generated_|

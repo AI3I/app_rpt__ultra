@@ -88,16 +88,16 @@ See [SLOTS.md](SLOTS.md) for complete slot mapping details.
 After upgrading to v2.0.5:
 
 1. **messagetable.txt** - automatically updated by upgrade
-2. **config.ini** - UPDATE these paths:
+2. **config.ini** - weather alert paths: v2.0.5 briefly moved these to
+   `weather/wx_*`; v2.0.6 restored the original paths, which are the current
+   default and match slots 60-61:
    ```ini
-   # OLD:
    SVWXALERT=tails/severe_weather_alert
    RTWXALERT=tails/weather_alert
-
-   # NEW:
-   SVWXALERT=weather/wx_severe_alert
-   RTWXALERT=weather/wx_alert
    ```
+   Upgrades keep whatever value a node already has. Both paths work
+   (`weatheralert.sh` writes the alert audio to whichever is set), but
+   `tails/*` is the supported default.
 
 3. **AllMon3 web.ini** - Update slot references as shown above
 

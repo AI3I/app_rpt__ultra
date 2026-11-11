@@ -404,9 +404,9 @@ AUTOUPGRADE=1                    # Auto-upgrade when hub version changes
 **What happens:**
 - Hub runs `weatherkeeper.sh` every 15 minutes, fetches from WU API
 - Hub stores data in `/opt/app_rpt/lib/wunderground.out`
-- Child nodes run `configkeeper.sh` every 5 minutes
-- `configkeeper.sh` syncs `/opt/app_rpt/lib/` from hub via `rsync`
-- Child nodes use cached weather data (no API calls)
+- On child nodes, `weatherkeeper.sh` (also every 15 minutes) pulls the hub's
+  `wunderground.out` via `rsync` instead of calling the API
+- Child nodes build their announcements from the hub's data (no API calls)
 - All nodes announce same weather data
 - API rate limits: 1 request serves 10 nodes!
 

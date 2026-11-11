@@ -336,14 +336,15 @@ The hub/child architecture allows you to manage multiple repeater sites from a c
 └──────────────┬──────────────┬───────────────┬──────────────┘
                │              │               │
                │ rsync        │ rsync         │ rsync
-               │ every 5min   │ every 5min    │ every 5min
+               │ hourly (:05) │ hourly (:05)  │ hourly (:05)
                ▼              ▼               ▼
        ┌───────────┐  ┌───────────┐  ┌───────────┐
        │  CHILD 1  │  │  CHILD 2  │  │  CHILD 3  │
        │ (Node A)  │  │ (Node B)  │  │ (Node C)  │
        │           │  │           │  │           │
        │ Syncs:    │  │ Syncs:    │  │ Syncs:    │
-       │ • Weather │  │ • Weather │  │ • Weather │
+       │ • Configs │  │ • Configs │  │ • Configs │
+       │ • Scripts │  │ • Scripts │  │ • Scripts │
        │ • Sounds  │  │ • Sounds  │  │ • Sounds  │
        │ • Version │  │ • Version │  │ • Version │
        └───────────┘  └───────────┘  └───────────┘
@@ -351,119 +352,78 @@ The hub/child architecture allows you to manage multiple repeater sites from a c
 
 #### What Gets Synchronized
 
-`configkeeper.sh` (runs every 5 minutes on child nodes) syncs:
+`configkeeper.sh` runs **hourly at :05** on every node from the `rpt.conf`
+scheduler (a `[schedule]` entry calls a macro, which runs the `cmd` function:
+`5010`/`C5010` in `rpt.conf.example`; deployed nodes use `9920`/`C9920`). It
+exits immediately unless `FETCHLOCAL=1`, so on a hub it does nothing. A child
+pulls from its hub (`FETCHPOINT`):
 
-| Path | Content | Purpose |
-|------|---------|---------|
-| `/opt/app_rpt/lib/wunderground.out` | Weather data (JSON) | Cached Weather Underground API response |
-| `/opt/app_rpt/sounds/wx/` | Weather audio files | Temperature, wind, pressure, etc. (TMS5220) |
-| `/opt/app_rpt/sounds/weather/` | Space weather files | Geomagnetic storm alerts (G/S/R scales) |
-| `/opt/app_rpt/sounds/tails/` | Tail messages | Custom announcements, weather alerts |
-| `/opt/app_rpt/sounds/ids/` | Voice IDs (optional) | Synchronized callsign IDs |
-| Version check | `common.sh` version | Triggers auto-upgrade when hub updates |
+| Hub source | Child destination | How |
+|------------|-------------------|-----|
+| `backups/<node>/config.ini` | `/opt/app_rpt/config.ini` | Applied only when the hub copy changes |
+| `backups/<node>/rpt.conf` | `/etc/asterisk/rpt.conf` | Applied only when the hub copy changes |
+| `backups/<node>/manager.conf` | `/etc/asterisk/manager.conf` | Applied only when the hub copy changes |
+| `backups/<node>/extensions.conf` | `/etc/asterisk/custom/extensions.conf` | Applied only when the hub copy changes |
+| `backups/<node>/allmon3.ini` | `/etc/allmon3/allmon3.ini` | Applied only when changed (if allmon3 is installed) |
+| `/opt/app_rpt/bin/`, `/opt/app_rpt/util/` | same paths | Mirrored |
+| `/opt/app_rpt/sounds/rpt/` (incl. `nodenames/`) | same path | Mirrored |
+| `backups/<node>/sounds/ids/` | `/opt/app_rpt/sounds/ids/` | Copied, never mirrored (an empty hub copy can't wipe a node's IDs) |
+| `/opt/app_rpt/src/` | same path | Only for an auto-upgrade (below) |
 
-**What does NOT sync:**
-- `/opt/app_rpt/config.ini` - Each node has unique settings (MYNODE, callsign)
-- `/etc/asterisk/rpt.conf` - Node-specific *Asterisk* configuration
-- `/opt/app_rpt/sounds/custom/` - Site-specific recordings
+**The hub's `/opt/app_rpt/backups/<node>/` directory is the source of truth for
+each child.** Edit a child's files there; the child applies them within the hour.
 
-#### Configuration Examples
-
-**Hub Node Setup (`config.ini`):**
-```ini
-# Hub node at headquarters with good internet
-MYNODE=1999
-FETCHLOCAL=0              # This is the hub (fetch from internet)
-WUAPIKEY=abc123...        # Weather Underground API key
-WUSTATION=KSTEXAS123     # Local weather station
-NWSZONE=PAZ073            # NOAA alert zone
-```
-
-**Child Node Setup (`config.ini`):**
-```ini
-# Remote site on mountain top
-MYNODE=2000
-FETCHLOCAL=1                     # This is a child (fetch from hub)
-FETCHPOINT=hub.example.com       # Hub hostname or IP
-AUTOUPGRADE=1                    # Auto-upgrade when hub version changes
-
-# No weather API key needed - uses hub's data
-WUAPIKEY=empty
-WUSTATION=empty
-NWSZONE=PAZ073              # Can use same zone or different
-```
+**What does NOT sync:** `tails/`, `custom/`, `wx/`, `weather/` and the
+Weather Underground data; those are per node.
 
 #### How `configkeeper.sh` Works
 
-**Every 5 minutes on child nodes:**
-```bash
-# 1. Check if child node
-if [[ $FETCHLOCAL == 1 ]]; then
-    # 2. Sync weather data from hub
-    rsync -avz --timeout=30 \
-        ${FETCHPOINT}:/opt/app_rpt/lib/wunderground.out \
-        /opt/app_rpt/lib/wunderground.out
+- **State is preserved.** `statekeeper.sh` and `weatheralert.sh` edit the
+  local `rpt.conf`/`config.ini` on every state change (daytime, nighttime,
+  net, alerts). Hub copies are staged in `/opt/app_rpt/lib/hubsync/` and
+  applied only when their checksum differs from the last applied one, so an
+  unchanged hub copy never undoes a state change. To force a re-apply, delete
+  `/opt/app_rpt/lib/hubsync/*.applied` on the child.
+- **Reloads only when needed.** Asterisk (`module reload`) and allmon3 are
+  reloaded only when a config file was actually applied.
+- **Failures don't stop the sync.** Each transfer is attempted; failures are
+  logged and counted, the rest still run, and the script exits 1 at the end.
+- **Auto-upgrade.** With `AUTOUPGRADE=1`, if the hub's `/opt/app_rpt/VERSION`
+  differs from the child's, the child pulls the hub's staged release from
+  `/opt/app_rpt/src/` and runs `src/upgrade.sh --force --auto-yes`, keeping its
+  settings. Hubs stage that release whenever `upgrade.sh` or `install.sh` runs
+  on them. Asterisk is not restarted by an upgrade.
+- **SSH.** All hub connections run as root with `BatchMode`, so a missing key
+  or host-key prompt fails fast instead of hanging.
 
-    # 3. Sync weather audio files
-    rsync -avz --delete --timeout=30 \
-        ${FETCHPOINT}:/opt/app_rpt/sounds/wx/ \
-        /opt/app_rpt/sounds/wx/
-
-    # 4. Sync space weather audio
-    rsync -avz --delete --timeout=30 \
-        ${FETCHPOINT}:/opt/app_rpt/sounds/weather/ \
-        /opt/app_rpt/sounds/weather/
-
-    # 5. Check hub version
-    HUB_VER=$(ssh $FETCHPOINT "grep VERSION /opt/app_rpt/bin/common.sh")
-    LOCAL_VER=$(grep VERSION /opt/app_rpt/bin/common.sh)
-
-    # 6. Auto-upgrade if enabled and versions differ
-    if [[ $AUTOUPGRADE == 1 ]] && [[ "$HUB_VER" != "$LOCAL_VER" ]]; then
-        log "Hub version changed: $HUB_VER (was $LOCAL_VER), upgrading..."
-        cd /usr/src/app_rpt__ultra
-        git pull
-        ./upgrade.sh --auto-yes
-    fi
-fi
+**Logged to `/opt/app_rpt/log/app_rpt.log`:**
 ```
-
-**Output logged to `/opt/app_rpt/log/app_rpt.log`:**
-```
-2026-01-07 21:00:01 [configkeeper] Syncing from hub hub.example.com
-2026-01-07 21:00:02 [configkeeper] Weather data synced: 2.1KB
-2026-01-07 21:00:03 [configkeeper] Audio files synced: 15 files, 234KB
-2026-01-07 21:00:04 [configkeeper] Version check: v2.0.5 (current)
+[2026-11-10 21:53:12] [38620] Applied updated rpt.conf from node504380
+[2026-11-10 21:53:12] [38620] Config sync from node504380 complete
 ```
 
 #### Management Workflows
 
 **Upgrading the entire network:**
 ```bash
-# 1. SSH to hub node
-ssh hub.example.com
-
-# 2. Upgrade hub
-cd /usr/src/app_rpt__ultra
-git pull
+# 1. On the hub, from a checkout of the new release (bump VERSION for each
+#    release: children only auto-upgrade when the hub's VERSION changes)
 sudo ./upgrade.sh
+#    -> installs the release, stages it in /opt/app_rpt/src for children, and
+#       migrates each backups/<node>/config.ini to the current format
 
-# 3. Wait 5 minutes - child nodes detect version change
-# 4. Verify children upgraded (check logs):
-ssh child1.example.com "tail -50 /opt/app_rpt/log/app_rpt.log | grep upgrade"
+# 2. Children with AUTOUPGRADE=1 upgrade themselves at the next :05.
+#    Verify on a child:
+grep -aE "Auto-upgrade|Config sync" /opt/app_rpt/log/app_rpt.log | tail -3
+
+# 3. Children with AUTOUPGRADE=0: on the child,
+sudo rsync -a hub:/opt/app_rpt/src/ /opt/app_rpt/src/
+sudo bash /opt/app_rpt/src/upgrade.sh --force --auto-yes
 ```
 
-**Updating a custom tail message network-wide:**
-```bash
-# 1. On hub, record new message to slot 05
-asterisk -rx "rpt localplay 1999 /opt/app_rpt/sounds/tails/tail_message_5"
-
-# 2. Optionally sync tails/ directory (if you enable it in configkeeper.sh)
-# Default: tails/ are NOT synced (site-specific)
-
-# 3. To sync tails, edit configkeeper.sh on children:
-# Add: rsync -avz ${FETCHPOINT}:/opt/app_rpt/sounds/tails/ /opt/app_rpt/sounds/tails/
-```
+**Updating a tail message:** tails are per node and are not synced. Record
+the message on each node with `msgwriter.sh` (tail slots 11-19, e.g.
+`15D<codes>` for `tails/tail_message_5`).
 
 **Monitoring sync status across network:**
 ```bash
