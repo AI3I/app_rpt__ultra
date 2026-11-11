@@ -39,5 +39,3 @@ if ! cat "${SNDMALE}/today.ulaw" \
     log_error "Failed to build current_date.ulaw - missing sound files"
     exit 1
 fi
-
-###VERSION=2.0.9

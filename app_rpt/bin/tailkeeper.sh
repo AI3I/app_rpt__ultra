@@ -82,5 +82,3 @@ if [[ ${#candidates[@]} -gt 0 ]]; then
 else
     set_tail ""
 fi
-
-###VERSION=2.0.9

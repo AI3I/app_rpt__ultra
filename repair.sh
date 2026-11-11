@@ -29,7 +29,6 @@ set -euo pipefail
 #
 
 # Version information
-readonly SCRIPT_VERSION="2.0.9"
 readonly SCRIPT_NAME="repair.sh"
 readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -1212,7 +1211,7 @@ main() {
     echo ""
     echo "╔═══════════════════════════════════════╗"
     echo "║  app_rpt__ultra System Repair Tool    ║"
-    echo "║  Version $SCRIPT_VERSION                        ║"
+    printf "║  Version %-29s║\n" "$(cat "$VERSION_FILE" 2>/dev/null || echo unknown)"
     echo "╚═══════════════════════════════════════╝"
     echo ""
 

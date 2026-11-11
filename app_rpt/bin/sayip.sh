@@ -89,5 +89,3 @@ wan)
     die_with_error "Invalid argument: $1"
     ;;
 esac
-
-###VERSION=2.0.9

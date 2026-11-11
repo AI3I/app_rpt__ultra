@@ -50,5 +50,3 @@ else
     echo "WARNING: Unknown SPECIALID value: $SPECIALID" >&2
     exit 0
 fi
-
-###VERSION=2.0.9

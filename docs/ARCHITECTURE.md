@@ -233,63 +233,31 @@ fi
 
 ### What Happens During Upgrade
 
-**`upgrade.sh` technical steps:**
+**`upgrade.sh` steps:**
 
-1. **Version Check:**
-   ```bash
-   CURRENT_VER=$(grep "^###VERSION=" /opt/app_rpt/bin/common.sh | cut -d= -f2)
-   NEW_VER=$(grep "^###VERSION=" app_rpt/bin/common.sh | cut -d= -f2)
-   ```
+1. **Version check** — compares `/opt/app_rpt/VERSION` with the release's
+   `VERSION` file. Reinstalling the same version needs `--force`.
+2. **Backup** — `/opt/app_rpt/backups/upgrade_backup_<timestamp>/` gets
+   `config.ini`, `bin/`, `lib/`, `rpt.conf`, the asterisk crontab and the old
+   and new version numbers.
+3. **Sound layout** — if `/opt/app_rpt/sounds` is still a real directory,
+   `migrate-lang.sh` moves it to the `rp` layout. Nothing is deleted: the old
+   directory is kept as `backups/sounds_premigration_<timestamp>/`.
+4. **Config migration** — a new `config.ini` is built from the release
+   template with every existing non-empty setting carried over (paths stay
+   release-managed). On a hub, every `backups/<node>/config.ini` is migrated
+   the same way.
+5. **Scripts** — `common.sh` first (and checked), then `bin/*.sh` and the
+   utilities in `util/`. Each file is written next to its destination and
+   renamed into place, so a script running during the upgrade keeps its old
+   copy. The `kerchunkd` service and log rotation are updated too.
+6. **Sounds** — release sound directories are synced; `ids/`, `tails/` and
+   `custom/` are never touched.
+7. **Finish** — validation, ownership, `/opt/app_rpt/VERSION` is written, and
+   the release is staged in `/opt/app_rpt/src` for child nodes.
 
-2. **Backup:**
-   ```bash
-   BACKUP="/opt/app_rpt/backups/upgrade_backup_$(date +%Y%m%d_%H%M%S)"
-   cp -a /opt/app_rpt/bin "$BACKUP/bin"
-   cp /opt/app_rpt/config.ini "$BACKUP/config.ini"
-   cp /etc/asterisk/rpt.conf "$BACKUP/rpt.conf.bkp"
-   ```
-
-3. **Config Migration:**
-   ```bash
-   # Extract current values
-   OLD_NODE=$(grep "^MYNODE=" /opt/app_rpt/config.ini | cut -d= -f2)
-   OLD_APIKEY=$(grep "^WUAPIKEY=" /opt/app_rpt/config.ini | cut -d= -f2)
-
-   # Install new config template
-   cp app_rpt/config.ini.example /opt/app_rpt/config.ini
-
-   # Restore user values
-   sed -i "s/^MYNODE=.*/MYNODE=$OLD_NODE/" /opt/app_rpt/config.ini
-   sed -i "s/^WUAPIKEY=.*/WUAPIKEY=$OLD_APIKEY/" /opt/app_rpt/config.ini
-   ```
-
-4. **Script Installation:**
-   ```bash
-   # Copy all 24 scripts with version updates
-   cp -a app_rpt/bin/*.sh /opt/app_rpt/bin/
-   chmod 755 /opt/app_rpt/bin/*.sh
-   chown -R asterisk:asterisk /opt/app_rpt/
-   ```
-
-5. **Validation:**
-   ```bash
-   # Check critical files exist
-   test -f /opt/app_rpt/bin/common.sh || exit 1
-   test -f /opt/app_rpt/config.ini || exit 1
-
-   # Verify version updated
-   grep "^###VERSION=$NEW_VER" /opt/app_rpt/bin/common.sh || exit 1
-   ```
-
-**Rollback on failure:**
-```bash
-if [[ $? -ne 0 ]]; then
-    echo "Upgrade failed! Rolling back..."
-    cp -a "$BACKUP/bin/"* /opt/app_rpt/bin/
-    cp "$BACKUP/config.ini" /opt/app_rpt/config.ini
-    exit 1
-fi
-```
+**Rollback:** if script installation or validation fails, `config.ini`,
+`bin/` and `lib/` are restored from the backup and the version is reset.
 
 ### Distributed Architecture (Hub/Child)
 
@@ -353,8 +321,8 @@ The hub/child architecture allows you to manage multiple repeater sites from a c
 #### What Gets Synchronized
 
 `configkeeper.sh` runs **hourly at :05** on every node from the `rpt.conf`
-scheduler (a `[schedule]` entry calls a macro, which runs the `cmd` function:
-`5010`/`C5010` in `rpt.conf.example`; deployed nodes use `9920`/`C9920`). It
+scheduler (a `[schedule]` entry calls macro `9920`, which runs the `cmd` function
+`C9920`; see `rpt.conf.example`). It
 exits immediately unless `FETCHLOCAL=1`, so on a hub it does nothing. A child
 pulls from its hub (`FETCHPOINT`):
 

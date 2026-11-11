@@ -58,5 +58,3 @@ elif [[ "$FETCHLOCAL" == "0" ]]; then
 else
     exit 1
 fi
-
-###VERSION=2.0.9

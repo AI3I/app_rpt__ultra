@@ -16,7 +16,7 @@
 
 **NEW in v2.0.5!**
 
-## ✅ USER-EDITABLE SLOTS (01-59)
+## ✅ USER-EDITABLE SLOTS (01-49, 51-59)
 
 ### ID Messages (01-10)
 | Slot | Filename | Description | Used By |
@@ -52,7 +52,7 @@
 | 25-29 | custom/demonstration_1-5 | Demo/test messages |
 | 30-39 | custom/emergency_autodial_0-9 | Emergency autodial |
 | 40-49 | custom/mailbox_0-9 | Mailbox messages |
-| 50 | rpt/litz_alert | LiTZ (Long Tone Zero) alert |
+| 50 | rpt/litz_alert | LiTZ (Long Tone Zero) alert — **system sound, not writable** |
 | 51-59 | custom/available_51-59 | **AVAILABLE FOR CUSTOM USE** (freed in v2.0.5) |
 
 **v2.0.5 Change:** Slots 51-59 are now available for your custom messages! Weather alerts moved to 60-61, net messages moved to 96-99.
@@ -136,7 +136,7 @@
    - They pull live data from Weather Underground API
 
 4. **Best Practice:**
-   - Use msgwriter.sh for slots 01-59 (see [Script Reference](docs/REFERENCE.md#msgwritersh))
+   - Use msgwriter.sh for slots 01-49 and 51-59; slot 50 is the system LiTZ alert (see [Script Reference](docs/REFERENCE.md#msgwritersh))
    - Leave slots 70-79 alone (auto-generated)
    - Customize slots 60-61 if you want better generic weather alert messages
    - Slots 51-59 now available for your custom messages!

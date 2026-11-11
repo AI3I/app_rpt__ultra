@@ -94,5 +94,3 @@ else
     asterisk -rx "rpt localplay $MYNODE rpt/program_error"
     exit 1
 fi
-
-###VERSION=2.0.9

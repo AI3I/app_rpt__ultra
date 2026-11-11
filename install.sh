@@ -467,6 +467,18 @@ create_directories() {
     print_success "Directories created"
 }
 
+# /opt/app_rpt/VERSION is what upgrade.sh and child auto-upgrade compare
+# (configkeeper.sh skips auto-upgrade while it is missing).
+record_version() {
+    if [[ -f "$SCRIPT_DIR/VERSION" ]]; then
+        cp "$SCRIPT_DIR/VERSION" "$DEST_DIR/VERSION"
+        chown asterisk:asterisk "$DEST_DIR/VERSION"
+        print_success "Installed version $(cat "$DEST_DIR/VERSION")"
+    else
+        print_warning "No VERSION file in $SCRIPT_DIR — auto-upgrade will not work for this node"
+    fi
+}
+
 # Keep a copy of this release in $DEST_DIR/src.  Child nodes with AUTOUPGRADE=1
 # pull it from their hub (configkeeper.sh) and run src/upgrade.sh, which needs
 # the full tree (app_rpt/, VERSION, ...), not just the util/ scripts.
@@ -956,6 +968,7 @@ main() {
     install_asterisk_configs
     generate_voice_id
     install_crontab
+    record_version
     stage_release
     set_permissions
     run_initial_setup

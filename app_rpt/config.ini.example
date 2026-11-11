@@ -199,5 +199,3 @@ LIBDIR=/opt/app_rpt/lib
 UTILDIR=/opt/app_rpt/util
 BACKUPDIR=/opt/app_rpt/backups
 RECORDDIR=/opt/asterisk
-
-###VERSION=2.0.6

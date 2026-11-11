@@ -30,7 +30,6 @@ set -euo pipefail
 #
 
 # Version information
-readonly SCRIPT_VERSION="2.0.9"
 readonly SCRIPT_NAME="upgrade.sh"
 readonly REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -192,8 +191,18 @@ get_repo_version() {
     if [[ -f "$REPO_DIR/VERSION" ]]; then
         cat "$REPO_DIR/VERSION"
     else
-        echo "$SCRIPT_VERSION"
+        echo "unknown"
     fi
+}
+
+# Install a file by writing it next to the destination and renaming it into
+# place.  A script that is running while it is upgraded (configkeeper.sh runs
+# upgrade.sh during an auto-upgrade) keeps reading its old copy instead of
+# having its file rewritten under it.
+install_atomic() {   # src dest mode owner
+    local src="$1" dest="$2" mode="$3" owner="$4" tmp
+    tmp="$(dirname "$dest")/.$(basename "$dest").new.$$"
+    cp "$src" "$tmp" && chmod "$mode" "$tmp" && chown "$owner" "$tmp" && mv -f "$tmp" "$dest"
 }
 
 escape_sed_replacement() {
@@ -432,7 +441,7 @@ migrate_hub_backup_configs() {
         tmp=$(mktemp "/tmp/config.ini.$node.XXXXXX")
         cp "$template" "$tmp"
         carry_over_settings "$cfg" "$tmp" "node $node"
-        sed -i "s|%%BASEDIR%%|$INSTALL_BASE|g; s|###VERSION=.*|###VERSION=$(get_repo_version)|g" "$tmp"
+        sed -i "s|%%BASEDIR%%|$INSTALL_BASE|g" "$tmp"
 
         if ! bash -c "set -euo pipefail; source '$tmp'" >/dev/null 2>&1; then
             log_warn "  $node: migrated config failed validation; left unchanged"
@@ -543,8 +552,6 @@ migrate_config() {
     # Replace %%BASEDIR%% placeholder
     sed -i "s|%%BASEDIR%%|$INSTALL_BASE|g" "$temp_config"
 
-    # Add version marker
-    sed -i "s|###VERSION=.*|###VERSION=$(get_repo_version)|g" "$temp_config"
 
     # Validate new config can be sourced
     if ! bash -c "set -euo pipefail; source '$temp_config'" 2>/dev/null; then
@@ -686,9 +693,7 @@ install_scripts() {
     sed -i "s|%%BASEDIR%%|$INSTALL_BASE|g" "$temp_common"
 
     if [[ "$DRY_RUN" == false ]]; then
-        cp "$temp_common" "$INSTALL_BASE/bin/common.sh"
-        chmod 755 "$INSTALL_BASE/bin/common.sh"
-        chown asterisk:asterisk "$INSTALL_BASE/bin/common.sh"
+        install_atomic "$temp_common" "$INSTALL_BASE/bin/common.sh" 755 asterisk:asterisk
     fi
     rm -f "$temp_common"
 
@@ -720,9 +725,7 @@ install_scripts() {
         sed -i "s|%%BASEDIR%%|$INSTALL_BASE|g" "$temp_script"
 
         if [[ "$DRY_RUN" == false ]]; then
-            cp "$temp_script" "$INSTALL_BASE/bin/$script_name"
-            chmod 755 "$INSTALL_BASE/bin/$script_name"
-            chown asterisk:asterisk "$INSTALL_BASE/bin/$script_name"
+            install_atomic "$temp_script" "$INSTALL_BASE/bin/$script_name" 755 asterisk:asterisk
         fi
 
         rm -f "$temp_script"
@@ -752,9 +755,7 @@ install_scripts() {
             sed -i "s|%%BASEDIR%%|$INSTALL_BASE|g" "$temp_util"
 
             if [[ "$DRY_RUN" == false ]]; then
-                cp "$temp_util" "$INSTALL_BASE/util/$util_name"
-                chmod 755 "$INSTALL_BASE/util/$util_name"
-                chown asterisk:asterisk "$INSTALL_BASE/util/$util_name"
+                install_atomic "$temp_util" "$INSTALL_BASE/util/$util_name" 755 asterisk:asterisk
             fi
 
             rm -f "$temp_util"
@@ -826,6 +827,8 @@ install_scripts() {
             log_success "Created symlink: $INSTALL_BASE/sounds -> $AST_SOUNDS_RP"
         elif [[ -L "$INSTALL_BASE/sounds" ]] && [[ "$(readlink "$INSTALL_BASE/sounds")" == "$AST_SOUNDS_RP" ]]; then
             log_info "sounds symlink already correct"
+        elif [[ -L "$INSTALL_BASE/sounds" ]]; then
+            log_warn "$INSTALL_BASE/sounds points to $(readlink "$INSTALL_BASE/sounds"), not $AST_SOUNDS_RP — run repair.sh to fix it"
         fi
 
         # /var/lib/asterisk/sounds/rp — secondary Asterisk search path
@@ -1150,7 +1153,7 @@ main() {
     echo ""
     echo "╔═══════════════════════════════════════╗"
     echo "║  app_rpt__ultra Upgrade Tool          ║"
-    echo "║  Version $SCRIPT_VERSION                        ║"
+    printf "║  Version %-29s║\n" "$(get_repo_version)"
     echo "╚═══════════════════════════════════════╝"
     echo ""
 

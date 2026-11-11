@@ -80,7 +80,7 @@ build_audio() {
 # Reach out and grab the latest Weather Underground data
 if [[ "$FETCHLOCAL" == "1" ]]; then
     # Copy a file from a local hub
-    if ! sudo rsync -azr --delete "$FETCHPOINT:$WUOUTPUT" "$WUOUTPUT" 2>/dev/null; then
+    if ! sudo rsync -az -e "ssh -o BatchMode=yes -o ConnectTimeout=15" "$FETCHPOINT:$WUOUTPUT" "$WUOUTPUT" 2>/dev/null; then
         log_error "Failed to fetch weather data from $FETCHPOINT"
         exit 1
     fi
@@ -401,5 +401,3 @@ build_audio "$SNDWX/wind.ulaw" \
     "$SNDMALE/per.ulaw" "$SNDMALE/hour.ulaw"
 
 log "Weather data updated successfully"
-
-###VERSION=2.0.9

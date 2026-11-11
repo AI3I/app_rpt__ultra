@@ -21,7 +21,7 @@
 set -euo pipefail
 source "%%BASEDIR%%/bin/common.sh"
 
-# Runs hourly from the rpt.conf scheduler (macro 5010 -> function C5010) on
+# Runs hourly from the rpt.conf scheduler (macro 9920 -> function C9920) on
 # every node.  Only child nodes (FETCHLOCAL=1) pull from a hub; on a hub this
 # would copy its own backup config.ini over the live one.
 if [[ "${FETCHLOCAL:-0}" != "1" ]]; then
@@ -57,22 +57,40 @@ STAGE="${BASEDIR}/lib/hubsync"
 applied=0
 allmon_applied=0
 
+# Checksum of a file's settings only: comment (# or ;) and blank lines are
+# ignored, so a comment edit or an old version marker never triggers a re-apply.
+settings_sum() {
+    # awk (not grep -v) so a file with no setting lines still returns success
+    sudo awk '!/^[[:space:]]*([#;]|$)/' "$1" | sha256sum | cut -d' ' -f1
+}
+
 pull_config() {
     local src="$1" dest name staged sum last
     dest=$(readlink -f "$2" || echo "$2")
     name=$(basename "$src")
     staged="$STAGE/$name"
-    if ! sudo rsync -a -e "$ssh_cmd" "${FETCHPOINT}:${src}" "$staged"; then
+    # Records written before 2.0.10 hold a whole-file checksum.  If the record
+    # still matches the copy staged last time, convert it to a settings checksum
+    # so changing the method doesn't cause a one-time re-apply.
+    if sudo test -f "$staged" && sudo test -f "$staged.applied"; then
+        last=$(sudo cat "$staged.applied")
+        if [[ "$last" == "$(sudo sha256sum "$staged" | cut -d' ' -f1)" ]]; then
+            settings_sum "$staged" | sudo tee "$staged.applied" >/dev/null
+        fi
+    fi
+    # -c compares contents: a same-size edit within the same second as the last
+    # sync must still be fetched
+    if ! sudo rsync -ac -e "$ssh_cmd" "${FETCHPOINT}:${src}" "$staged"; then
         log_error "Failed to sync ${src} from ${FETCHPOINT}"
         failures=$((failures + 1))
         return 0
     fi
-    sum=$(sudo sha256sum "$staged" | cut -d' ' -f1)
+    sum=$(settings_sum "$staged")
     last=$(sudo cat "$staged.applied" 2>/dev/null || true)
     if [[ "$sum" == "$last" ]]; then
         return 0
     fi
-    if sudo rsync -a "$staged" "$dest"; then
+    if sudo rsync -ac "$staged" "$dest"; then
         echo "$sum" | sudo tee "$staged.applied" >/dev/null
         log "Applied updated ${name} from ${FETCHPOINT}"
         applied=$((applied + 1))
@@ -165,5 +183,3 @@ if [[ $failures -gt 0 ]]; then
     exit 1
 fi
 log "Config sync from ${FETCHPOINT} complete"
-
-###VERSION=2.0.9

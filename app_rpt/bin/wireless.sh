@@ -47,5 +47,3 @@ asterisk -rx "rpt localplay $MYNODE rpt/frequency_is"
 sleep 6
 asterisk -rx "rpt localplay $MYNODE rpt/flow_rate_is"
 "$BINDIR/speaktext.sh" "$rate"
-
-###VERSION=2.0.9

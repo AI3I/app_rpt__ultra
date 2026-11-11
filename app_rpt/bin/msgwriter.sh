@@ -63,9 +63,10 @@ if [[ "$idstring" == "00" ]]; then
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_w_i_d"
     exit 0
 else
-    # Validate before writing: slots 60-99 are system/auto-generated and must not be overwritten
-    if [[ "$slot" -gt 59 ]]; then
-        die_with_error "Invalid message slot: $idstring (must be 01-59)"
+    # Validate before writing: slot 50 (LiTZ alert) and 60-99 are system or
+    # auto-generated sounds and must not be overwritten
+    if [[ "$slot" -gt 59 || "$slot" -eq 50 ]]; then
+        die_with_error "Invalid message slot: $idstring (writable: 01-49, 51-59)"
     fi
     msgid=$(grep "^${idstring} " "$MSGTBL" 2>/dev/null | head -1 | cut -d' ' -f2 || true)
     if [[ -z "$msgid" ]]; then
@@ -106,5 +107,3 @@ else
     "$BINDIR/speaktext.sh" "$idstring"
     exit 0
 fi
-
-###VERSION=2.0.9

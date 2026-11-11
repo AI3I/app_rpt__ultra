@@ -72,5 +72,3 @@ wireguard) # WireGuard Restart (if installed and enabled)
     exit 1
     ;;
 esac
-
-###VERSION=2.0.9

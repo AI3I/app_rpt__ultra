@@ -53,6 +53,22 @@ severity=$(grep '<cap:severity>Severe</cap:severity>' "$NWSFILE" 2>/dev/null | c
 
 all_events=$(grep '<cap:event>' "$NWSFILE" 2>/dev/null | sed 's/.*<cap:event>\(.*\)<\/cap:event>.*/\1/' || true)
 
+# The alert tail files (SVWXALERT/RTWXALERT, slots 60/61) are overwritten with
+# each alert's own audio.  When an alert ends, put back the generic recording
+# shipped with the release (staged in $BASEDIR/src) so the slots never end up
+# empty; remove the file only when no release copy is available.
+restore_generic_alerts() {
+    local f generic
+    for f in "$RTWXALERT" "$SVWXALERT"; do
+        generic="${BASEDIR}/src/app_rpt/sounds/${f}.ulaw"
+        if [[ -f "$generic" ]]; then
+            cp -f "$generic" "${SOUNDS}/${f}.ulaw" 2>/dev/null || true
+        else
+            rm -f "${SOUNDS}/${f}.ulaw" 2>/dev/null || true
+        fi
+    done
+}
+
 select_highest_priority_event() {
     local events="$1"
     local result
@@ -546,8 +562,8 @@ elif [[ "$SEVEREWEATHER" == "2" ]]; then
         sleep 5
         "$STATEKEEPER" standard
 
-        # Clean up stale weather alert files
-        rm -f "${SOUNDS}/${RTWXALERT}.ulaw" "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
+        # Restore the generic alert recordings in place of this alert's audio
+        restore_generic_alerts
 
         log "NWS Alert cleared"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), weatheralert, standard, nws_clear, ${MYNODE}" >> /opt/app_rpt/log/state_history.log
@@ -579,8 +595,8 @@ elif [[ "$SEVEREWEATHER" == "1" ]]; then
         sleep 5
         "$STATEKEEPER" standard
 
-        # Clean up stale weather alert files
-        rm -f "${SOUNDS}/${RTWXALERT}.ulaw" "${SOUNDS}/${SVWXALERT}.ulaw" 2>/dev/null || true
+        # Restore the generic alert recordings in place of this alert's audio
+        restore_generic_alerts
 
         log "NWS Alert cleared"
         echo "$(date '+%Y-%m-%d %H:%M:%S'), severeweather, standard, nws_clear, ${MYNODE}" >> /opt/app_rpt/log/state_history.log
@@ -593,5 +609,3 @@ elif [[ "$SEVEREWEATHER" == "0" ]]; then
 else
     exit 0
 fi
-
-###VERSION=2.0.9

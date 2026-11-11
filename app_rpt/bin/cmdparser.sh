@@ -56,5 +56,3 @@ status) # Status Commands
     exit 1
     ;;
 esac
-
-###VERSION=2.0.9
