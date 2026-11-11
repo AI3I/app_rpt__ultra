@@ -4,6 +4,17 @@ All notable changes to `app_rpt__ultra` are documented here.
 
 ---
 
+## [2.0.11] - 2026-11-11
+
+Fixes found while bringing the hubs up to date: two announcements that never played (caught by checking every sound file the scripts reference against the release) and a node-list change that allmon3 never picked up.
+
+### Fixed
+- **`datekeeper.sh`: date announcement never built** — It asked for `_sndfx/pause.ulaw`, which doesn't exist, so `current_date.ulaw` failed to build every night ("Failed to build current_date.ulaw - missing sound files"). It now uses `_sndfx/shortpause.ulaw`.
+- **`sayip.sh wlan`: silent announcement** — It played `rpt/wlan_ip_address`, which doesn't exist; the Wi-Fi address readback now says "W" + "LAN IP address".
+- **`configkeeper.sh`: allmon3 node changes ignored** — After applying a new `allmon3.ini` it reloaded allmon3, which doesn't re-read its node list; it now restarts allmon3.
+
+---
+
 ## [2.0.10] - 2026-11-11
 
 Follow-up to 2.0.9 from running auto-upgrade across a live network: a release no longer makes every child re-apply its configuration, upgrades can't rewrite a running script, the version lives in one place, and `rpt.conf.example` now uses the numbering deployed nodes use.
