@@ -105,7 +105,11 @@ pull_dir "${BINDIR}" "${BINDIR}"
 pull_dir "${UTILDIR}" "${UTILDIR}"
 
 # Update sound files
-pull_dir "${SNDNODES}" "${SNDNODES}"
+# SNDNODES normally lives inside SNDRPT (rpt/nodenames), which the SNDRPT
+# mirror already covers; syncing it separately failed on hubs without one.
+if [[ "${SNDNODES}" != "${SNDRPT}"/* ]]; then
+    pull_dir "${SNDNODES}" "${SNDNODES}"
+fi
 pull_dir "${SNDRPT}" "${SNDRPT}"
 # Recorded IDs are copied, never mirrored: an empty or missing ids/ in the hub's
 # backup must not delete the IDs this node transmits.
