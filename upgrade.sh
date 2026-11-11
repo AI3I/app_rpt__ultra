@@ -155,7 +155,7 @@ check_prerequisites() {
 
     # Check required commands
     local missing_cmds=()
-    for cmd in jq rsync awk sed grep dialog fzf; do
+    for cmd in jq rsync awk sed grep; do
         if ! command -v "$cmd" &>/dev/null; then
             missing_cmds+=("$cmd")
         fi

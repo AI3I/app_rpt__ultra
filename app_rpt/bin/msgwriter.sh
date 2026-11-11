@@ -33,6 +33,11 @@ if [[ -z "${1:-}" ]]; then
 fi
 
 idstring="${1:0:2}"
+if [[ ! "$idstring" =~ ^[0-9]{2}$ ]]; then
+    die_with_error "Invalid message slot: $idstring"
+fi
+# Force base 10 so slots 08 and 09 aren't parsed as invalid octal
+slot=$((10#$idstring))
 if [[ "${1:2:1}" != "D" ]]; then
     die_with_error "Invalid message format: $1 (expected <slot>D<codes>, nothing changed)"
 fi
@@ -58,6 +63,10 @@ if [[ "$idstring" == "00" ]]; then
     asterisk -rx "rpt localplay $MYNODE rpt/write_c_w_i_d"
     exit 0
 else
+    # Validate before writing: slots 60-99 are system/auto-generated and must not be overwritten
+    if [[ "$slot" -gt 59 ]]; then
+        die_with_error "Invalid message slot: $idstring (must be 01-59)"
+    fi
     msgid=$(grep "^${idstring} " "$MSGTBL" 2>/dev/null | head -1 | cut -d' ' -f2 || true)
     if [[ -z "$msgid" ]]; then
         die_with_error "Invalid message slot: $idstring"
@@ -86,24 +95,16 @@ else
     fi
     mv -f "$tmpmsg" "${SOUNDS}/${msgid}.ulaw"
     : > "$voicemsg"
-    if [[ "$idstring" -le "10" ]]; then
+    if [[ "$slot" -le 10 ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/write_i_d"
-        sleep 1
-        "$BINDIR/speaktext.sh" "$idstring"
-        exit 0
-    elif [[ "$idstring" -le "19" ]]; then
+    elif [[ "$slot" -le 19 ]]; then
         asterisk -rx "rpt localplay $MYNODE rpt/write_t_m"
-        sleep 1
-        "$BINDIR/speaktext.sh" "$idstring"
-        exit 0
-    elif [[ "$idstring" -le "50" ]]; then
-        asterisk -rx "rpt localplay $MYNODE rpt/write_message"
-        sleep 1
-        "$BINDIR/speaktext.sh" "$idstring"
-        exit 0
     else
-        die_with_error "Invalid message slot: $idstring (must be 01-50)"
+        asterisk -rx "rpt localplay $MYNODE rpt/write_message"
     fi
+    sleep 1
+    "$BINDIR/speaktext.sh" "$idstring"
+    exit 0
 fi
 
 ###VERSION=2.0.8

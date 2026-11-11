@@ -1,4 +1,4 @@
-# Message Slot Summary for msgbuilder.sh
+# Message Slot Summary
 
 ## 🎵 SPECIAL SLOT (00)
 
@@ -136,7 +136,7 @@
    - They pull live data from Weather Underground API
 
 4. **Best Practice:**
-   - Use msgbuilder.sh for slots 01-59
+   - Use msgwriter.sh for slots 01-59 (see [Script Reference](docs/REFERENCE.md#msgwritersh))
    - Leave slots 70-79 alone (auto-generated)
    - Customize slots 60-61 if you want better generic weather alert messages
    - Slots 51-59 now available for your custom messages!

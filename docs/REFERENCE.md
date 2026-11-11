@@ -273,7 +273,7 @@ msgreader.sh 10
 This script can write messages into slots using the vocabulary and character tables listed below.
 > [!NOTE]
 > 1. Slot _**00** is special_ and is for the CW ID, which writes to the _**idtalkover**_ parameter in rpt.conf.
-> 2. Slots **01** through **50** are customizable through the message writer, while slots **51** through **99** are pre-programmed and cannot be overwritten by this tool.
+> 2. Slots **01** through **59** are customizable through the message writer, while slots **60** through **99** are system or auto-generated and cannot be overwritten by this tool.
 > 3. Character `D` delimits the slot from the message, and `*` delimits each character or vocabulary word.
 
 #### EXAMPLES

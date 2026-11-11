@@ -101,7 +101,7 @@ After upgrading to v2.0.5:
 
 3. **AllMon3 web.ini** - Update slot references as shown above
 
-4. **Your messages** - If you customized slots 51-55, rebuild them in new locations using msgbuilder.sh
+4. **Your messages** - If you customized slots 51-55, rebuild them in new locations using msgwriter.sh
 
 ## Security Best Practices
 
@@ -138,7 +138,7 @@ When customizing your DTMF codes in `rpt.conf`, organize them logically for easy
 For questions about configuration:
 - Check the [README.md](README.md) for feature documentation
 - See [SLOTS.md](SLOTS.md) for message slot details
-- Review [MSGBUILDER.md](MSGBUILDER.md) for message creation
+- See [Script Reference](docs/REFERENCE.md#msgwritersh) for message creation with `msgwriter.sh`
 
 ---
 
