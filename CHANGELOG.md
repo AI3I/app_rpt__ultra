@@ -4,9 +4,26 @@ All notable changes to `app_rpt__ultra` are documented here.
 
 ---
 
-## [Unreleased]
+## [2.0.9] - 2026-11-11
+
+Hub-and-child operation now works end to end (hourly sync that keeps state changes, auto-upgrade from a hub-staged release, migrated hub backup configs), sounds move to their own `rp` language, and a long list of fixes found while upgrading live nodes. Upgrade with `upgrade.sh`; existing settings are carried over.
+
+### Added
+- **`rp` sound language** — app_rpt__ultra sounds live in `/usr/share/asterisk/sounds/rp/` (with `/opt/app_rpt/sounds` and `/var/lib/asterisk/sounds/rp` symlinked to it) and `defaultlanguage = rp` is set in `asterisk.conf`, so `asl3-asterisk` package updates can no longer mix stock English sounds into the app_rpt__ultra set. `migrate-lang.sh` moves existing installs; `upgrade.sh` runs it automatically.
+- **Hourly hub sync** — `rpt.conf.example` schedules `configkeeper.sh` at :05 (function `C5010`, macro `5010`); hubs stage each release in `/opt/app_rpt/src` so children can auto-upgrade.
+- **Log rotation** — `/etc/logrotate.d/app_rpt__ultra` rotates `/opt/app_rpt/log/*.log` weekly (8 kept, compressed).
+- **`kerchunkd.sh`: post-COS warning delay** — The warning waits `KERCHUNK_WARNDELAY` seconds (default 2) after the carrier drops so the repeater tail can clear (#4, Devin Frederick).
+
+### Removed
+- **`web/msgbuilder.php`** — Messages are written with `msgwriter.sh` (DTMF or CLI).
+- **`fzf`/`dialog` requirement** — `install.sh`/`upgrade.sh` no longer install or check for them (ASL's own `asl3-menu` still installs them).
 
 ### Fixed
+- **`kerchunkd.sh`: daemon exited on every restart** — `[[ ! -f ... ]] && ...` returned 1 once the state files existed, and `set -e` ended the daemon (#4, Devin Frederick). Kerchunks are now detected with app_rpt's RF-only kerchunk counter, so node connects and other non-RF keyups no longer count, and the counter is seeded on first run so a restart doesn't treat the whole history as new (#4).
+- **`msgwriter.sh`: slots 08/09 and system slots** — 08 and 09 failed as invalid octal after the message was written; slots 60-99 were overwritten before being rejected. Slots are now validated first (01-59 writable, 60-99 system).
+- **Silent courtesy tones and telemetry under the `rp` language** — `defaultlanguage = rp` is set in `asterisk.conf`, not only `chan_dahdi.conf`, so app_rpt's internal channels find the sounds.
+- **`upgrade.sh`: placeholder sounds never replaced** — Release sound files (`rpt/`, `_male/`, `_female/`, `_sndfx/`, `letters/`, `digits/`, `wx/`, `weather/`) are synced on every upgrade; `ids/`, `tails/` and `custom/` are left alone.
+- **`install.sh`/`upgrade.sh`: root-owned `sounds/rp`** — `/usr/share/asterisk` is included in the ownership pass so scripts can write their generated sounds.
 - **`upgrade.sh`, `install.sh`, `repair.sh`: `rm -rf` of a pre-rp `sounds/` directory** — Replacing a real `/opt/app_rpt/sounds` with a symlink deleted recorded IDs, tails and custom messages. On nodes where `/usr/share/asterisk/sounds` is itself a symlink to `/opt/app_rpt/sounds`, `sounds/rp` lived inside the old directory and was deleted as well. All three now hand the layout change to `migrate-lang.sh`, which never deletes anything.
 - **`migrate-lang.sh`: unsafe on symlinked layouts** — Replaces parent symlinks into the old directory with real directories, removes `en` symlinks by resolved path (trailing-slash or relative targets were previously skipped), refuses if `sounds/rp` would resolve inside the old directory, copies `ids/ tails/ custom/ rpt/ recordings/` plus `voice_id`/`tail_message`, and moves the old directory to `backups/sounds_premigration_<timestamp>/` instead of deleting it. Safe to re-run; installed into `util/`.
 - **`configkeeper.sh`: child auto-upgrade always failed and stopped all syncing** — It ran `util/upgrade.sh`, which can't find the release tree from `util/`; under `set -e` the failure ended the script before any config, script or sound sync. Hubs now stage the release in `${BASEDIR}/src` (`upgrade.sh`, `install.sh`) and children run `src/upgrade.sh`; a failure is logged and the sync continues.

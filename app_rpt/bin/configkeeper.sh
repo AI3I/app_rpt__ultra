@@ -166,4 +166,4 @@ if [[ $failures -gt 0 ]]; then
 fi
 log "Config sync from ${FETCHPOINT} complete"
 
-###VERSION=2.0.8
+###VERSION=2.0.9
