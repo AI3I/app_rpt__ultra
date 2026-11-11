@@ -80,7 +80,7 @@ default) # Reset to Default Operations
     sudo asterisk -rx "rpt cmd $MYNODE cop 15 $MYNODE" # Set Scheduler to ENABLED
     sleep 15
     sudo asterisk -rx "module reload"
-    log_state_change "tactical" "manual"
+    log_state_change "default" "manual"
     ;;
 standard) # Standard Operations
     sed -i "s/^SEVEREWEATHER=.*$/SEVEREWEATHER=3/g" "$sourcefile"
@@ -152,7 +152,7 @@ tactical) # Tactical Operations
     sudo asterisk -rx "rpt cmd $MYNODE cop 16 $MYNODE" # Set Scheduler to DISABLED
     sleep 15
     sudo asterisk -rx "module reload"
-    log_state_change "default" "manual"
+    log_state_change "tactical" "manual"
     ;;
 stealth) # Stealth Operations
     sed -i "s/^SCHEDULER=.*$/SCHEDULER=0/g" "$sourcefile"

@@ -48,6 +48,42 @@ pull_file() {
     fi
 }
 
+# Config files are staged here and applied only when the hub copy has changed
+# since it was last applied.  statekeeper.sh edits rpt.conf and config.ini on
+# every state change (daytime, nighttime, net, ...); re-applying an unchanged
+# hub copy every hour would silently undo those changes.  To force a re-apply,
+# delete ${BASEDIR}/lib/hubsync/*.applied.
+STAGE="${BASEDIR}/lib/hubsync"
+applied=0
+allmon_applied=0
+
+pull_config() {
+    local src="$1" dest name staged sum last
+    dest=$(readlink -f "$2" || echo "$2")
+    name=$(basename "$src")
+    staged="$STAGE/$name"
+    if ! sudo rsync -a -e "$ssh_cmd" "${FETCHPOINT}:${src}" "$staged"; then
+        log_error "Failed to sync ${src} from ${FETCHPOINT}"
+        failures=$((failures + 1))
+        return 0
+    fi
+    sum=$(sudo sha256sum "$staged" | cut -d' ' -f1)
+    last=$(sudo cat "$staged.applied" 2>/dev/null || true)
+    if [[ "$sum" == "$last" ]]; then
+        return 0
+    fi
+    if sudo rsync -a "$staged" "$dest"; then
+        echo "$sum" | sudo tee "$staged.applied" >/dev/null
+        log "Applied updated ${name} from ${FETCHPOINT}"
+        applied=$((applied + 1))
+        [[ "$name" == "allmon3.ini" ]] && allmon_applied=1
+    else
+        log_error "Failed to install ${name} from ${FETCHPOINT}"
+        failures=$((failures + 1))
+    fi
+    return 0
+}
+
 # Mirror one directory from the hub (removes local files the hub no longer has).
 pull_dir() {
     local src="$1" dest
@@ -86,16 +122,14 @@ if [[ "${FETCHLOCAL:-0}" == "1" ]] && [[ "${AUTOUPGRADE:-0}" == "1" ]]; then
     fi
 fi
 
-# Update local node master configuration file
-pull_file "${BACKUPDIR}/${MYNODE}/config.ini" "${BASEDIR}/config.ini"
-sleep 2
-
-# Replace configuration files with newer version, if necessary
-pull_file "${BACKUPDIR}/${MYNODE}/rpt.conf" /etc/asterisk/rpt.conf
-pull_file "${BACKUPDIR}/${MYNODE}/manager.conf" /etc/asterisk/manager.conf
-pull_file "${BACKUPDIR}/${MYNODE}/extensions.conf" /etc/asterisk/custom/extensions.conf
+# Configuration files: applied only when the hub copy has changed (see above)
+sudo mkdir -p "$STAGE"
+pull_config "${BACKUPDIR}/${MYNODE}/config.ini" "${BASEDIR}/config.ini"
+pull_config "${BACKUPDIR}/${MYNODE}/rpt.conf" /etc/asterisk/rpt.conf
+pull_config "${BACKUPDIR}/${MYNODE}/manager.conf" /etc/asterisk/manager.conf
+pull_config "${BACKUPDIR}/${MYNODE}/extensions.conf" /etc/asterisk/custom/extensions.conf
 if [[ -d /etc/allmon3 ]]; then
-    pull_file "${BACKUPDIR}/${MYNODE}/allmon3.ini" /etc/allmon3/allmon3.ini
+    pull_config "${BACKUPDIR}/${MYNODE}/allmon3.ini" /etc/allmon3/allmon3.ini
 fi
 
 # Update scripts from bin directory
@@ -115,11 +149,14 @@ pull_dir "${SNDRPT}" "${SNDRPT}"
 # backup must not delete the IDs this node transmits.
 pull_file "${BACKUPDIR}/${MYNODE}/sounds/ids/" "${SNDID}/"
 
-# Reload even after partial failures: files that did sync must take effect so the
-# running config matches what is on disk.
-sleep 5
-sudo asterisk -rx "module reload" || log_error "Asterisk module reload failed"
-if [[ -d /etc/allmon3 ]]; then
+# Reload only when a config file was applied (even if other steps failed, so
+# the running config matches what is on disk); an hourly reload with nothing
+# new would only disturb a node that is in service.
+if [[ $applied -gt 0 ]]; then
+    sleep 5
+    sudo asterisk -rx "module reload" || log_error "Asterisk module reload failed"
+fi
+if [[ $allmon_applied -eq 1 ]]; then
     sudo systemctl reload allmon3 || log_error "allmon3 reload failed"
 fi
 
