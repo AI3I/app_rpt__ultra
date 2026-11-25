@@ -4,6 +4,23 @@ All notable changes to `app_rpt__ultra` are documented here.
 
 ---
 
+## [2.0.12] - 2026-11-24
+
+Recordings that play in a browser, a page to play them from, and child recordings that actually reach the hub.
+
+### Added
+- **Recordings page** — `/recordings/` on a hub now opens a page with a tab per node (the hub plus every child whose hub copy of `rpt.conf` has `archivedir`, even before its first upload) listing that node's recordings by day, with a play button, local time and length in seconds for each, a "hide shorter than" filter for kerchunks, and optional play-next. It plays from `recordings.json`, which the new `recordkeeper.sh` rebuilds every minute from the WAV headers (hubs only; children exit). Start times come from each file's modification time minus its length, not its name: app_rpt names files in the zone Asterisk started under, so one archive can mix UTC- and local-named files. `install.sh`/`upgrade.sh` install the page to `/opt/asterisk/index.html` and add the cron job.
+- **`.txt` activity logs not served** — The daily `YYYYMMDD.txt` logs beside the recordings hold DTMF commands and telemetry. A new Apache snippet (`app_rpt__ultra-recordings.conf`, enabled with `a2enconf`) returns 403 for them and hides them from directory listings.
+
+### Changed
+- **Recordings archived as PCM WAV** — `archiveformat=wav` added after `archivedir` in `rpt.conf.example`, and by `upgrade.sh` in the live `rpt.conf` and the hub's per-node copies wherever no format is set. app_rpt's default, `wav49` (GSM in a WAV), plays in no browser. PCM files are about 10× larger (about 16 KB per second of audio).
+
+### Fixed
+- **`datadumper.sh`: child recordings never reached the hub** — The nightly upload ran `rsync` as the `asterisk` user, which has no SSH key or known_hosts entry for the hub, so every upload failed host-key verification. It now uses `sudo rsync` (root's key, as `configkeeper.sh` does) and logs rsync's own error when an upload fails.
+- **`datadumper.sh`: retention purge reached the top of `/opt/asterisk`** — It now purges only inside the per-node directories, so the recordings page isn't deleted after `RETENTION` days.
+
+---
+
 ## [2.0.11] - 2026-11-11
 
 Fixes found while bringing the hubs up to date: two announcements that never played (caught by checking every sound file the scripts reference against the release) and a node-list change that allmon3 never picked up.
