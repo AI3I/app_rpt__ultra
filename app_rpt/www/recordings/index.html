@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recordings</title>
+<!--
+  app_rpt__ultra recordings page.  Installed as /opt/asterisk/index.html and
+  served at /recordings/.  Plays from recordings.json, which recordkeeper.sh
+  rebuilds every minute.  Each entry is [file, seconds, start (Unix time)];
+  times are shown in the viewer's time zone.
+-->
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f5f6f8; --card: #fff; --fg: #1c2127; --muted: #69727d;
+  --line: #e2e5e9; --accent: #1f6feb; --on-accent: #fff; --tint: #eef3fd;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1115; --card: #161a20; --fg: #e5e8eb; --muted: #8d96a0;
+    --line: #262c34; --accent: #5a96ff; --on-accent: #0e1115; --tint: #1a2333;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg);
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+header { position: sticky; top: 0; z-index: 2; background: var(--bg);
+  border-bottom: 1px solid var(--line); }
+h1 { font-size: 19px; font-weight: 650; margin: 16px 0 10px; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding-bottom: 12px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tabs .lbl { color: var(--muted); font-size: 13px; margin-right: 2px; }
+.tabs button { font: inherit; font-size: 14px; padding: 4px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; }
+.tabs button span { color: var(--muted); margin-left: 6px; font-size: 12px; }
+.tabs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.tabs button[aria-pressed="true"] span { color: inherit; opacity: .8; }
+.tabs button.none:not([aria-pressed="true"]) { color: var(--muted); }
+.opts { margin-left: auto; display: flex; gap: 14px; align-items: center; color: var(--muted); font-size: 13px; }
+.opts select { font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--line);
+  border-radius: 6px; padding: 2px 4px; }
+.opts label { display: flex; gap: 5px; align-items: center; cursor: pointer; }
+details { background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin: 12px 0; overflow: hidden; }
+summary { cursor: pointer; list-style: none; padding: 10px 14px; display: flex;
+  justify-content: space-between; gap: 12px; font-weight: 600; }
+summary::-webkit-details-marker { display: none; }
+summary::before { content: "▸"; color: var(--muted); margin-right: 8px; display: inline-block; transition: transform .15s; }
+details[open] summary::before { transform: rotate(90deg); }
+summary .day { flex: 1; }
+summary .meta { color: var(--muted); font-weight: 400; font-size: 13px; white-space: nowrap; }
+.row { position: relative; display: grid; grid-template-columns: 34px 1fr auto auto;
+  gap: 12px; align-items: center; padding: 5px 14px; border-top: 1px solid var(--line); }
+.row.on { background: var(--tint); }
+.play { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--card); color: var(--fg); cursor: pointer; display: grid; place-items: center; padding: 0; }
+.play svg { width: 12px; height: 12px; fill: currentColor; }
+.row.on .play { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.time, .dur { font-variant-numeric: tabular-nums; }
+.dur { color: var(--muted); text-align: right; min-width: 6ch; }
+.row.bad .dur { color: #d1242f; }
+.dl { color: var(--muted); text-decoration: none; padding: 4px; border-radius: 4px; display: grid; }
+.dl:hover { color: var(--fg); }
+.dl svg { width: 14px; height: 14px; fill: currentColor; }
+.prog { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--accent); }
+.note { color: var(--muted); padding: 32px 0; text-align: center; }
+footer { color: var(--muted); font-size: 12px; padding: 8px 0 32px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Recordings</h1>
+    <div class="bar">
+      <div class="tabs" id="tabs"></div>
+      <div class="opts">
+        <label>Hide shorter than
+          <select id="min">
+            <option value="0">—</option>
+            <option value="2">2 s</option>
+            <option value="5">5 s</option>
+            <option value="10">10 s</option>
+          </select>
+        </label>
+        <label><input type="checkbox" id="auto"> Play next</label>
+      </div>
+    </div>
+  </div>
+</header>
+<main class="wrap" id="list"><p class="note">Loading…</p></main>
+<footer class="wrap" id="foot"></footer>
+
+<script>
+"use strict";
+const ICON = {
+  play: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.2v9.6L10.5 6z"/></svg>',
+  pause: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1h3v10H2zM7 1h3v10H7z"/></svg>',
+  down: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7 1h2v8.2l2.8-2.8 1.4 1.4L8 13 2.8 7.8l1.4-1.4L7 9.2zM2 14h12v2H2z"/></svg>'
+};
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("rec." + k); return v === null ? d : v; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("rec." + k, v); } catch {} }
+};
+const S = {
+  data: null, node: null,
+  min: +store.get("min", 0), auto: store.get("auto", "1") === "1",
+  row: null              // row element currently loaded in the player
+};
+const audio = new Audio();
+audio.preload = "none";
+const $ = id => document.getElementById(id);
+const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const fDay = new Intl.DateTimeFormat(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+const fTime = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const fStamp = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+
+// Start time comes from the index; filenames are in whatever zone Asterisk
+// ran under, so they're only a fallback for an index without start times.
+function when(name, start) {
+  if (start) return new Date(start * 1000);
+  const m = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(name);
+  return m ? new Date(Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6])) : null;
+}
+function dayKey(d) { return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+function total(s) {
+  s = Math.round(s);
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60;
+  return h ? `${h}h ${m}m` : m ? `${m}m ${r}s` : `${r}s`;
+}
+
+async function load() {
+  const r = await fetch("recordings.json", { cache: "no-store" });
+  if (!r.ok) throw new Error(r.status === 404 ? "No recordings index yet." : `Index unavailable (HTTP ${r.status}).`);
+  return r.json();
+}
+
+function tabs() {
+  const nodes = Object.keys(S.data.nodes);
+  $("tabs").innerHTML = '<span class="lbl">Node</span>';
+  for (const n of nodes) {
+    const b = document.createElement("button");
+    const count = S.data.nodes[n].length;
+    b.setAttribute("aria-pressed", n === S.node);
+    b.title = `${count} recording${count === 1 ? "" : "s"} from node ${n}`;
+    if (!count) b.className = "none";
+    b.innerHTML = `${n}<span>${count}</span>`;
+    b.onclick = () => { location.hash = n; };
+    $("tabs").append(b);
+  }
+}
+
+function render(keepOpen) {
+  const list = $("list");
+  const nodes = S.data.nodes;
+  if (!Object.keys(nodes).length) { list.innerHTML = '<p class="note">No recordings.</p>'; return; }
+  if (!nodes[S.node]) S.node = nodes[S.data.home] ? S.data.home : Object.keys(nodes)[0];
+  tabs();
+  if (!nodes[S.node].length) {
+    list.innerHTML = `<p class="note">No recordings from node ${S.node} on this hub yet.<br>` +
+      `Linked nodes upload their recordings here once a night.</p>`;
+    return;
+  }
+
+  // Days newest first; recordings within a day in the order they happened
+  const days = new Map();
+  for (const [name, secs, start] of nodes[S.node]) {
+    if (secs < S.min) continue;
+    const d = when(name, start);
+    if (!d) continue;
+    const k = dayKey(d);
+    if (!days.has(k)) days.set(k, { date: d, items: [] });
+    days.get(k).items.push({ name, secs, d });
+  }
+  const open = keepOpen || new Set();
+  list.innerHTML = "";
+  if (!days.size) { list.innerHTML = '<p class="note">Nothing matches this filter.</p>'; return; }
+  const ordered = [...days.entries()].reverse();
+  ordered.forEach(([k, day], i) => {
+    const det = document.createElement("details");
+    det.dataset.key = k;
+    const secs = day.items.reduce((a, it) => a + it.secs, 0);
+    det.innerHTML = `<summary><span class="day">${fDay.format(day.date)}</span>` +
+      `<span class="meta">${day.items.length} recording${day.items.length === 1 ? "" : "s"} · ${total(secs)}</span></summary>`;
+    let built = false;
+    const build = () => {
+      if (built) return;
+      built = true;
+      for (const it of day.items) det.append(row(it));
+    };
+    det.addEventListener("toggle", () => { if (det.open) build(); });
+    if (keepOpen ? open.has(k) : i === 0) { det.open = true; build(); }
+    list.append(det);
+  });
+}
+
+function row(it) {
+  const el = document.createElement("div");
+  el.className = "row";
+  el.dataset.src = encodeURIComponent(S.node) + "/" + encodeURIComponent(it.name);
+  const t = fTime.format(it.d);
+  el.innerHTML =
+    `<button class="play" aria-label="Play ${t}, ${it.secs} seconds">${ICON.play}</button>` +
+    `<span class="time">${t}</span><span class="dur">${it.secs.toFixed(1)} s</span>` +
+    `<a class="dl" href="${el.dataset.src}" download title="Download">${ICON.down}</a><span class="prog"></span>`;
+  el.querySelector(".play").onclick = () => toggle(el);
+  return el;
+}
+
+function mark(el, playing) {
+  el.classList.toggle("on", playing || (el === S.row && !audio.ended));
+  el.querySelector(".play").innerHTML = playing ? ICON.pause : ICON.play;
+}
+
+function toggle(el) {
+  if (S.row === el) {
+    if (audio.paused) audio.play().catch(() => fail(el)); else audio.pause();
+    return;
+  }
+  if (S.row) { S.row.querySelector(".prog").style.width = "0"; S.row.classList.remove("on"); mark(S.row, false); }
+  S.row = el;
+  audio.src = el.dataset.src;
+  audio.play().catch(() => fail(el));
+}
+
+function fail(el) {
+  el.classList.add("bad");
+  el.querySelector(".dur").textContent = "can't play";
+  mark(el, false);
+}
+
+audio.addEventListener("play", () => S.row && mark(S.row, true));
+audio.addEventListener("pause", () => S.row && mark(S.row, false));
+audio.addEventListener("error", () => S.row && fail(S.row));
+audio.addEventListener("timeupdate", () => {
+  if (S.row && audio.duration) S.row.querySelector(".prog").style.width = (100 * audio.currentTime / audio.duration) + "%";
+});
+audio.addEventListener("ended", () => {
+  const done = S.row;
+  if (!done) return;
+  done.querySelector(".prog").style.width = "0";
+  done.classList.remove("on");
+  mark(done, false);
+  const next = done.nextElementSibling;
+  if (S.auto && next && next.classList.contains("row")) toggle(next);
+  else S.row = null;
+});
+
+function footer() {
+  const u = S.data.updated ? fStamp.format(new Date(S.data.updated * 1000)) : "unknown";
+  $("foot").textContent = `List updated ${u} · times shown in ${tz}`;
+}
+
+async function refresh() {
+  try {
+    const d = await load();
+    if (S.data && d.updated === S.data.updated) return;
+    // Don't pull the list out from under something that is playing
+    if (S.data && S.row && !audio.paused) return;
+    const open = S.data ? new Set([...document.querySelectorAll("details[open]")].map(x => x.dataset.key)) : null;
+    S.data = d;
+    S.row = null;
+    render(open);
+    footer();
+  } catch (e) {
+    if (!S.data) $("list").innerHTML = `<p class="note">${e.message}</p>`;
+  }
+}
+
+$("min").value = String(S.min);
+$("min").onchange = e => { S.min = +e.target.value; store.set("min", S.min); audio.pause(); S.row = null; render(); };
+$("auto").checked = S.auto;
+$("auto").onchange = e => { S.auto = e.target.checked; store.set("auto", S.auto ? "1" : "0"); };
+window.addEventListener("hashchange", () => {
+  S.node = decodeURIComponent(location.hash.slice(1));
+  if (S.data) { audio.pause(); S.row = null; render(); }
+});
+S.node = decodeURIComponent(location.hash.slice(1)) || null;
+refresh();
+setInterval(refresh, 60000);
+</script>
+</body>
+</html>

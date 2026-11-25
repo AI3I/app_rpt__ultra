@@ -65,6 +65,7 @@ litzcmd=*C2009#
 startup_macro=*501000
 startup_macro_delay=5
 archivedir=/opt/asterisk
+archiveformat=wav
 
 [nodes]
 ; Local

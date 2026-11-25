@@ -32,8 +32,10 @@ if ! sudo find /var/log/asterisk/ -not -empty -type f -mtime +"${RETENTION}" -ex
     log_error "Failed to purge old log files"
 fi
 
-# Purge recordings after retention period
-if ! sudo find /opt/asterisk/ -not -empty -type f -mtime +"${RETENTION}" -exec rm {} \; 2>/dev/null; then
+# Purge recordings after retention period.  -mindepth 2: only the per-node
+# directories age out; the recordings page (index.html, recordings.json) sits
+# at the top of /opt/asterisk and must survive.
+if ! sudo find /opt/asterisk/ -mindepth 2 -not -empty -type f -mtime +"${RETENTION}" -exec rm {} \; 2>/dev/null; then
     log_error "Failed to purge old recordings"
 fi
 
@@ -46,9 +48,12 @@ if [[ "$FETCHLOCAL" == "1" ]]; then
     fi
     # No --delete: the hub keeps its copy until its own RETENTION purge, so an
     # empty or reimaged child can't wipe the hub's archive of its recordings.
-    if ! rsync -az -e "ssh -o BatchMode=yes -o ConnectTimeout=15" \
-        "${RECORDDIR}/${MYNODE}/" "${FETCHPOINT}:${RECORDDIR}/${MYNODE}/" 2>/dev/null; then
-        log_error "Failed to upload recordings to ${FETCHPOINT}"
+    # sudo: the hub's SSH key and known_hosts entry belong to root (configkeeper.sh
+    # syncs the same way); run as the asterisk user, every upload failed host-key
+    # verification.
+    if ! err=$(sudo rsync -az -e "ssh -o BatchMode=yes -o ConnectTimeout=15" \
+        "${RECORDDIR}/${MYNODE}/" "${FETCHPOINT}:${RECORDDIR}/${MYNODE}/" 2>&1); then
+        log_error "Recordings not uploaded to ${FETCHPOINT}; the hub's archive is missing this node's recent recordings: ${err//$'\n'/ }"
         exit 1
     fi
     log "Recordings uploaded to ${FETCHPOINT}"

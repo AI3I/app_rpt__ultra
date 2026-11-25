@@ -677,6 +677,84 @@ update_lib_files() {
 }
 
 # ==============================================================================
+#    Recordings
+# ==============================================================================
+
+# Archive recordings as 16-bit PCM WAV (archiveformat=wav), which every browser
+# plays, instead of app_rpt's default wav49 (GSM), which none do.  Added only
+# where archiving is on and no format is chosen, in the live rpt.conf and in a
+# hub's copies for its children (which they pick up via configkeeper.sh).
+migrate_archive_format() {
+    local f live_changed=0 changed=0
+    local -a files=(/etc/asterisk/rpt.conf)
+    for f in "$BACKUP_BASE"/*/rpt.conf; do
+        [[ "$(basename "$(dirname "$f")")" =~ ^[0-9]+$ ]] && files+=("$f")
+    done
+    for f in "${files[@]}"; do
+        [[ -f "$f" ]] || continue
+        grep -q '^archivedir[[:space:]]*=' "$f" || continue
+        grep -q '^archiveformat[[:space:]]*=' "$f" && continue
+        if [[ "$DRY_RUN" == true ]]; then
+            log_info "[DRY RUN] Would add archiveformat=wav to $f"
+        else
+            sed -i '/^archivedir[[:space:]]*=/a archiveformat=wav' "$f"
+            log_info "Added archiveformat=wav to $f"
+            [[ "$f" == /etc/asterisk/rpt.conf ]] && live_changed=1
+        fi
+        changed=$((changed + 1))
+    done
+    if [[ $live_changed -eq 1 ]] && asterisk -rx "core show version" &>/dev/null; then
+        if asterisk -rx "module reload app_rpt.so" &>/dev/null; then
+            log_info "app_rpt reloaded: new recordings are PCM WAV"
+        else
+            log_warn "app_rpt reload failed; recordings stay GSM until Asterisk restarts"
+        fi
+    fi
+    [[ $changed -gt 0 ]] && log_success "Recording format set to wav in $changed rpt.conf file(s)"
+    return 0
+}
+
+# Recordings page (/opt/asterisk/index.html, served at /recordings/), the Apache
+# snippet that keeps the .txt activity logs from being served, and the
+# recordkeeper.sh cron job that builds the page's recordings.json.
+install_recordings_page() {
+    local cron_line="* * * * *      $INSTALL_BASE/bin/recordkeeper.sh    >/dev/null 2>&1"
+    local current
+
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY RUN] Would install the recordings page, its Apache snippet and the recordkeeper.sh cron job"
+        return 0
+    fi
+
+    mkdir -p /opt/asterisk
+    install -o asterisk -g asterisk -m 644 "$REPO_DIR/app_rpt/www/recordings/index.html" /opt/asterisk/index.html
+    log_info "Recordings page installed: /opt/asterisk/index.html"
+
+    if [[ -d /etc/apache2/conf-available ]] && [[ -f "$REPO_DIR/app_rpt__ultra-recordings.conf" ]]; then
+        install -o root -g root -m 644 "$REPO_DIR/app_rpt__ultra-recordings.conf" \
+            /etc/apache2/conf-available/app_rpt__ultra-recordings.conf
+        a2enconf -q app_rpt__ultra-recordings >/dev/null 2>&1 || true
+        if apache2ctl configtest >/dev/null 2>&1; then
+            systemctl reload apache2 2>/dev/null || true
+            log_info "Apache: .txt activity logs under /recordings/ are not served"
+        else
+            a2disconf -q app_rpt__ultra-recordings >/dev/null 2>&1 || true
+            log_warn "Apache rejected app_rpt__ultra-recordings.conf; left disabled, so .txt activity logs under /recordings/ are still served"
+        fi
+    fi
+
+    current=$(crontab -u asterisk -l 2>/dev/null || true)
+    if ! grep -qF "$INSTALL_BASE/bin/recordkeeper.sh" <<<"$current"; then
+        if printf '%s\n%s\n' "$current" "$cron_line" | crontab -u asterisk -; then
+            log_info "Cron job added: recordkeeper.sh (every minute)"
+        else
+            log_warn "Could not add the recordkeeper.sh cron job; the recordings page won't list new recordings"
+        fi
+    fi
+    log_success "Recordings page ready"
+}
+
+# ==============================================================================
 #    Script Installation
 # ==============================================================================
 
@@ -1228,6 +1306,11 @@ main() {
         [[ -n "$backup_dir" ]] && rollback_upgrade "$backup_dir"
         exit 4
     fi
+
+    # Step 4.2: Recording format, recordings page and its cron job
+    migrate_archive_format
+    install_recordings_page
+    echo ""
 
     # Step 4.5: Sync sound files from repo (skips user dirs: ids/ tails/ custom/)
     if [[ "$DRY_RUN" == false ]]; then

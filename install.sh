@@ -758,6 +758,33 @@ generate_voice_id() {
     fi
 }
 
+# Recordings page: /opt/asterisk is served at /recordings/; index.html plays
+# from recordings.json (built by recordkeeper.sh), and the Apache snippet keeps
+# the .txt activity logs (DTMF commands, telemetry) from being served.
+install_recordings_page() {
+    print_step "Installing Recordings Page"
+
+    install -o "$OWNER_USER" -g "$OWNER_GROUP" -m 644 \
+        "$SOURCE_APP_RPT/www/recordings/index.html" /opt/asterisk/index.html
+    print_success "Recordings page installed: /opt/asterisk/index.html"
+
+    if [[ -d /etc/apache2/conf-available ]]; then
+        install -o root -g root -m 644 "$SCRIPT_DIR/app_rpt__ultra-recordings.conf" \
+            /etc/apache2/conf-available/app_rpt__ultra-recordings.conf
+        a2enconf -q app_rpt__ultra-recordings >/dev/null 2>&1 || true
+        if apache2ctl configtest >/dev/null 2>&1; then
+            systemctl reload apache2 2>/dev/null || true
+            print_success "Apache: .txt activity logs under /recordings/ are not served"
+        else
+            a2disconf -q app_rpt__ultra-recordings >/dev/null 2>&1 || true
+            print_warning "Apache rejected app_rpt__ultra-recordings.conf; left disabled, so .txt activity logs under /recordings/ are still served"
+        fi
+    fi
+    if [[ ! -e /var/www/html/recordings ]]; then
+        print_info "/var/www/html/recordings doesn't exist; the page is served once it links to /opt/asterisk"
+    fi
+}
+
 install_crontab() {
     print_step "Installing Crontab"
 
@@ -786,6 +813,7 @@ install_crontab() {
 */15 * * * *   $DEST_DIR/bin/weatherkeeper.sh   >/dev/null 2>&1
 0 0 * * *      $DEST_DIR/bin/datekeeper.sh      >/dev/null 2>&1
 0 0 * * *      $DEST_DIR/bin/datadumper.sh      >/dev/null 2>&1
+* * * * *      $DEST_DIR/bin/recordkeeper.sh    >/dev/null 2>&1
 EOF
 
     crontab -u "$OWNER_USER" "$crontab_file" || { rm -f "$crontab_file"; die_with_error "Failed to install crontab"; }
@@ -968,6 +996,7 @@ main() {
     install_asterisk_configs
     generate_voice_id
     install_crontab
+    install_recordings_page
     record_version
     stage_release
     set_permissions
